@@ -2,7 +2,7 @@
 import { useForm, useFieldArray, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { Election, Candidate } from '@/lib/types';
+import type { Election, Candidate, Category } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,13 +22,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Trash2, PlusCircle, Loader2 } from 'lucide-react';
+import { Trash2, PlusCircle, Loader2, CalendarIcon } from 'lucide-react';
 import { saveElection } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { Form } from '@/components/ui/form';
-
+import { useEffect, useState } from 'react';
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
 
 const candidateSchema = z.object({
   id: z.string().optional(),
@@ -43,7 +46,17 @@ const electionSchema = z.object({
   name: z.string().min(3, 'Election name must be at least 3 characters.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   status: z.enum(['pending', 'ongoing', 'completed']),
+  startDate: z.date().optional(),
+  endDate: z.date().optional(),
   candidates: z.array(candidateSchema).min(2, 'At least two candidates are required.'),
+}).refine(data => {
+    if (data.startDate && data.endDate) {
+      return data.endDate > data.startDate;
+    }
+    return true;
+}, {
+    message: "End date must be after start date.",
+    path: ["endDate"],
 });
 
 type ElectionFormData = z.infer<typeof electionSchema>;
@@ -61,6 +74,8 @@ export function ElectionForm({ election }: ElectionFormProps) {
     resolver: zodResolver(electionSchema),
     defaultValues: {
       ...election,
+      startDate: election.startDate ? new Date(election.startDate) : undefined,
+      endDate: election.endDate ? new Date(election.endDate) : undefined,
       candidates: election.candidates ? Object.values(election.candidates) : [],
     },
   });
@@ -78,6 +93,12 @@ export function ElectionForm({ election }: ElectionFormProps) {
     formData.append('name', data.name);
     formData.append('description', data.description);
     formData.append('status', data.status);
+    if (data.startDate) {
+        formData.append('startDate', data.startDate.toISOString());
+    }
+    if (data.endDate) {
+        formData.append('endDate', data.endDate.toISOString());
+    }
     formData.append('candidates', JSON.stringify(data.candidates));
 
     try {
@@ -120,6 +141,84 @@ export function ElectionForm({ election }: ElectionFormProps) {
               {form.formState.errors.description && (
                 <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>
               )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="startDate"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                        <FormLabel>Start Date</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                        {form.formState.errors.startDate && <p className="text-sm text-destructive">{form.formState.errors.startDate.message}</p>}
+                        </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="endDate"
+                    render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                        <FormLabel>End Date</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button
+                                variant={"outline"}
+                                className={cn(
+                                    "pl-3 text-left font-normal",
+                                    !field.value && "text-muted-foreground"
+                                )}
+                                >
+                                {field.value ? (
+                                    format(field.value, "PPP")
+                                ) : (
+                                    <span>Pick a date</span>
+                                )}
+                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                initialFocus
+                            />
+                            </PopoverContent>
+                        </Popover>
+                         {form.formState.errors.endDate && <p className="text-sm text-destructive">{form.formState.errors.endDate.message}</p>}
+                        </FormItem>
+                    )}
+                />
             </div>
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>

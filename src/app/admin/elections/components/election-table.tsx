@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { deleteElection } from '@/lib/actions';
+import { format } from 'date-fns';
 
 type ElectionTableProps = {
   initialElections: Election[];
@@ -115,6 +116,7 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
+              <TableHead>Schedule</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Candidates</TableHead>
               <TableHead className="w-[100px] text-right">Actions</TableHead>
@@ -125,6 +127,11 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
               filteredElections.map((election) => (
                 <TableRow key={election.id}>
                   <TableCell className="font-medium">{election.name}</TableCell>
+                  <TableCell>
+                    {election.startDate && election.endDate
+                      ? `${format(new Date(election.startDate), 'd MMM yyyy')} - ${format(new Date(election.endDate), 'd MMM yyyy')}`
+                      : 'Not set'}
+                  </TableCell>
                   <TableCell>{getStatusBadge(election.status)}</TableCell>
                   <TableCell>{election.candidates ? Object.keys(election.candidates).length : 0}</TableCell>
                   <TableCell className="text-right">
@@ -151,7 +158,7 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                   No elections found.
                 </TableCell>
               </TableRow>

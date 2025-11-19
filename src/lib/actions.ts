@@ -164,6 +164,8 @@ export async function saveElection(formData: FormData): Promise<{ savedElectionI
     name: formData.get('name') as string,
     description: formData.get('description') as string,
     status: formData.get('status') as 'pending' | 'ongoing' | 'completed',
+    startDate: formData.get('startDate') as string | null,
+    endDate: formData.get('endDate') as string | null,
     candidates: JSON.parse(formData.get('candidates') as string),
   };
   
@@ -194,12 +196,19 @@ export async function saveElection(formData: FormData): Promise<{ savedElectionI
         return acc;
     }, {});
 
-    const electionData = {
+    const electionData: Partial<Election> = {
         name: rawData.name,
         description: rawData.description,
         status: rawData.status,
         candidates: candidatesObject,
     };
+
+    if (rawData.startDate) {
+        electionData.startDate = rawData.startDate;
+    }
+    if (rawData.endDate) {
+        electionData.endDate = rawData.endDate;
+    }
     
     await set(ref(db, `elections/${savedElectionId}`), electionData);
     

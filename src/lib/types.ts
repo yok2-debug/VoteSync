@@ -2,6 +2,8 @@ export interface Election {
   id: string;
   name: string;
   description: string;
+  startDate?: string;
+  endDate?: string;
   status: 'pending' | 'ongoing' | 'completed';
   candidates: Record<string, Candidate>;
   committee?: CommitteeMember[];

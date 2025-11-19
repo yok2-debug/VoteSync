@@ -1,4 +1,4 @@
-import { getElectionById } from '@/lib/data';
+import { getCategories, getElectionById } from '@/lib/data';
 import { ElectionForm } from '../components/election-form';
 import { redirect } from 'next/navigation';
 
@@ -10,6 +10,7 @@ type ElectionEditPageProps = {
 
 export default async function ElectionEditPage({ params }: ElectionEditPageProps) {
   const { electionId } = params;
+  const categories = await getCategories();
 
   if (electionId === 'new') {
     const newElection = {
@@ -19,6 +20,8 @@ export default async function ElectionEditPage({ params }: ElectionEditPageProps
       status: 'pending' as 'pending' | 'ongoing' | 'completed',
       candidates: {},
       committee: [],
+      startDate: undefined,
+      endDate: undefined,
     };
     return (
       <div className="flex flex-col gap-6">
