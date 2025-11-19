@@ -21,11 +21,10 @@ export function middleware(request: NextRequest) {
   
   const isLoginPage = pathname === '/';
 
-  // If user has a session and is on the login page, redirect to their dashboard
-  if (session && isLoginPage) {
-    const url = session.isAdmin 
-      ? new URL('/admin/dashboard', request.url) 
-      : new URL('/vote', request.url);
+  // If a voter has a session and is on the login page, redirect to their dashboard.
+  // Admins are allowed to see the login page to also log in as a voter.
+  if (session && !session.isAdmin && isLoginPage) {
+    const url = new URL('/vote', request.url);
     return NextResponse.redirect(url);
   }
 
@@ -40,7 +39,9 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/vote', request.url));
     }
     if (pathname.startsWith('/vote') && session.isAdmin) {
-      return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+      // This allows an admin to visit the voter pages, which might be intended.
+      // If not, redirect them to the admin dashboard.
+      // return NextResponse.redirect(new URL('/admin/dashboard', request.url));
     }
   }
   
