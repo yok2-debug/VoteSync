@@ -7,7 +7,7 @@ import { redirect } from 'next/navigation';
 import { VoterLogoutButton } from './components/voter-logout-button';
 import { useDatabase } from '@/context/database-context';
 import { getVoterSession } from '@/lib/session';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Loading from '../loading';
 import type { VoterSessionPayload } from '@/lib/types';
 
@@ -25,30 +25,32 @@ export default function VoterDashboardPage() {
     fetchSession();
   }, []);
 
+  const voter = useMemo(() => {
+    if (!session?.voterId) return null;
+    return voters.find(v => v.id === session.voterId);
+  }, [voters, session]);
+  
+  const category = useMemo(() => {
+      if (!voter) return null;
+      return categories.find(c => c.id === voter.category);
+  }, [categories, voter]);
+
+  const availableElections = useMemo(() => {
+    if (!category) return [];
+    return elections.filter(e => {
+        const isActive = e.status === 'active';
+        const isAllowed = category?.allowedElections?.includes(e.id);
+        return isActive && isAllowed;
+    });
+  }, [elections, category]);
+
   if (isLoading || isSessionLoading) {
     return <Loading />;
   }
   
-  if (!session?.voterId) {
-    redirect('/');
+  if (!session?.voterId || !voter) {
+    return redirect('/');
   }
-
-  const voter = voters.find(v => v.id === session.voterId);
-
-  if (!voter) {
-    // This might happen if the voter is deleted while logged in.
-    redirect('/');
-  }
-  
-  const category = categories.find(c => c.id === voter.category);
-
-  // 1. Filter for active elections
-  // 2. Filter for elections allowed for the voter's category
-  const availableElections = elections.filter(e => {
-    const isActive = e.status === 'active';
-    const isAllowed = category?.allowedElections?.includes(e.id);
-    return isActive && isAllowed;
-  });
 
   const now = new Date();
 

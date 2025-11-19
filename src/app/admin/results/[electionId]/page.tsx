@@ -3,19 +3,20 @@ import { redirect, useParams } from 'next/navigation';
 import { ResultsDisplay } from './components/results-display';
 import { useDatabase } from '@/context/database-context';
 import Loading from '@/app/loading';
+import { useMemo } from 'react';
 
 export default function ElectionResultsPage() {
   const { electionId } = useParams() as { electionId: string };
   const { elections, isLoading } = useDatabase();
 
+  const election = useMemo(() => elections.find(e => e.id === electionId), [elections, electionId]);
+
   if (isLoading) {
     return <Loading />;
   }
 
-  const election = elections.find(e => e.id === electionId);
-
   if (!election) {
-    redirect('/admin/results');
+    return redirect('/admin/results');
   }
 
   return (

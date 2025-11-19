@@ -3,19 +3,20 @@ import { redirect, useParams } from 'next/navigation';
 import { RecapitulationDisplay } from './components/recapitulation-display';
 import { useDatabase } from '@/context/database-context';
 import Loading from '@/app/loading';
+import { useMemo } from 'react';
 
 export default function RecapitulationPage() {
   const { electionId } = useParams() as { electionId: string };
   const { elections, voters, categories, isLoading } = useDatabase();
 
+  const election = useMemo(() => elections.find(e => e.id === electionId), [elections, electionId]);
+
   if (isLoading) {
     return <Loading />;
   }
 
-  const election = elections.find(e => e.id === electionId);
-
   if (!election) {
-    redirect('/admin/recapitulation');
+    return redirect('/admin/recapitulation');
   }
 
   return (
