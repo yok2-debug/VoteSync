@@ -114,7 +114,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
             <CardContent className="space-y-8 pt-6">
                 
                 <p>
-                    Pada hari {electionDayInfo.day}, tanggal {electionDayInfo.date}, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} dengan hasil sebagai berikut:
+                    Pada hari ini, {electionDayInfo.day}, tanggal {electionDayInfo.date}, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} dengan hasil sebagai berikut:
                 </p>
 
                 <div>
