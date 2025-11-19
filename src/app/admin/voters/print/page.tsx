@@ -48,10 +48,13 @@ export default function PrintCardsPage() {
             size: A4;
             margin: 1cm;
           }
-          body, .print-container {
-            background-color: transparent !important;
+          body, html {
+            background-color: #fff !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+          }
+          .print-container {
+             background-color: #fff !important;
           }
           .no-print {
             display: none !important;
