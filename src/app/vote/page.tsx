@@ -10,9 +10,8 @@ import { getVoterSession } from '@/lib/session';
 import { useEffect, useState, useMemo } from 'react';
 import Loading from '../loading';
 import type { VoterSessionPayload } from '@/lib/types';
-import { DatabaseProvider } from '@/context/database-context';
 
-function VoteDashboardContent() {
+export default function VoterDashboardPage() {
   const router = useRouter();
   const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
@@ -21,12 +20,12 @@ function VoteDashboardContent() {
   useEffect(() => {
     async function fetchSessionAndCheck() {
       const voterSession = await getVoterSession();
-      setSession(voterSession);
-      setIsSessionLoading(false);
-
       if (!voterSession?.voterId) {
           router.push('/');
+      } else {
+        setSession(voterSession);
       }
+      setIsSessionLoading(false);
     }
     fetchSessionAndCheck();
   }, [router]);
@@ -52,7 +51,7 @@ function VoteDashboardContent() {
   
   const isLoading = isDbLoading || isSessionLoading;
 
-  if (isLoading || !session?.voterId || !voter) {
+  if (isLoading || !voter) {
     return <Loading />;
   }
 
@@ -133,12 +132,4 @@ function VoteDashboardContent() {
       </div>
     </main>
   );
-}
-
-export default function VoterDashboardPage() {
-  return (
-    <DatabaseProvider>
-      <VoteDashboardContent />
-    </DatabaseProvider>
-  )
 }

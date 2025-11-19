@@ -10,7 +10,7 @@ import { ArrowLeft, FileText } from 'lucide-react';
 import { useDatabase } from '@/context/database-context';
 import { getVoterSession } from '@/lib/session';
 import { useEffect, useState, useMemo } from 'react';
-import { redirect, useParams } from 'next/navigation';
+import { redirect, useParams, useRouter } from 'next/navigation';
 import Loading from '@/app/loading';
 import type { VoterSessionPayload } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
@@ -22,22 +22,26 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { DatabaseProvider } from '@/context/database-context';
 
-function VotePageContent() {
+export default function VotePage() {
   const { electionId } = useParams() as { electionId: string };
   const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchSession() {
       const voterSession = await getVoterSession();
-      setSession(voterSession);
+      if (!voterSession?.voterId) {
+        router.push('/');
+      } else {
+        setSession(voterSession);
+      }
       setIsSessionLoading(false);
     }
     fetchSession();
-  }, []);
+  }, [router]);
 
   const election = useMemo(() => elections.find(e => e.id === electionId), [elections, electionId]);
   const voter = useMemo(() => voters.find(v => v.id === session?.voterId), [voters, session]);
@@ -49,11 +53,11 @@ function VotePageContent() {
     return <Loading />;
   }
 
+  // Redirect logic after hooks and loading check
   if (!session?.voterId) {
-    redirect('/');
-    return null;
+    return <Loading />; // Or redirect, but loading is safer to prevent flashes
   }
-  
+
   const now = new Date();
   const electionStarted = election?.startDate ? new Date(election.startDate) <= now : false;
   const electionEnded = election?.endDate ? new Date(election.endDate) < now : false;
@@ -61,8 +65,12 @@ function VotePageContent() {
   const hasVoted = voter?.hasVoted?.[electionId];
 
   if (!election || election.status !== 'active' || !voter || !electionStarted || electionEnded || !isVoterAllowed || hasVoted) {
-    redirect('/vote');
-    return null;
+    // Using useEffect for redirection is safer on client side after initial render.
+    // This is a fallback.
+    if (typeof window !== 'undefined') {
+        router.push('/vote');
+    }
+    return <Loading />;
   }
 
   const candidates = election.candidates ? Object.values(election.candidates) : [];
@@ -135,13 +143,4 @@ function VotePageContent() {
       </div>
     </main>
   );
-}
-
-
-export default function VotePage() {
-  return (
-    <DatabaseProvider>
-      <VotePageContent />
-    </DatabaseProvider>
-  )
 }

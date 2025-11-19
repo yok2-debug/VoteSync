@@ -8,11 +8,10 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { PublicNavbar } from '@/components/public-navbar';
-import { DatabaseProvider } from '@/context/database-context';
 
 export default function LoginPage() {
   return (
-    <DatabaseProvider>
+    <>
       <PublicNavbar />
       <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4 pt-20">
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
@@ -34,6 +33,6 @@ export default function LoginPage() {
           </Card>
         </div>
       </main>
-    </DatabaseProvider>
+    </>
   );
 }

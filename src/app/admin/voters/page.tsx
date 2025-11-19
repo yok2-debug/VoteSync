@@ -2,9 +2,8 @@
 import { VoterTable } from './components/voter-table';
 import { useDatabase } from '@/context/database-context';
 import Loading from '@/app/loading';
-import { DatabaseProvider } from '@/context/database-context';
 
-function VotersPageContent() {
+export default function VotersPage() {
   const { voters, categories, isLoading } = useDatabase();
 
   return (
@@ -22,12 +21,4 @@ function VotersPageContent() {
       )}
     </div>
   );
-}
-
-export default function VotersPage() {
-    return (
-        <DatabaseProvider>
-            <VotersPageContent />
-        </DatabaseProvider>
-    )
 }
