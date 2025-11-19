@@ -59,7 +59,8 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   const filteredVoters = useMemo(() => voters.filter(
     (voter) =>
       (voter.name.toLowerCase().includes(filter.toLowerCase()) ||
-      voter.id.toLowerCase().includes(filter.toLowerCase())) &&
+      voter.id.toLowerCase().includes(filter.toLowerCase()) ||
+      (voter.nik && voter.nik.includes(filter))) &&
       (categoryFilter === 'all' || voter.category === categoryFilter)
   ), [voters, filter, categoryFilter]);
 
@@ -78,7 +79,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   };
 
   const handleExportTemplate = () => {
-    const csvContent = 'id,name,category,password\n';
+    const csvContent = 'id,nik,name,birthPlace,birthDate,gender,address,category,password\n';
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     if (link.href) {
@@ -209,7 +210,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
       <div className="flex justify-between items-center gap-2 flex-wrap">
         <form className="flex gap-2">
            <Input
-            placeholder="Filter by name or ID..."
+            placeholder="Filter by name, ID, or NIK..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             className="max-w-sm"
@@ -252,8 +253,8 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Voter ID</TableHead>
+              <TableHead>NIK</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Password</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Has Voted</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -264,8 +265,8 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
               filteredVoters.map((voter) => (
                 <TableRow key={voter.id}>
                   <TableCell className="font-mono">{voter.id}</TableCell>
+                  <TableCell className="font-mono">{voter.nik || 'N/A'}</TableCell>
                   <TableCell className="font-medium">{voter.name}</TableCell>
-                  <TableCell className="font-mono">{voter.password}</TableCell>
                   <TableCell>{categoryMap.get(voter.category) || 'N/A'}</TableCell>
                   <TableCell>{voter.hasVoted && Object.keys(voter.hasVoted).length > 0 ? 'Yes' : 'No'}</TableCell>
                   <TableCell className="text-right">

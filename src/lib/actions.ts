@@ -225,7 +225,7 @@ export async function deleteElection(electionId: string): Promise<void> {
 
 
 // Voter Actions
-export async function saveVoter(voter: Omit<Voter, 'hasVoted'>): Promise<Voter> {
+export async function saveVoter(voter: Omit<Voter, 'hasVoted' | 'followedElections'>): Promise<Voter> {
   const { id, ...voterData } = voter;
 
   try {
@@ -291,12 +291,17 @@ export async function resetVoterPassword(voterId: string, newPassword: string):P
 
 const importVoterSchema = z.object({
   id: z.string().min(1, 'ID is required'),
+  nik: z.string().optional(),
   name: z.string().min(1, 'Name is required'),
+  birthPlace: z.string().optional(),
+  birthDate: z.string().optional(),
+  gender: z.string().optional(),
+  address: z.string().optional(),
   category: z.string().min(1, 'Category is required'),
   password: z.string().optional(),
 });
 
-const normalizeCategory = (name: string) => name.replace(/\s+/g, '').toLowerCase();
+const normalizeCategory = (name: string) => name ? name.replace(/\s+/g, '').toLowerCase() : '';
 
 export async function importVoters(data: any[]): Promise<{ importedCount: number, importedVoters: Voter[] }> {
   const categories = await getCategories();
@@ -308,10 +313,14 @@ export async function importVoters(data: any[]): Promise<{ importedCount: number
   const importedVoters: Voter[] = [];
   
   for (const row of data) {
-    // Manually handle potential undefined values from CSV parsing
     const cleanRow = {
       id: typeof row.id === 'string' ? row.id.trim() : row.id,
+      nik: row.nik ? String(row.nik).trim() : '',
       name: typeof row.name === 'string' ? row.name.trim() : row.name,
+      birthPlace: typeof row.birthPlace === 'string' ? row.birthPlace.trim() : '',
+      birthDate: typeof row.birthDate === 'string' ? row.birthDate.trim() : '',
+      gender: typeof row.gender === 'string' ? row.gender.trim() : '',
+      address: typeof row.address === 'string' ? row.address.trim() : '',
       category: typeof row.category === 'string' ? row.category.trim() : row.category,
       password: row.password,
     };
@@ -321,7 +330,7 @@ export async function importVoters(data: any[]): Promise<{ importedCount: number
       throw new Error(`Invalid data in CSV: ${JSON.stringify(validation.error.flatten().fieldErrors)}`);
     }
 
-    const { id, name, category, password } = validation.data;
+    const { id, category, ...rest } = validation.data;
 
     if (existingVoterIds.has(id)) {
         throw new Error(`Voter with ID "${id}" already exists.`);
@@ -331,14 +340,18 @@ export async function importVoters(data: any[]): Promise<{ importedCount: number
     const categoryId = categoryNameMap.get(normalizedCategory);
 
     if (!categoryId) {
-        throw new Error(`Category "${category}" not found for voter "${name}".`);
+        throw new Error(`Category "${category}" not found for voter "${rest.name}".`);
     }
 
-    const voterData = {
-      name,
+    const voterData: Omit<Voter, 'id'| 'followedElections' | 'hasVoted'> = {
+      ...rest,
       category: categoryId,
-      password: password || Math.random().toString(36).substring(2, 8),
+      password: rest.password || Math.random().toString(36).substring(2, 8),
     };
+    if (voterData.gender && !['Laki-laki', 'Perempuan'].includes(voterData.gender)) {
+        throw new Error(`Invalid gender: '${voterData.gender}'. Must be 'Laki-laki' or 'Perempuan'.`);
+    }
+
 
     votersToImport[`voters/${id}`] = voterData;
     importedVoters.push({ id, ...voterData });
@@ -403,8 +416,6 @@ export async function saveVote(electionId: string, candidateId: string, voterId:
     revalidatePath('/vote');
     revalidatePath(`/vote/${electionId}`);
     revalidatePath('/real-count');
-    revalidatePath('/admin/results');
-    revalidatePath(`/admin/results/${electionId}`);
     revalidatePath('/admin/recapitulation');
     revalidatePath(`/admin/recapitulation/${electionId}`);
   } catch (error) {

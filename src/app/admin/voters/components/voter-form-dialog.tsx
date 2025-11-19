@@ -24,12 +24,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 const voterSchema = z.object({
   id: z.string().min(1, { message: 'Voter ID is required.' }),
   name: z.string().min(3, { message: 'Name must be at least 3 characters.' }),
   category: z.string().min(1, { message: 'Category is required.' }),
   password: z.string().optional(),
+  nik: z.string().optional(),
+  birthPlace: z.string().optional(),
+  birthDate: z.string().optional(),
+  gender: z.enum(['Laki-laki', 'Perempuan']).optional(),
+  address: z.string().optional(),
 });
 
 type VoterFormData = z.infer<typeof voterSchema>;
@@ -70,9 +76,24 @@ export function VoterFormDialog({
           name: voter.name,
           category: voter.category,
           password: '', // Always start with empty password field for editing
+          nik: voter.nik || '',
+          birthPlace: voter.birthPlace || '',
+          birthDate: voter.birthDate || '',
+          gender: voter.gender,
+          address: voter.address || '',
         });
       } else {
-        reset({ id: '', name: '', category: '', password: '' });
+        reset({ 
+          id: '', 
+          name: '', 
+          category: '', 
+          password: '',
+          nik: '',
+          birthPlace: '',
+          birthDate: '',
+          gender: undefined,
+          address: '',
+        });
       }
     }
   }, [voter, reset, open]);
@@ -102,75 +123,90 @@ export function VoterFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Voter' : 'Add New Voter'}</DialogTitle>
           <DialogDescription>
             {isEditing ? 'Update the details for this voter.' : 'Enter the details for the new voter.'}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} id="voter-form" className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="id" className="text-right">
-              Voter ID
-            </Label>
-            <div className="col-span-3">
-              <Input id="id" {...register('id')} className="w-full font-mono" disabled={isEditing} />
-              {errors.id && (
-                <p className="text-sm text-destructive mt-1">{errors.id.message}</p>
-              )}
-            </div>
+        <form onSubmit={handleSubmit(onSubmit)} id="voter-form" className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-1">
+          <div className="space-y-2">
+            <Label htmlFor="id">Voter ID</Label>
+            <Input id="id" {...register('id')} className="w-full font-mono" disabled={isEditing} />
+            {errors.id && <p className="text-sm text-destructive mt-1">{errors.id.message}</p>}
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
-            </Label>
-            <div className="col-span-3">
-              <Input id="name" {...register('name')} className="w-full" />
-              {errors.name && (
-                <p className="text-sm text-destructive mt-1">{errors.name.message}</p>
-              )}
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="nik">NIK</Label>
+            <Input id="nik" {...register('nik')} className="w-full font-mono" />
+            {errors.nik && <p className="text-sm text-destructive mt-1">{errors.nik.message}</p>}
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="category" className="text-right">
-              Category
-            </Label>
-            <div className="col-span-3">
+          <div className="space-y-2">
+            <Label htmlFor="name">Name</Label>
+            <Input id="name" {...register('name')} className="w-full" />
+            {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
+          </div>
+           <div className="space-y-2">
+            <Label htmlFor="birthPlace">Tempat Lahir</Label>
+            <Input id="birthPlace" {...register('birthPlace')} className="w-full" />
+            {errors.birthPlace && <p className="text-sm text-destructive mt-1">{errors.birthPlace.message}</p>}
+          </div>
+           <div className="space-y-2">
+            <Label htmlFor="birthDate">Tanggal Lahir (DD-MM-YYYY)</Label>
+            <Input id="birthDate" {...register('birthDate')} className="w-full" placeholder="Contoh: 31-12-1990" />
+            {errors.birthDate && <p className="text-sm text-destructive mt-1">{errors.birthDate.message}</p>}
+          </div>
+           <div className="space-y-2">
+             <Label>Jenis Kelamin</Label>
               <Controller
                 control={control}
-                name="category"
+                name="gender"
                 render={({ field }) => (
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
+                      <SelectValue placeholder="Pilih jenis kelamin" />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </SelectItem>
-                      ))}
+                      <SelectItem value="Laki-laki">Laki-laki</SelectItem>
+                      <SelectItem value="Perempuan">Perempuan</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
               />
-              {errors.category && (
-                <p className="text-sm text-destructive mt-1">{errors.category.message}</p>
-              )}
+              {errors.gender && <p className="text-sm text-destructive mt-1">{errors.gender.message}</p>}
+           </div>
+            <div className="space-y-2">
+                <Label htmlFor="address">Alamat</Label>
+                <Textarea id="address" {...register('address')} />
+                {errors.address && <p className="text-sm text-destructive mt-1">{errors.address.message}</p>}
             </div>
+          <div className="space-y-2">
+            <Label>Category</Label>
+            <Controller
+              control={control}
+              name="category"
+              render={({ field }) => (
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
           </div>
           {isEditing && (
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="password" className="text-right">
-                Password
-              </Label>
-              <div className="col-span-3">
-                <Input id="password" type="password" {...register('password')} className="w-full" placeholder="Leave blank to keep current" />
-                {errors.password && (
-                  <p className="text-sm text-destructive mt-1">{errors.password.message}</p>
-                )}
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input id="password" type="password" {...register('password')} className="w-full" placeholder="Leave blank to keep current" />
+              {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
             </div>
           )}
         </form>

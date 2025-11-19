@@ -34,7 +34,7 @@ type ValidatedRow = {
 };
 
 // Helper function to normalize category names for robust matching
-const normalizeCategory = (name: string) => name.replace(/\s+/g, '').toLowerCase();
+const normalizeCategory = (name: string) => name ? name.replace(/\s+/g, '').toLowerCase() : '';
 
 
 export function VoterImportDialog({ open, onOpenChange, data, categories, onSave }: VoterImportDialogProps) {
@@ -61,7 +61,12 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
             const errors: string[] = [];
             const cleanRow = {
                 id: typeof row.id === 'string' ? row.id.trim() : row.id,
+                nik: row.nik ? String(row.nik).trim() : '',
                 name: typeof row.name === 'string' ? row.name.trim() : row.name,
+                birthPlace: typeof row.birthPlace === 'string' ? row.birthPlace.trim() : '',
+                birthDate: typeof row.birthDate === 'string' ? row.birthDate.trim() : '',
+                gender: typeof row.gender === 'string' ? row.gender.trim() : '',
+                address: typeof row.address === 'string' ? row.address.trim() : '',
                 category: typeof row.category === 'string' ? row.category.trim() : row.category,
                 password: row.password
             };
@@ -82,6 +87,10 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
             
             if (!cleanRow.category || !categoryNameMap.has(normalizeCategory(cleanRow.category))) {
                 errors.push(`Category '${cleanRow.category}' is not a valid, existing category.`);
+            }
+            
+            if (cleanRow.gender && !['Laki-laki', 'Perempuan'].includes(cleanRow.gender)) {
+                errors.push(`Invalid gender: '${cleanRow.gender}'. Must be 'Laki-laki' or 'Perempuan'.`);
             }
 
             return {
@@ -119,7 +128,7 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-6xl">
         <DialogHeader>
           <DialogTitle>Import Voters from CSV</DialogTitle>
           <DialogDescription>
@@ -138,20 +147,17 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
           <Table>
             <TableHeader className="sticky top-0 bg-background">
               <TableRow>
+                <TableHead>Status</TableHead>
                 <TableHead>ID</TableHead>
+                <TableHead>NIK</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead>Password</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Details</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {validatedData.map((row, index) => (
                 <TableRow key={`import-row-${index}`} className={!row.isValid ? 'bg-destructive/10' : ''}>
-                  <TableCell>{row.data.id}</TableCell>
-                  <TableCell>{row.data.name}</TableCell>
-                  <TableCell>{row.data.category}</TableCell>
-                  <TableCell>{row.data.password || '(auto-generated)'}</TableCell>
                   <TableCell>
                     {row.isValid ? (
                       <Badge variant="secondary" className="bg-green-100 text-green-800">Valid</Badge>
@@ -162,6 +168,15 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
                         ))}
                       </div>
                     )}
+                  </TableCell>
+                  <TableCell>{row.data.id}</TableCell>
+                  <TableCell>{row.data.nik}</TableCell>
+                  <TableCell>{row.data.name}</TableCell>
+                  <TableCell>{row.data.category}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {row.data.birthPlace}, {row.data.birthDate} <br/>
+                    {row.data.gender} <br/>
+                    {row.data.address}
                   </TableCell>
                 </TableRow>
               ))}

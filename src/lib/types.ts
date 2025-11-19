@@ -33,6 +33,11 @@ export interface Voter {
   hasVoted?: Record<string, boolean>; // { [electionId]: true }
   isEditing?: boolean; // client-side only
   followedElections?: Election[];
+  nik?: string;
+  birthPlace?: string;
+  birthDate?: string; // dd-mm-yyyy
+  gender?: 'Laki-laki' | 'Perempuan';
+  address?: string;
 }
 
 export interface Category {
