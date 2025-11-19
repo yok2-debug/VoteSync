@@ -26,9 +26,10 @@ export default async function VoterDashboardPage() {
     getCategoryById(voter.category),
   ]);
 
+  // 1. Filter for active elections
+  // 2. Filter for elections allowed for the voter's category
   const availableElections = elections.filter(e => {
     const isActive = e.status === 'active';
-    // Check if category exists and has allowedElections, then check if this election is in the list
     const isAllowed = category?.allowedElections?.includes(e.id);
     return isActive && isAllowed;
   });
