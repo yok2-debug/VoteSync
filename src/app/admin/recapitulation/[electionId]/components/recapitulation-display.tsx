@@ -126,11 +126,11 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
             .print-table {
                 color: #000 !important;
                 border-collapse: collapse !important;
-                border: none !important;
             }
             .print-table th, .print-table td {
                 border: 1px solid #000 !important;
                 color: #000 !important;
+                padding: 4px 8px;
             }
             .print-table th {
                 text-align: center !important;
