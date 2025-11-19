@@ -11,7 +11,10 @@ export function PublicNavbar() {
           <Logo />
           <span className="text-xl font-bold">VoteSync</span>
         </Link>
-        <nav>
+        <nav className="flex items-center gap-4">
+          <Button asChild variant="ghost">
+            <Link href="/">Beranda</Link>
+          </Button>
           <Button asChild variant="outline">
             <Link href="/admin-login">Admin Login</Link>
           </Button>
