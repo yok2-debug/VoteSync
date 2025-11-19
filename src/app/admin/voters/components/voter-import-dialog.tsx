@@ -41,7 +41,9 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
   
   useEffect(() => {
     async function validateData() {
-        if (!open || data.length === 0) {
+        const filteredData = data.filter(row => row.id || row.name || row.category);
+
+        if (!open || filteredData.length === 0) {
             setValidatedData([]);
             return;
         }
@@ -50,7 +52,7 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
         const existingVoterIds = new Set(existingVoters.map(v => v.id));
         const currentImportIds = new Set();
 
-        const validated = data.map(row => {
+        const validated = filteredData.map(row => {
             const errors: string[] = [];
             
             if (!row.id || typeof row.id !== 'string' || row.id.trim() === '') {
@@ -161,7 +163,7 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button onClick={handleConfirmImport} disabled={isSubmitting || hasErrors || validRowCount === 0}>
+          <Button onClick={handleConfirmImport} disabled={isSubmitting || validRowCount === 0}>
             {isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importing...
