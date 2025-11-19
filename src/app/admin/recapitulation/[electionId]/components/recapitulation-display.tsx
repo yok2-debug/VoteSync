@@ -91,17 +91,17 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">{DPT}</div>
-                      <p className="text-xs text-muted-foreground">Total eligible voters for this election</p>
+                      <p className="text-xs text-muted-foreground">Total voters who have the right to vote</p>
                     </CardContent>
                   </Card>
                    <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Voter Participation</CardTitle>
+                      <CardTitle className="text-sm font-medium">Total Votes Cast</CardTitle>
                       <UserCheck className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">{totalVotesCast}</div>
-                      <p className="text-xs text-muted-foreground">{participationPercentage}% participation rate</p>
+                      <p className="text-xs text-muted-foreground">{participationPercentage}% participation rate from DPT</p>
                     </CardContent>
                   </Card>
                 </div>
