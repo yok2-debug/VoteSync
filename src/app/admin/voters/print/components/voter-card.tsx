@@ -40,14 +40,14 @@ export function VoterCard({ voter }: VoterCardProps) {
           <p style={{ margin: 0, fontSize: '9px', fontWeight: '600', wordBreak: 'break-word' }}>{voter.name}</p>
         </div>
          <div style={{ marginTop: '8px' }}>
-          <p style={{ margin: '0 0 2px 0', fontSize: '8px', color: '#333' }}>Pemilu yang Diikuti:</p>
+          <p style={{ margin: '0 0 2px 0', fontSize: '8px', color: '#333' }}>Pemilihan yang Diikuti:</p>
           <ul style={{ margin: 0, paddingLeft: '12px', fontSize: '8px', listStyle: 'disc' }}>
             {voter.followedElections && voter.followedElections.length > 0 ? (
                 voter.followedElections.map(election => (
                     <li key={election.id} style={{ marginBottom: '2px' }}>{election.name}</li>
                 ))
             ) : (
-                <li>(Tidak ada pemilu yang diikuti)</li>
+                <li>(Tidak ada pemilihan yang diikuti)</li>
             )}
           </ul>
         </div>
