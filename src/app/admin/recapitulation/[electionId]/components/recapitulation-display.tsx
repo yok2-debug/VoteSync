@@ -141,6 +141,10 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
             .print-table thead {
                 background-color: #f2f2f2 !important;
             }
+            
+             .print-signature-container {
+                padding-top: 2rem;
+             }
 
              .print-signature-table {
                 width: 100%;
@@ -198,7 +202,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
 
                 <div>
                     <h3 className="text-lg font-semibold mb-2">A. Data Pemilih dan Penggunaan Hak Pilih</h3>
-                     <div className="rounded-md border print-table">
+                     <div className="rounded-md print-table">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -227,7 +231,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
                 
                 <div>
                     <h3 className="text-lg font-semibold mb-2">B. Rincian Perolehan Suara Kandidat</h3>
-                    <div className="rounded-md border print-table">
+                    <div className="rounded-md print-table">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -262,7 +266,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
                 </p>
 
                 {election.committee && election.committee.length > 0 && (
-                  <div className="pt-8">
+                  <div className="print-signature-container">
                      <h3 className="text-lg font-semibold mb-4 text-center">Panitia Pemilihan</h3>
                      <table className="print-signature-table">
                         <thead>
