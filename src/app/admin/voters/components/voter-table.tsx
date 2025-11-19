@@ -185,7 +185,7 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
                           <KeyRound className="mr-2 h-4 w-4" />
                           Reset Password
                          </DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleDelete(voter)}>
+                        <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(voter)}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>
