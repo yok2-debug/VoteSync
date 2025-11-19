@@ -1,23 +1,43 @@
+'use client';
 import { getVoterById, getVoters } from '@/lib/data';
 import type { Voter } from '@/lib/types';
 import { VoterCard } from './components/voter-card';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import Loading from '@/app/loading';
 
-type PrintCardsPageProps = {
-  searchParams: {
-    voterIds?: string;
-  };
-};
+export default function PrintCardsPage() {
+  const searchParams = useSearchParams();
+  const [voters, setVoters] = useState<Voter[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-export default async function PrintCardsPage({ searchParams }: PrintCardsPageProps) {
-  const { voterIds } = searchParams;
-  let voters: Voter[] = [];
+  useEffect(() => {
+    async function fetchVoters() {
+      const voterIds = searchParams.get('voterIds');
+      let fetchedVoters: Voter[] = [];
 
-  if (voterIds) {
-    const ids = voterIds.split(',');
-    const voterPromises = ids.map(id => getVoterById(id));
-    voters = (await Promise.all(voterPromises)).filter((v): v is Voter => v !== null);
-  } else {
-    voters = await getVoters();
+      if (voterIds) {
+        const ids = voterIds.split(',');
+        const voterPromises = ids.map(id => getVoterById(id));
+        fetchedVoters = (await Promise.all(voterPromises)).filter((v): v is Voter => v !== null);
+      } else {
+        fetchedVoters = await getVoters();
+      }
+      setVoters(fetchedVoters);
+      setIsLoading(false);
+    }
+
+    fetchVoters();
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (!isLoading && voters.length > 0) {
+      window.print();
+    }
+  }, [isLoading, voters]);
+
+  if (isLoading) {
+    return <Loading />;
   }
 
   return (

@@ -14,11 +14,22 @@ export async function getAdminCredentials(): Promise<Admin | null> {
   }
 }
 
+async function enrichVoterWithElections(voterData: Omit<Voter, 'id'>, id: string): Promise<Voter> {
+    const [categories, elections] = await Promise.all([
+        getCategories(),
+        getElections()
+    ]);
+    const voterCategory = categories.find(c => c.id === voterData.category);
+    const followedElections = elections.filter(e => voterCategory?.allowedElections?.includes(e.id));
+    return { id, ...voterData, followedElections };
+}
+
 export async function getVoterById(voterId: string): Promise<Voter | null> {
   try {
     const snapshot = await get(ref(db, `voters/${voterId}`));
     if (snapshot.exists()) {
-        return { id: snapshot.key!, ...snapshot.val() };
+        const voterData = snapshot.val();
+        return await enrichVoterWithElections(voterData, snapshot.key!);
     }
     return null;
   } catch (error) {
@@ -63,10 +74,10 @@ export async function getVoters(): Promise<Voter[]> {
         const snapshot = await get(ref(db, 'voters'));
         if (snapshot.exists()) {
             const votersData = snapshot.val();
-            return Object.keys(votersData).map(id => ({
-                id,
-                ...votersData[id],
-            }));
+            const votersPromises = Object.keys(votersData).map(id => 
+                enrichVoterWithElections(votersData[id], id)
+            );
+            return await Promise.all(votersPromises);
         }
         return [];
     } catch (error) {

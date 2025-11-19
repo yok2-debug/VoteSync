@@ -31,9 +31,21 @@ export function VoterCard({ voter }: VoterCardProps) {
             <p style={{ fontSize: '0.875rem', color: '#666', margin: 0 }}>Kartu Login Pemilih</p>
           </div>
         </div>
-        <div style={{ marginTop: '1.5rem' }}>
+        <div style={{ marginTop: '1rem' }}>
           <p style={{ margin: '0 0 4px 0', fontSize: '0.875rem', color: '#333' }}>Nama Pemilih:</p>
           <p style={{ margin: 0, fontSize: '1.125rem', fontWeight: '600' }}>{voter.name}</p>
+        </div>
+         <div style={{ marginTop: '1rem' }}>
+          <p style={{ margin: '0 0 4px 0', fontSize: '0.875rem', color: '#333' }}>Pemilu yang Diikuti:</p>
+          <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '0.875rem' }}>
+            {voter.followedElections && voter.followedElections.length > 0 ? (
+                voter.followedElections.map(election => (
+                    <li key={election.id}>{election.name}</li>
+                ))
+            ) : (
+                <li>Tidak ada pemilu yang diikuti</li>
+            )}
+          </ul>
         </div>
       </div>
       
