@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { Voter, Category } from '@/lib/types';
 import {
   Table,
@@ -30,9 +30,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { deleteVoter } from '@/lib/actions';
+import { deleteVoter, importVoters } from '@/lib/actions';
 import { ResetPasswordDialog } from './reset-password-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Papa from 'papaparse';
+import { VoterImportDialog } from './voter-import-dialog';
 
 type VoterTableProps = {
   initialVoters: Voter[];
@@ -46,9 +48,12 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importedData, setImportedData] = useState<any[]>([]);
   const [selectedVoter, setSelectedVoter] = useState<Voter | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const categoryMap = new Map(categories.map((c) => [c.id, c.name]));
 
@@ -74,7 +79,7 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
   };
 
   const handleExportTemplate = () => {
-    const csvContent = 'id_pemilih,nama,kategori,password\n';
+    const csvContent = 'id,name,category,password\n';
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     if (link.href) {
@@ -88,9 +93,55 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
     toast({ title: "Template exported." });
   };
   
-  const handleImport = () => {
-    toast({ title: "Import clicked", description: "This feature is under development." });
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
   };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          setImportedData(results.data);
+          setShowImportDialog(true);
+        },
+        error: (error: any) => {
+           toast({
+            variant: 'destructive',
+            title: 'Error parsing CSV',
+            description: error.message,
+          });
+        }
+      });
+    }
+    // Reset file input to allow re-uploading the same file
+    if(event.target) {
+      event.target.value = '';
+    }
+  };
+  
+  const handleImportSave = async (dataToImport: any[]) => {
+    try {
+      const result = await importVoters(dataToImport);
+      toast({
+        title: 'Import Successful',
+        description: `${result.importedCount} voters were successfully imported.`,
+      });
+      // Refresh voter list
+      const updatedVoters = [...voters, ...result.importedVoters];
+      setVoters(updatedVoters);
+      
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'Import Failed',
+        description: error instanceof Error ? error.message : 'An unknown error occurred during import.',
+      });
+    }
+  }
+
 
   const handleAdd = () => {
     setSelectedVoter(null);
@@ -144,6 +195,13 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
 
   return (
     <div className="space-y-4">
+       <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          className="hidden"
+          accept=".csv"
+        />
       <div className="flex justify-between items-center gap-2">
         <div className="flex gap-2">
            <Input
@@ -175,7 +233,7 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
               <Download className="mr-2 h-4 w-4" />
               Export Template
             </Button>
-            <Button variant="outline" onClick={handleImport}>
+            <Button variant="outline" onClick={handleImportClick}>
               <Upload className="mr-2 h-4 w-4" />
               Import CSV
             </Button>
@@ -249,6 +307,14 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
         voter={selectedVoter}
         categories={categories}
         onSave={onFormSave}
+      />
+      
+      <VoterImportDialog 
+        open={showImportDialog}
+        onOpenChange={setShowImportDialog}
+        data={importedData}
+        categories={categories}
+        onSave={handleImportSave}
       />
 
        {selectedVoter && (

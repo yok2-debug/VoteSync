@@ -1,6 +1,6 @@
 'use server';
 
-import { getAdminCredentials, getVoterById } from '@/lib/data';
+import { getAdminCredentials, getVoterById, getCategories } from '@/lib/data';
 import { createAdminSession, createVoterSession, deleteAdminSession, deleteVoterSession } from '@/lib/session';
 import { revalidatePath } from 'next/cache';
 import * as z from 'zod';
@@ -300,4 +300,59 @@ export async function resetVoterPassword(voterId: string, newPassword: string):P
     console.error('Error resetting password:', error);
     throw new Error('Could not reset password. Please try again.');
   }
+}
+
+const importVoterSchema = z.object({
+  id: z.string().min(1, 'ID is required'),
+  name: z.string().min(1, 'Name is required'),
+  category: z.string().min(1, 'Category is required'),
+  password: z.string().optional(),
+});
+
+export async function importVoters(data: any[]): Promise<{ importedCount: number, importedVoters: Voter[] }> {
+  const categories = await getCategories();
+  const categoryNameMap = new Map(categories.map(c => [c.name.toLowerCase(), c.id]));
+  const allVoters = await getVoters();
+  const existingVoterIds = new Set(allVoters.map(v => v.id));
+
+  const votersToImport: Record<string, Omit<Voter, 'id' | 'hasVoted'>> = {};
+  const importedVoters: Voter[] = [];
+  
+  for (const row of data) {
+    const validation = importVoterSchema.safeParse(row);
+    if (!validation.success) {
+      throw new Error(`Invalid data in CSV: ${validation.error.flatten().fieldErrors}`);
+    }
+
+    const { id, name, category, password } = validation.data;
+
+    if (existingVoterIds.has(id)) {
+        throw new Error(`Voter with ID "${id}" already exists.`);
+    }
+
+    const categoryId = categoryNameMap.get(category.toLowerCase());
+    if (!categoryId) {
+        throw new Error(`Category "${category}" not found for voter "${name}".`);
+    }
+
+    votersToImport[`voters/${id}`] = {
+      name,
+      category: categoryId,
+      password: password || Math.random().toString(36).substring(2, 8),
+    };
+    
+    importedVoters.push({ id, name, category: categoryId, password: votersToImport[`voters/${id}`].password });
+  }
+
+  if (Object.keys(votersToImport).length > 0) {
+    try {
+      await update(ref(db), votersToImport);
+    } catch (error) {
+      console.error('Error importing voters:', error);
+      throw new Error('Failed to save imported voters to the database.');
+    }
+  }
+  
+  revalidatePath('/admin/voters');
+  return { importedCount: importedVoters.length, importedVoters: importedVoters };
 }
