@@ -22,8 +22,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { DatabaseProvider } from '@/context/database-context';
 
-export default function VotePage() {
+function VotePageContent() {
   const { electionId } = useParams() as { electionId: string };
   const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
@@ -50,9 +51,9 @@ export default function VotePage() {
 
   if (!session?.voterId) {
     redirect('/');
-    return <Loading />;
+    return null;
   }
-
+  
   const now = new Date();
   const electionStarted = election?.startDate ? new Date(election.startDate) <= now : false;
   const electionEnded = election?.endDate ? new Date(election.endDate) < now : false;
@@ -61,7 +62,7 @@ export default function VotePage() {
 
   if (!election || election.status !== 'active' || !voter || !electionStarted || electionEnded || !isVoterAllowed || hasVoted) {
     redirect('/vote');
-    return <Loading />;
+    return null;
   }
 
   const candidates = election.candidates ? Object.values(election.candidates) : [];
@@ -134,4 +135,13 @@ export default function VotePage() {
       </div>
     </main>
   );
+}
+
+
+export default function VotePage() {
+  return (
+    <DatabaseProvider>
+      <VotePageContent />
+    </DatabaseProvider>
+  )
 }

@@ -10,8 +10,9 @@ import { getVoterSession } from '@/lib/session';
 import { useEffect, useState, useMemo } from 'react';
 import Loading from '../loading';
 import type { VoterSessionPayload } from '@/lib/types';
+import { DatabaseProvider } from '@/context/database-context';
 
-export default function VoterDashboardPage() {
+function VoteDashboardContent() {
   const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
@@ -52,7 +53,7 @@ export default function VoterDashboardPage() {
   
   if (!session?.voterId || !voter) {
     redirect('/');
-    return <Loading />;
+    return null;
   }
 
   const now = new Date();
@@ -132,4 +133,12 @@ export default function VoterDashboardPage() {
       </div>
     </main>
   );
+}
+
+export default function VoterDashboardPage() {
+  return (
+    <DatabaseProvider>
+      <VoteDashboardContent />
+    </DatabaseProvider>
+  )
 }
