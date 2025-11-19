@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import type { Voter } from '@/lib/types';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Check, Vote as VoteIcon } from 'lucide-react';
+import { Check, Vote as VoteIcon, Lock, Clock } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { VoterLogoutButton } from './components/voter-logout-button';
 
@@ -33,6 +33,8 @@ export default async function VoterDashboardPage() {
     return isOngoing && isAllowed;
   });
 
+  const now = new Date();
+
   return (
     <main className="flex min-h-screen flex-col items-center bg-background p-4 sm:p-8">
       <div className="w-full max-w-4xl space-y-8">
@@ -48,6 +50,43 @@ export default async function VoterDashboardPage() {
           <div className="space-y-4">
             {ongoingElections.map(election => {
               const hasVoted = voter?.hasVoted?.[election.id] === true;
+              const electionStarted = election.startDate ? new Date(election.startDate) <= now : true;
+              const electionEnded = election.endDate ? new Date(election.endDate) < now : false;
+
+              let content;
+
+              if (hasVoted) {
+                 content = (
+                  <div className="flex items-center gap-2 text-green-600">
+                    <Check className="h-5 w-5" />
+                    <span className="font-medium">You have already voted in this election.</span>
+                  </div>
+                );
+              } else if (electionEnded) {
+                content = (
+                  <div className="flex items-center gap-2 text-red-600">
+                    <Lock className="h-5 w-5" />
+                    <span className="font-medium">This election has ended.</span>
+                  </div>
+                );
+              } else if (!electionStarted) {
+                  content = (
+                    <div className="flex items-center gap-2 text-blue-600">
+                      <Clock className="h-5 w-5" />
+                      <span className="font-medium">This election has not started yet.</span>
+                    </div>
+                  );
+              } else {
+                 content = (
+                  <Link href={`/vote/${election.id}`}>
+                    <Button className="w-full">
+                      <VoteIcon className="mr-2 h-4 w-4" />
+                      Go to Voting Page
+                    </Button>
+                  </Link>
+                );
+              }
+
               return (
                 <Card key={election.id}>
                   <CardHeader>
@@ -55,19 +94,7 @@ export default async function VoterDashboardPage() {
                     <CardDescription>{election.description}</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {hasVoted ? (
-                      <div className="flex items-center gap-2 text-green-600">
-                        <Check className="h-5 w-5" />
-                        <span className="font-medium">You have already voted in this election.</span>
-                      </div>
-                    ) : (
-                      <Link href={`/vote/${election.id}`}>
-                        <Button className="w-full">
-                          <VoteIcon className="mr-2 h-4 w-4" />
-                          Go to Voting Page
-                        </Button>
-                      </Link>
-                    )}
+                    {content}
                   </CardContent>
                 </Card>
               );

@@ -24,7 +24,12 @@ export default async function VotePage({ params }: VotePageProps) {
     getVoterById(session.voterId)
   ]);
   
-  if (!election || election.status !== 'ongoing' || !voter) {
+  const now = new Date();
+  const electionStarted = election?.startDate ? new Date(election.startDate) <= now : true;
+  const electionEnded = election?.endDate ? new Date(election.endDate) < now : false;
+
+
+  if (!election || election.status !== 'ongoing' || !voter || !electionStarted || electionEnded) {
     redirect('/vote');
   }
 
