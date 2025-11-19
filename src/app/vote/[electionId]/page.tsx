@@ -47,7 +47,8 @@ export default function VotePage() {
   }
 
   if (!session?.voterId) {
-    return redirect('/');
+    redirect('/');
+    return null;
   }
 
   const now = new Date();
@@ -57,7 +58,8 @@ export default function VotePage() {
   const hasVoted = voter?.hasVoted?.[electionId];
 
   if (!election || election.status !== 'active' || !voter || !electionStarted || electionEnded || !isVoterAllowed || hasVoted) {
-    return redirect('/vote');
+    redirect('/vote');
+    return null;
   }
 
   const candidates = election.candidates ? Object.values(election.candidates) : [];
