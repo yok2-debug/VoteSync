@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useMemo } from 'react';
 import { format } from 'date-fns';
-import { id } from 'date-fns/locale';
+import { id as localeID } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
@@ -16,17 +16,45 @@ type RecapitulationDisplayProps = {
   allCategories: Category[];
 };
 
+// Helper function to convert number to words in Indonesian
+const toWords = (num: number): string => {
+  const
+    terbilang = [
+      '', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh', 'sebelas'
+    ];
+
+  if (num < 12) return terbilang[num];
+  if (num < 20) return terbilang[num - 10] + ' belas';
+  if (num < 100) return terbilang[Math.floor(num / 10)] + ' puluh ' + terbilang[num % 10];
+  if (num < 200) return 'seratus ' + toWords(num - 100);
+  if (num < 1000) return terbilang[Math.floor(num / 100)] + ' ratus ' + toWords(num % 100);
+  if (num < 2000) return 'seribu ' + toWords(num - 1000);
+  if (num < 1000000) return toWords(Math.floor(num / 1000)) + ' ribu ' + toWords(num % 1000);
+  // Add more cases if needed for larger numbers
+  return '';
+};
+
+const formatDateToWords = (date: Date) => {
+    const day = date.getDate();
+    const year = date.getFullYear();
+    const month = format(date, 'MMMM', { locale: localeID });
+    
+    const dayWords = toWords(day).trim();
+    const yearWords = toWords(year).trim();
+
+    return `${dayWords} ${month} ${yearWords}`;
+}
+
+
 export function RecapitulationDisplay({ election, allVoters, allCategories }: RecapitulationDisplayProps) {
   const candidates = useMemo(() => Object.values(election.candidates || {}), [election.candidates]);
   const totalVotesCast = useMemo(() => Object.keys(election.votes || {}).length, [election.votes]);
 
   const DPT = useMemo(() => {
-    // Find categories allowed in this election
     const allowedCategoryIds = allCategories
       .filter(cat => cat.allowedElections?.includes(election.id))
       .map(cat => cat.id);
     
-    // Count voters belonging to those categories
     return allVoters.filter(voter => allowedCategoryIds.includes(voter.category)).length;
   }, [election.id, allVoters, allCategories]);
 
@@ -40,8 +68,8 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
     if (!election.endDate) return { day: 'N/A', date: 'N/A' };
     const date = new Date(election.endDate);
     return {
-      day: format(date, 'EEEE', { locale: id }),
-      date: format(date, 'd MMMM yyyy', { locale: id })
+      day: format(date, 'EEEE', { locale: localeID }),
+      date: formatDateToWords(date)
     }
   }, [election.endDate]);
 
@@ -114,7 +142,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
             <CardContent className="space-y-8 pt-6">
                 
                 <p>
-                    Pada hari ini, {electionDayInfo.day}, tanggal {electionDayInfo.date}, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} dengan hasil sebagai berikut:
+                    Pada hari ini, <span className="font-bold">{electionDayInfo.day}</span>, tanggal <span className="font-bold capitalize">{electionDayInfo.date}</span>, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} dengan hasil sebagai berikut:
                 </p>
 
                 <div>
