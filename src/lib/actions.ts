@@ -69,7 +69,6 @@ export async function login(
 export async function logout() {
   await deleteSession();
   revalidatePath('/');
-  redirect('/');
 }
 
 export async function performResetAction(action: string) {
@@ -150,7 +149,7 @@ export async function deleteCategory(categoryId: string): Promise<void> {
 
 
 // Election Actions
-export async function saveElection(formData: FormData): Promise<{ electionId: string }> {
+export async function saveElection(formData: FormData) {
   const electionId = formData.get('id') as string;
   
   const rawData = {
@@ -162,6 +161,7 @@ export async function saveElection(formData: FormData): Promise<{ electionId: st
   };
   
   let savedElectionId = rawData.id;
+
   try {
     if (savedElectionId === 'new') {
         const newElectionRef = push(ref(db, `elections`));
@@ -197,8 +197,6 @@ export async function saveElection(formData: FormData): Promise<{ electionId: st
 
   revalidatePath('/admin/elections');
   revalidatePath(`/admin/elections/${savedElectionId}`);
-  
-  return { electionId: savedElectionId };
 }
 
 export async function deleteElection(electionId: string): Promise<void> {

@@ -85,6 +85,7 @@ export function ElectionForm({ election }: ElectionFormProps) {
         description: `The election "${data.name}" has been saved successfully.`,
       });
       router.push('/admin/elections');
+      router.refresh();
     } catch (error) {
       toast({
         variant: 'destructive',
