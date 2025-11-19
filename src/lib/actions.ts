@@ -150,7 +150,7 @@ export async function deleteCategory(categoryId: string): Promise<void> {
 
 
 // Election Actions
-export async function saveElection(formData: FormData) {
+export async function saveElection(formData: FormData): Promise<{ electionId: string }> {
   const electionId = formData.get('id') as string;
   
   const rawData = {
@@ -161,18 +161,17 @@ export async function saveElection(formData: FormData) {
     candidates: JSON.parse(formData.get('candidates') as string),
   };
   
+  let savedElectionId = rawData.id;
   try {
-    let id = rawData.id;
-    if (id === 'new') {
+    if (savedElectionId === 'new') {
         const newElectionRef = push(ref(db, `elections`));
-        id = newElectionRef.key!;
+        savedElectionId = newElectionRef.key!;
     }
     
     const candidatesObject = rawData.candidates.reduce((acc: any, candidate: any) => {
         let candidateId = candidate.id || '';
-        // If it's a new candidate (temp id) or has no id, generate a new one.
         if (candidate.id?.startsWith('temp-') || !candidate.id) {
-          candidateId = push(ref(db, `elections/${id}/candidates`)).key;
+          candidateId = push(ref(db, `elections/${savedElectionId}/candidates`)).key;
         }
 
         acc[candidateId] = { ...candidate, id: candidateId };
@@ -186,7 +185,7 @@ export async function saveElection(formData: FormData) {
         candidates: candidatesObject,
     };
     
-    await set(ref(db, `elections/${id}`), electionData);
+    await set(ref(db, `elections/${savedElectionId}`), electionData);
 
   } catch (error) {
     console.error('Error saving election:', error);
@@ -197,8 +196,9 @@ export async function saveElection(formData: FormData) {
   }
 
   revalidatePath('/admin/elections');
-  revalidatePath(`/admin/elections/${electionId}`);
-  redirect('/admin/elections');
+  revalidatePath(`/admin/elections/${savedElectionId}`);
+  
+  return { electionId: savedElectionId };
 }
 
 export async function deleteElection(electionId: string): Promise<void> {

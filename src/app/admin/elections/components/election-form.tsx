@@ -84,7 +84,7 @@ export function ElectionForm({ election }: ElectionFormProps) {
         title: `Election ${data.id === 'new' ? 'created' : 'updated'}`,
         description: `The election "${data.name}" has been saved successfully.`,
       });
-      // Redirect is handled in server action
+      router.push('/admin/elections');
     } catch (error) {
       toast({
         variant: 'destructive',
