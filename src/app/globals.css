@@ -94,9 +94,3 @@ body {
       color: hsl(var(--foreground));
   }
 }
-
-@media print {
-  .loading-logo {
-    display: none !important;
-  }
-}
