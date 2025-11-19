@@ -3,13 +3,6 @@ import { Logo } from '@/components/logo';
 export default function Loading() {
   return (
     <>
-      <style>{`
-        @media print {
-          .loading-logo, .loading-logo * {
-            display: none !important;
-          }
-        }
-      `}</style>
       <div className="flex min-h-screen flex-col items-center justify-center">
         <div className="animate-pulse loading-logo">
           <Logo />
