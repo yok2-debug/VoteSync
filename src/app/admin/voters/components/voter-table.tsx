@@ -77,7 +77,7 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
               <Upload className="mr-2 h-4 w-4" />
               Import CSV
             </Button>
-            <Button>
+            <Button onClick={() => alert('Add voter functionality not implemented yet.')}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Voter
             </Button>
@@ -111,9 +111,9 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                         <DropdownMenuItem>Reset Password</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem onClick={() => alert('Edit functionality not implemented yet.')}>Edit</DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => alert('Reset password functionality not implemented yet.')}>Reset Password</DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-600" onClick={() => alert('Delete functionality not implemented yet.')}>
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>

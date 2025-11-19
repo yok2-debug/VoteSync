@@ -40,7 +40,7 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
           onChange={(e) => setFilter(e.target.value)}
           className="max-w-sm"
         />
-        <Button>
+        <Button onClick={() => alert('Add category functionality not implemented yet.')}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Category
         </Button>
@@ -69,8 +69,8 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem onClick={() => alert('Edit functionality not implemented yet.')}>Edit</DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-600" onClick={() => alert('Delete functionality not implemented yet.')}>
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
