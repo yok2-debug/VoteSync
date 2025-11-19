@@ -115,7 +115,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
                 background: #fff !important;
             }
             .print-card-header {
-                border: none !important;
+                border-bottom: 2px solid #000 !important;
                 background: #fff !important;
                 padding-top: 0 !important;
             }
@@ -185,7 +185,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
       </div>
       <div id="print-section">
         <Card className="shadow-none border-0 print-card">
-            <CardHeader className="text-center space-y-2 border-b-2 border-black pb-4 print-card-header">
+            <CardHeader className="text-center space-y-2 pb-4 print-card-header">
                 <h2 className="text-2xl font-bold tracking-tight">BERITA ACARA</h2>
                 <h3 className="text-xl font-semibold uppercase">HASIL PENGHITUNGAN SUARA PEMILIHAN</h3>
                 <h1 className="text-xl font-semibold uppercase">{election.name}</h1>
