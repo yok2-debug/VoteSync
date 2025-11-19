@@ -2,7 +2,7 @@
 import { useForm, useFieldArray, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { Election, Candidate, Category } from '@/lib/types';
+import type { Election, Candidate } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,13 +22,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, PlusCircle, Loader2 } from 'lucide-react';
 import { saveElection } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form } from '@/components/ui/form';
 
 
 const candidateSchema = z.object({
@@ -45,17 +44,15 @@ const electionSchema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   status: z.enum(['pending', 'ongoing', 'completed']),
   candidates: z.array(candidateSchema).min(2, 'At least two candidates are required.'),
-  allowedCategories: z.array(z.string()).min(1, 'At least one voter category must be selected.'),
 });
 
 type ElectionFormData = z.infer<typeof electionSchema>;
 
 interface ElectionFormProps {
-  election: Election;
-  allCategories: Category[];
+  election: Omit<Election, 'allowedCategories'>;
 }
 
-export function ElectionForm({ election, allCategories }: ElectionFormProps) {
+export function ElectionForm({ election }: ElectionFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -65,7 +62,6 @@ export function ElectionForm({ election, allCategories }: ElectionFormProps) {
     defaultValues: {
       ...election,
       candidates: election.candidates ? Object.values(election.candidates) : [],
-      allowedCategories: election.allowedCategories || [],
     },
   });
 
@@ -83,7 +79,6 @@ export function ElectionForm({ election, allCategories }: ElectionFormProps) {
     formData.append('description', data.description);
     formData.append('status', data.status);
     formData.append('candidates', JSON.stringify(data.candidates));
-    formData.append('allowedCategories', JSON.stringify(data.allowedCategories));
 
     try {
       const result = await saveElection(formData);
@@ -149,57 +144,6 @@ export function ElectionForm({ election, allCategories }: ElectionFormProps) {
               )}
             </div>
           </CardContent>
-        </Card>
-
-        <Card>
-            <CardHeader>
-                <CardTitle>Allowed Voter Categories</CardTitle>
-                <CardDescription>Select which categories of voters can participate in this election.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <FormField
-                  control={form.control}
-                  name="allowedCategories"
-                  render={() => (
-                    <FormItem className="space-y-3">
-                      {allCategories.map((item) => (
-                        <FormField
-                          key={item.id}
-                          control={form.control}
-                          name="allowedCategories"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={item.id}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                              >
-                                <FormControl>
-                                  <Checkbox
-                                    checked={field.value?.includes(item.id)}
-                                    onCheckedChange={(checked) => {
-                                      return checked
-                                        ? field.onChange([...field.value, item.id])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== item.id
-                                            )
-                                          )
-                                    }}
-                                  />
-                                </FormControl>
-                                <FormLabel className="font-normal">
-                                  {item.name}
-                                </FormLabel>
-                              </FormItem>
-                            )
-                          }}
-                        />
-                      ))}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-            </CardContent>
         </Card>
 
         <Card>

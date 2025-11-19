@@ -91,3 +91,16 @@ export async function getCategories(): Promise<Category[]> {
         return [];
     }
 }
+
+export async function getCategoryById(id: string): Promise<Category | null> {
+    try {
+        const snapshot = await get(ref(db, `categories/${id}`));
+        if (snapshot.exists()) {
+            return { id, ...snapshot.val() };
+        }
+        return null;
+    } catch (error) {
+        console.error(`Error fetching category ${id}:`, error);
+        return null;
+    }
+}

@@ -8,7 +8,6 @@ export interface Election {
   voters?: Voter[];
   votes?: Record<string, string>; // { [voterId]: candidateId }
   results?: Record<string, number>; // { [candidateId]: voteCount }
-  allowedCategories: string[]; // Array of category IDs
 }
 
 export interface Candidate {
@@ -36,6 +35,7 @@ export interface Voter {
 export interface Category {
   id: string;
   name: string;
+  allowedElections?: string[]; // Array of election IDs
 }
 
 export type Admin = {

@@ -1,4 +1,4 @@
-import { getElections, getVoterById } from '@/lib/data';
+import { getElections, getVoterById, getCategoryById } from '@/lib/data';
 import { getVoterSession } from '@/lib/session';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Voter } from '@/lib/types';
@@ -14,20 +14,22 @@ export default async function VoterDashboardPage() {
     redirect('/');
   }
 
-  const [elections, voter] = await Promise.all([
-    getElections(),
-    getVoterById(session.voterId),
-  ]);
+  const voter = await getVoterById(session.voterId);
 
   if (!voter) {
     // This might happen if the voter is deleted while logged in.
     redirect('/');
   }
+  
+  const [elections, category] = await Promise.all([
+    getElections(),
+    getCategoryById(voter.category),
+  ]);
 
   const ongoingElections = elections.filter(e => {
     const isOngoing = e.status === 'ongoing';
-    // Ensure allowedCategories is an array before checking
-    const isAllowed = Array.isArray(e.allowedCategories) && e.allowedCategories.includes(voter.category);
+    // Check if category exists and has allowedElections, then check if this election is in the list
+    const isAllowed = category?.allowedElections?.includes(e.id);
     return isOngoing && isAllowed;
   });
 

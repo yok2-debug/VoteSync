@@ -1,8 +1,11 @@
-import { getCategories } from '@/lib/data';
+import { getCategories, getElections } from '@/lib/data';
 import { CategoryTable } from './components/category-table';
 
 export default async function CategoriesPage() {
-  const categories = await getCategories();
+  const [categories, elections] = await Promise.all([
+    getCategories(),
+    getElections(),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -12,7 +15,7 @@ export default async function CategoriesPage() {
           Manage voter categories for elections.
         </p>
       </div>
-      <CategoryTable initialCategories={categories} />
+      <CategoryTable initialCategories={categories} allElections={elections} />
     </div>
   );
 }

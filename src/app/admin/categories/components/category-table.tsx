@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import type { Category } from '@/lib/types';
+import type { Category, Election } from '@/lib/types';
 import {
   Table,
   TableBody,
@@ -34,9 +34,10 @@ import { useToast } from '@/hooks/use-toast';
 
 type CategoryTableProps = {
   initialCategories: Category[];
+  allElections: Election[];
 };
 
-export function CategoryTable({ initialCategories }: CategoryTableProps) {
+export function CategoryTable({ initialCategories, allElections }: CategoryTableProps) {
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [filter, setFilter] = useState('');
   const [showFormDialog, setShowFormDialog] = useState(false);
@@ -113,6 +114,7 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Category Name</TableHead>
+              <TableHead>Allowed Elections</TableHead>
               <TableHead className="w-[100px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -121,6 +123,9 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
               filteredCategories.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell className="font-medium">{category.name}</TableCell>
+                  <TableCell>
+                    {category.allowedElections?.length || 0} election(s)
+                  </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -134,9 +139,9 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(category)}>
-                           <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
+                        <DropdownMenuItem onClick={() => handleDelete(category)}>
+                           <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                          <span className="text-destructive">Delete</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -159,6 +164,7 @@ export function CategoryTable({ initialCategories }: CategoryTableProps) {
         onOpenChange={setShowFormDialog}
         category={selectedCategory}
         onSave={onFormSave}
+        allElections={allElections}
       />
 
 

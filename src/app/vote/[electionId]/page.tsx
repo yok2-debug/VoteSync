@@ -1,4 +1,4 @@
-import { getElectionById, getVoterById } from '@/lib/data';
+import { getElectionById, getVoterById, getCategoryById } from '@/lib/data';
 import { getVoterSession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,9 +28,10 @@ export default async function VotePage({ params }: VotePageProps) {
     redirect('/vote');
   }
 
+  const category = await getCategoryById(voter.category);
+
   // Check if voter category is allowed
-  if (!Array.isArray(election.allowedCategories) || !election.allowedCategories.includes(voter.category)) {
-    // Redirect if category not allowed
+  if (!category?.allowedElections?.includes(election.id)) {
     redirect('/vote');
   }
   

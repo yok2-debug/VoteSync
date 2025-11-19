@@ -14,14 +14,18 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useEffect, useState } from 'react';
-import type { Category } from '@/lib/types';
+import type { Category, Election } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { saveCategory } from '@/lib/actions';
 import { Loader2 } from 'lucide-react';
 import { getCategories } from '@/lib/data';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const categorySchema = z.object({
   name: z.string().min(3, { message: 'Category name must be at least 3 characters.' }),
+  allowedElections: z.array(z.string()).optional(),
 });
 
 type CategoryFormData = z.infer<typeof categorySchema>;
@@ -31,6 +35,7 @@ interface CategoryFormDialogProps {
   onOpenChange: (open: boolean) => void;
   category: Category | null;
   onSave: (category: Category & { isNew?: boolean }) => void;
+  allElections: Election[];
 }
 
 export function CategoryFormDialog({
@@ -38,25 +43,22 @@ export function CategoryFormDialog({
   onOpenChange,
   category,
   onSave,
+  allElections,
 }: CategoryFormDialogProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<CategoryFormData>({
+  
+  const form = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
   });
 
   useEffect(() => {
     if (category) {
-      reset({ name: category.name });
+      form.reset({ name: category.name, allowedElections: category.allowedElections || [] });
     } else {
-      reset({ name: '' });
+      form.reset({ name: '', allowedElections: [] });
     }
-  }, [category, reset, open]);
+  }, [category, form, open]);
 
   const onSubmit: SubmitHandler<CategoryFormData> = async (data) => {
     setIsSubmitting(true);
@@ -64,6 +66,7 @@ export function CategoryFormDialog({
       const categoryToSave = {
         id: category?.id,
         name: data.name,
+        allowedElections: data.allowedElections || [],
       };
       await saveCategory(categoryToSave);
       
@@ -94,26 +97,80 @@ export function CategoryFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{category ? 'Edit Category' : 'Add New Category'}</DialogTitle>
           <DialogDescription>
-            {category ? 'Update the details for this category.' : 'Enter the name for the new category.'}
+            {category ? 'Update the details for this category.' : 'Enter the details for the new category.'}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} id="category-form" className="grid gap-4 py-4">
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="name" className="text-right">
-              Name
-            </Label>
-            <div className="col-span-3">
-              <Input id="name" {...register('name')} className="w-full" />
-              {errors.name && (
-                <p className="text-sm text-destructive mt-1">{errors.name.message}</p>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} id="category-form" className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">
+                Category Name
+              </Label>
+              <Input id="name" {...form.register('name')} className="w-full" />
+              {form.formState.errors.name && (
+                <p className="text-sm text-destructive mt-1">{form.formState.errors.name.message}</p>
               )}
             </div>
-          </div>
-        </form>
+            
+             <FormField
+                control={form.control}
+                name="allowedElections"
+                render={() => (
+                  <FormItem>
+                    <div className="mb-4">
+                      <FormLabel className="text-base">Allowed Elections</FormLabel>
+                      <DialogDescription>
+                        Select the elections this category can vote in.
+                      </DialogDescription>
+                    </div>
+                    <ScrollArea className="h-40 w-full rounded-md border p-4">
+                      {allElections.length > 0 ? allElections.map((item) => (
+                        <FormField
+                          key={item.id}
+                          control={form.control}
+                          name="allowedElections"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={item.id}
+                                className="flex flex-row items-start space-x-3 space-y-0 mb-3"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(item.id)}
+                                    onCheckedChange={(checked) => {
+                                      const currentValue = field.value || [];
+                                      return checked
+                                        ? field.onChange([...currentValue, item.id])
+                                        : field.onChange(
+                                            currentValue?.filter(
+                                              (value) => value !== item.id
+                                            )
+                                          )
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {item.name}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
+                      )) : <p className="text-sm text-muted-foreground">No elections available.</p>}
+                    </ScrollArea>
+                    {form.formState.errors.allowedElections && (
+                      <p className="text-sm text-destructive mt-1">{form.formState.errors.allowedElections.message}</p>
+                    )}
+                  </FormItem>
+                )}
+              />
+          </form>
+        </Form>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
             Cancel

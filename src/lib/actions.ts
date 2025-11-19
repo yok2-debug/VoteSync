@@ -113,17 +113,19 @@ export async function performResetAction(action: string) {
 }
 
 // Category Actions
-export async function saveCategory(category: { id?: string; name: string }): Promise<void> {
+export async function saveCategory(category: { id?: string; name: string; allowedElections?: string[] }): Promise<void> {
   try {
+    const dataToSave = {
+      name: category.name,
+      allowedElections: category.allowedElections || [],
+    };
     if (category.id) {
       // Update existing category
-      await set(ref(db, `categories/${category.id}`), {
-        name: category.name,
-      });
+      await set(ref(db, `categories/${category.id}`), dataToSave);
     } else {
       // Create new category
       const newCategoryRef = push(ref(db, 'categories'));
-      await set(newCategoryRef, { name: category.name });
+      await set(newCategoryRef, dataToSave);
     }
     revalidatePath('/admin/categories');
   } catch (error) {
@@ -163,7 +165,6 @@ export async function saveElection(formData: FormData): Promise<{ savedElectionI
     description: formData.get('description') as string,
     status: formData.get('status') as 'pending' | 'ongoing' | 'completed',
     candidates: JSON.parse(formData.get('candidates') as string),
-    allowedCategories: JSON.parse(formData.get('allowedCategories') as string),
   };
   
   let savedElectionId = rawData.id;
@@ -198,7 +199,6 @@ export async function saveElection(formData: FormData): Promise<{ savedElectionI
         description: rawData.description,
         status: rawData.status,
         candidates: candidatesObject,
-        allowedCategories: rawData.allowedCategories,
     };
     
     await set(ref(db, `elections/${savedElectionId}`), electionData);
