@@ -1,6 +1,6 @@
 'use client';
-import 'react-quill/dist/quill.snow.css';
-import { useMemo, useRef } from 'react';
+import 'react-quilljs/dist/quill.snow.css';
+import { useMemo } from 'react';
 import dynamic from 'next/dynamic';
 
 interface WysiwygEditorProps {
@@ -11,12 +11,9 @@ interface WysiwygEditorProps {
 }
 
 export function WysiwygEditor({ value, onChange, placeholder, className }: WysiwygEditorProps) {
-  // We are using a ref to get the editor instance, which is a safer way to interact with the DOM
-  // than the deprecated findDOMNode method.
-  const quillRef = useRef<any>(null);
 
   // Dynamically import ReactQuill to ensure it only runs on the client-side.
-  const ReactQuill = useMemo(() => dynamic(() => import('react-quill'), { ssr: false }), []);
+  const ReactQuill = useMemo(() => dynamic(() => import('react-quilljs'), { ssr: false }), []);
   
   const modules = {
     toolbar: [
@@ -50,7 +47,6 @@ export function WysiwygEditor({ value, onChange, placeholder, className }: Wysiw
         `}
         </style>
       <ReactQuill
-        ref={quillRef}
         theme="snow"
         value={value}
         onChange={onChange}
