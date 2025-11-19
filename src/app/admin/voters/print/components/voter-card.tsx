@@ -15,7 +15,7 @@ export function VoterCard({ voter }: VoterCardProps) {
         padding: '8px',
         borderRadius: '4px',
         fontFamily: 'sans-serif',
-        height: '7.5cm',
+        height: '6.6cm',
         width: '100%',
         display: 'flex',
         flexDirection: 'column',
