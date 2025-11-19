@@ -1,3 +1,4 @@
+
 'use client';
 import { Logo } from '@/components/logo';
 import type { Voter } from '@/lib/types';
@@ -46,7 +47,7 @@ export function VoterCard({ voter }: VoterCardProps) {
                     <li key={election.id} style={{ marginBottom: '2px' }}>{election.name}</li>
                 ))
             ) : (
-                <li>Tidak ada</li>
+                <li>(Tidak ada pemilu yang diikuti)</li>
             )}
           </ul>
         </div>

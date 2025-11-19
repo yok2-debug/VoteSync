@@ -120,14 +120,12 @@ export async function saveCategory(category: { id?: string; name: string; allowe
       name: category.name,
       allowedElections: category.allowedElections || [],
     };
-    if (category.id) {
-      // Update existing category
-      await set(ref(db, `categories/${category.id}`), dataToSave);
-    } else {
+    let categoryId = category.id;
+    if (!categoryId) {
       // Create new category
-      const newCategoryRef = push(ref(db, 'categories'));
-      await set(newCategoryRef, dataToSave);
+      categoryId = push(ref(db, 'categories')).key!;
     }
+    await set(ref(db, `categories/${categoryId}`), dataToSave);
     revalidatePath('/admin/categories');
   } catch (error) {
     console.error('Error saving category:', error);
@@ -407,6 +405,8 @@ export async function saveVote(electionId: string, candidateId: string, voterId:
     revalidatePath('/real-count');
     revalidatePath('/admin/results');
     revalidatePath(`/admin/results/${electionId}`);
+    revalidatePath('/admin/recapitulation');
+    revalidatePath(`/admin/recapitulation/${electionId}`);
   } catch (error) {
     console.error('Error saving vote:', error);
     if (error instanceof Error) {

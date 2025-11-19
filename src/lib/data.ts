@@ -1,3 +1,4 @@
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -55,20 +56,6 @@ export async function getElections(): Promise<Election[]> {
     }
 }
 
-export async function getElectionById(id: string): Promise<Election | null> {
-    try {
-        const snapshot = await get(ref(db, `elections/${id}`));
-        if (snapshot.exists()) {
-            return { id, ...snapshot.val() };
-        }
-        return null;
-    } catch (error) {
-        console.error(`Error fetching election ${id}:`, error);
-        return null;
-    }
-}
-
-
 export async function getVoters(): Promise<Voter[]> {
     try {
         const snapshot = await get(ref(db, 'voters'));
@@ -100,18 +87,5 @@ export async function getCategories(): Promise<Category[]> {
     } catch (error) {
         console.error('Error fetching categories:', error);
         return [];
-    }
-}
-
-export async function getCategoryById(id: string): Promise<Category | null> {
-    try {
-        const snapshot = await get(ref(db, `categories/${id}`));
-        if (snapshot.exists()) {
-            return { id, ...snapshot.val() };
-        }
-        return null;
-    } catch (error) {
-        console.error(`Error fetching category ${id}:`, error);
-        return null;
     }
 }

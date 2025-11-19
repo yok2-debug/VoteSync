@@ -1,14 +1,14 @@
+
 'use client';
 
-import type { Election, Voter, Category, CommitteeMember } from '@/lib/types';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import type { Election, Voter, Category } from '@/lib/types';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useMemo } from 'react';
 import { format } from 'date-fns';
 import { id as localeID } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
 
 type RecapitulationDisplayProps = {
   election: Election;
@@ -201,7 +201,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
             <CardContent className="space-y-8 pt-6 print-card-content">
                 
                 <p>
-                    Pada hari ini <b>{electionDateInfo?.day}</b>, <span>tanggal</span> <b className="capitalize">{electionDateInfo?.dayWords}</b> <span>bulan</span> <b className="capitalize">{electionDateInfo?.month}</b> <span>tahun</span> <b className="capitalize">{electionDateInfo?.yearWords}</b>, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} dengan hasil sebagai berikut:
+                    Pada hari ini {electionDateInfo ? <><b>{electionDateInfo.day}</b>, <span>tanggal</span> <b className="capitalize">{electionDateInfo.dayWords}</b> <span>bulan</span> <b className="capitalize">{electionDateInfo.month}</b> <span>tahun</span> <b className="capitalize">{electionDateInfo.yearWords}</b></> : <span><b>(Tanggal tidak diatur)</b></span>}, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} dengan hasil sebagai berikut:
                 </p>
 
                 <div>
