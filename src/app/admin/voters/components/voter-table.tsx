@@ -32,6 +32,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { deleteVoter } from '@/lib/actions';
 import { ResetPasswordDialog } from './reset-password-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type VoterTableProps = {
   initialVoters: Voter[];
@@ -41,6 +42,7 @@ type VoterTableProps = {
 export function VoterTable({ initialVoters, categories }: VoterTableProps) {
   const [voters, setVoters] = useState<Voter[]>(initialVoters);
   const [filter, setFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
@@ -52,8 +54,9 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
 
   const filteredVoters = voters.filter(
     (voter) =>
-      voter.name.toLowerCase().includes(filter.toLowerCase()) ||
-      voter.id.toLowerCase().includes(filter.toLowerCase())
+      (voter.name.toLowerCase().includes(filter.toLowerCase()) ||
+      voter.id.toLowerCase().includes(filter.toLowerCase())) &&
+      (categoryFilter === '' || voter.category === categoryFilter)
   );
 
   const handlePrint = () => {
@@ -142,12 +145,27 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center gap-2">
-        <Input
-          placeholder="Filter by name or ID..."
-          value={filter}
-          onChange={(e) => setFilter(e.target.value)}
-          className="max-w-sm"
-        />
+        <div className="flex gap-2">
+           <Input
+            placeholder="Filter by name or ID..."
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="max-w-sm"
+          />
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Filter by category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">All Categories</SelectItem>
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="flex gap-2 flex-wrap">
            <Button variant="outline" onClick={handlePrint}>
               <Printer className="mr-2 h-4 w-4" />
