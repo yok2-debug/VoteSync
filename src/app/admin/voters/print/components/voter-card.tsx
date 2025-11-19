@@ -43,6 +43,10 @@ export function VoterCard({ voter }: VoterCardProps) {
           <p style={{ margin: '0 0 2px 0', fontSize: '8px', color: '#333' }}>NIK:</p>
           <p style={{ margin: 0, fontSize: '9px', fontWeight: '600', wordBreak: 'break-word' }}>{voter.nik || '-'}</p>
         </div>
+        <div style={{ marginTop: '4px' }}>
+          <p style={{ margin: '0 0 2px 0', fontSize: '8px', color: '#333' }}>Tanggal Lahir:</p>
+          <p style={{ margin: 0, fontSize: '9px', fontWeight: '600', wordBreak: 'break-word' }}>{voter.birthDate || '-'}</p>
+        </div>
          <div style={{ marginTop: '8px' }}>
           <p style={{ margin: '0 0 2px 0', fontSize: '8px', color: '#333' }}>Pemilihan yang Diikuti:</p>
           <ul style={{ margin: 0, paddingLeft: '12px', fontSize: '8px', listStyle: 'disc' }}>
