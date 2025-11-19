@@ -42,13 +42,15 @@ export default function VotePage() {
   const voter = useMemo(() => voters.find(v => v.id === session?.voterId), [voters, session]);
   const category = useMemo(() => categories.find(c => c.id === voter?.category), [categories, voter]);
   
-  if (isDbLoading || isSessionLoading) {
+  const isLoading = isDbLoading || isSessionLoading;
+
+  if (isLoading) {
     return <Loading />;
   }
 
   if (!session?.voterId) {
     redirect('/');
-    return null;
+    return <Loading />;
   }
 
   const now = new Date();
@@ -59,7 +61,7 @@ export default function VotePage() {
 
   if (!election || election.status !== 'active' || !voter || !electionStarted || electionEnded || !isVoterAllowed || hasVoted) {
     redirect('/vote');
-    return null;
+    return <Loading />;
   }
 
   const candidates = election.candidates ? Object.values(election.candidates) : [];

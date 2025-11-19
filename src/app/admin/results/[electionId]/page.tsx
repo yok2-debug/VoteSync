@@ -9,14 +9,18 @@ export default function ElectionResultsPage() {
   const { electionId } = useParams() as { electionId: string };
   const { elections, isLoading } = useDatabase();
 
-  const election = useMemo(() => elections.find(e => e.id === electionId), [elections, electionId]);
+  const election = useMemo(() => {
+    if (isLoading) return null;
+    return elections.find(e => e.id === electionId);
+  }, [elections, electionId, isLoading]);
 
   if (isLoading) {
     return <Loading />;
   }
 
   if (!election) {
-    return redirect('/admin/results');
+    redirect('/admin/results');
+    return <Loading />;
   }
 
   return (

@@ -6,19 +6,21 @@ import Loading from '@/app/loading';
 export default function CategoriesPage() {
   const { categories, elections, isLoading } = useDatabase();
 
-  if (isLoading) {
-    return <Loading />;
-  }
-
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Category Management</h1>
-        <p className="text-muted-foreground">
-          Manage voter categories for elections.
-        </p>
-      </div>
-      <CategoryTable initialCategories={categories} allElections={elections} />
-    </div>
+    <>
+      {isLoading ? (
+        <Loading />
+      ) : (
+        <div className="flex flex-col gap-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Category Management</h1>
+            <p className="text-muted-foreground">
+              Manage voter categories for elections.
+            </p>
+          </div>
+          <CategoryTable initialCategories={categories} allElections={elections} />
+        </div>
+      )}
+    </>
   );
 }

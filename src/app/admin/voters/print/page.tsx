@@ -11,7 +11,7 @@ export default function PrintCardsPage() {
   const searchParams = useSearchParams();
   const { voters: allVoters, isLoading: isDbLoading } = useDatabase();
   const [votersToPrint, setVotersToPrint] = useState<Voter[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
     if (isDbLoading) return;
@@ -22,19 +22,19 @@ export default function PrintCardsPage() {
       const filteredVoters = allVoters.filter(v => idsToPrint.has(v.id));
       setVotersToPrint(filteredVoters);
     }
-    setIsLoading(false);
+    setIsProcessing(false);
     
   }, [searchParams, allVoters, isDbLoading]);
 
   useEffect(() => {
-    if (!isLoading && votersToPrint.length > 0) {
+    if (!isProcessing && votersToPrint.length > 0) {
       // Small delay to ensure content is rendered before printing
       const timer = setTimeout(() => window.print(), 500);
       return () => clearTimeout(timer);
     }
-  }, [isLoading, votersToPrint]);
+  }, [isProcessing, votersToPrint]);
 
-  if (isLoading || isDbLoading) {
+  if (isProcessing) {
     return <Loading />;
   }
 

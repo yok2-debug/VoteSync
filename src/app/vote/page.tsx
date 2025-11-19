@@ -12,7 +12,7 @@ import Loading from '../loading';
 import type { VoterSessionPayload } from '@/lib/types';
 
 export default function VoterDashboardPage() {
-  const { elections, voters, categories, isLoading } = useDatabase();
+  const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
 
@@ -44,12 +44,15 @@ export default function VoterDashboardPage() {
     });
   }, [elections, category]);
 
-  if (isLoading || isSessionLoading) {
+  const isLoading = isDbLoading || isSessionLoading;
+
+  if (isLoading) {
     return <Loading />;
   }
   
   if (!session?.voterId || !voter) {
-    return redirect('/');
+    redirect('/');
+    return <Loading />;
   }
 
   const now = new Date();

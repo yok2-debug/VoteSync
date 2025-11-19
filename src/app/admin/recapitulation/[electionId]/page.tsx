@@ -9,14 +9,18 @@ export default function RecapitulationPage() {
   const { electionId } = useParams() as { electionId: string };
   const { elections, voters, categories, isLoading } = useDatabase();
 
-  const election = useMemo(() => elections.find(e => e.id === electionId), [elections, electionId]);
+  const election = useMemo(() => {
+    if (isLoading) return null;
+    return elections.find(e => e.id === electionId);
+  }, [elections, electionId, isLoading]);
 
   if (isLoading) {
     return <Loading />;
   }
 
   if (!election) {
-    return redirect('/admin/recapitulation');
+    redirect('/admin/recapitulation');
+    return <Loading />;
   }
 
   return (

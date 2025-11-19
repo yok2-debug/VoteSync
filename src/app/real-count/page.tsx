@@ -10,7 +10,12 @@ export default function RealCountPage() {
   const activeElections = elections.filter(e => e.status === 'active');
 
   if (isLoading) {
-    return <Loading />;
+    return (
+      <>
+        <PublicNavbar />
+        <Loading />
+      </>
+    );
   }
 
   return (

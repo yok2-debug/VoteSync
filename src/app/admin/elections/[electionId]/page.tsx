@@ -10,6 +10,7 @@ export default function ElectionEditPage() {
   const { elections, isLoading } = useDatabase();
 
   const election = useMemo(() => {
+    if (isLoading) return null;
     if (electionId === 'new') {
       return {
         id: 'new',
@@ -23,14 +24,15 @@ export default function ElectionEditPage() {
       };
     }
     return elections.find(e => e.id === electionId);
-  }, [elections, electionId]);
+  }, [elections, electionId, isLoading]);
 
   if (isLoading) {
     return <Loading />;
   }
 
   if (!election) {
-    return redirect('/admin/elections');
+    redirect('/admin/elections');
+    return <Loading />;
   }
   
   const isNew = election.id === 'new';
