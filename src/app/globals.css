@@ -85,4 +85,12 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+  .prose ul > li::marker,
+  .prose ol > li::marker {
+      color: hsl(var(--foreground));
+  }
+  .dark .prose ul > li::marker,
+  .dark .prose ol > li::marker {
+      color: hsl(var(--foreground));
+  }
 }
