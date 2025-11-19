@@ -45,7 +45,7 @@ const electionSchema = z.object({
   id: z.string(),
   name: z.string().min(3, 'Election name must be at least 3 characters.'),
   description: z.string().min(10, 'Description must be at least 10 characters.'),
-  status: z.enum(['pending', 'ongoing', 'completed']),
+  status: z.enum(['pending', 'active']),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
   candidates: z.array(candidateSchema).min(2, 'At least two candidates are required.'),
@@ -74,6 +74,7 @@ export function ElectionForm({ election }: ElectionFormProps) {
     resolver: zodResolver(electionSchema),
     defaultValues: {
       ...election,
+      status: election.status || 'pending',
       startDate: election.startDate ? new Date(election.startDate) : undefined,
       endDate: election.endDate ? new Date(election.endDate) : undefined,
       candidates: election.candidates ? Object.values(election.candidates) : [],
@@ -327,8 +328,7 @@ export function ElectionForm({ election }: ElectionFormProps) {
                           </SelectTrigger>
                           <SelectContent>
                               <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="ongoing">Ongoing</SelectItem>
-                              <SelectItem value="completed">Completed</SelectItem>
+                              <SelectItem value="active">Active</SelectItem>
                           </SelectContent>
                       </Select>
                   )}
@@ -421,5 +421,3 @@ export function ElectionForm({ election }: ElectionFormProps) {
     </Form>
   );
 }
-
-    

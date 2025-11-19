@@ -16,19 +16,24 @@ async function Dashboard() {
     // For now, redirecting to the same section is fine.
     redirect('/admin/elections');
   }
+  
+  const now = new Date();
 
   const totalElections = elections.length;
   const totalVoters = voters.length;
   const totalCategories = categories.length;
-  const completedElections = elections.filter(e => e.status === 'completed').length;
-  const ongoingElections = elections.filter(e => e.status === 'ongoing').length;
+  const activeElections = elections.filter(e => {
+    const isScheduled = e.startDate && e.endDate && new Date(e.startDate) <= now && new Date(e.endDate) > now;
+    return e.status === 'active' && isScheduled;
+  }).length;
+  const finishedElections = elections.filter(e => e.endDate && new Date(e.endDate) < now).length;
 
   const stats = [
     { title: 'Total Elections', value: totalElections, icon: <Vote className="h-6 w-6 text-muted-foreground" />, href: '/admin/elections' },
     { title: 'Total Voters', value: totalVoters, icon: <Users className="h-6 w-6 text-muted-foreground" />, href: '/admin/voters' },
     { title: 'Voter Categories', value: totalCategories, icon: <Box className="h-6 w-6 text-muted-foreground" />, href: '/admin/categories' },
-    { title: 'Ongoing Elections', value: ongoingElections, icon: <Clock className="h-6 w-6 text-muted-foreground" />, href: '/admin/elections' },
-    { title: 'Completed Elections', value: completedElections, icon: <CheckCircle className="h-6 w-6 text-muted-foreground" />, href: '/admin/elections' },
+    { title: 'Active Elections', value: activeElections, icon: <Clock className="h-6 w-6 text-muted-foreground" />, href: '/admin/elections' },
+    { title: 'Finished Elections', value: finishedElections, icon: <CheckCircle className="h-6 w-6 text-muted-foreground" />, href: '/admin/elections' },
   ];
 
   return (

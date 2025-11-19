@@ -26,11 +26,11 @@ export default async function VoterDashboardPage() {
     getCategoryById(voter.category),
   ]);
 
-  const ongoingElections = elections.filter(e => {
-    const isOngoing = e.status === 'ongoing';
+  const availableElections = elections.filter(e => {
+    const isActive = e.status === 'active';
     // Check if category exists and has allowedElections, then check if this election is in the list
     const isAllowed = category?.allowedElections?.includes(e.id);
-    return isOngoing && isAllowed;
+    return isActive && isAllowed;
   });
 
   const now = new Date();
@@ -46,11 +46,11 @@ export default async function VoterDashboardPage() {
             <VoterLogoutButton />
         </div>
 
-        {ongoingElections.length > 0 ? (
+        {availableElections.length > 0 ? (
           <div className="space-y-4">
-            {ongoingElections.map(election => {
+            {availableElections.map(election => {
               const hasVoted = voter?.hasVoted?.[election.id] === true;
-              const electionStarted = election.startDate ? new Date(election.startDate) <= now : true;
+              const electionStarted = election.startDate ? new Date(election.startDate) <= now : false;
               const electionEnded = election.endDate ? new Date(election.endDate) < now : false;
 
               let content;
@@ -103,7 +103,7 @@ export default async function VoterDashboardPage() {
         ) : (
           <Card>
             <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground">There are no ongoing elections available for your category at the moment.</p>
+              <p className="text-muted-foreground">There are no active elections available for your category at the moment.</p>
             </CardContent>
           </Card>
         )}

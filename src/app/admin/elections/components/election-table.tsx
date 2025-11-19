@@ -55,10 +55,8 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
     switch (status) {
       case 'pending':
         return <Badge variant="secondary">Pending</Badge>;
-      case 'ongoing':
-        return <Badge className="bg-blue-500 text-white">Ongoing</Badge>;
-      case 'completed':
-        return <Badge className="bg-green-500 text-white">Completed</Badge>;
+      case 'active':
+        return <Badge className="bg-green-500 text-white">Active</Badge>;
       default:
         return <Badge>{status}</Badge>;
     }
@@ -195,5 +193,3 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
     </div>
   );
 }
-
-    

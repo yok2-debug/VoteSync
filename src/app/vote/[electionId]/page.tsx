@@ -25,11 +25,11 @@ export default async function VotePage({ params }: VotePageProps) {
   ]);
   
   const now = new Date();
-  const electionStarted = election?.startDate ? new Date(election.startDate) <= now : true;
+  const electionStarted = election?.startDate ? new Date(election.startDate) <= now : false;
   const electionEnded = election?.endDate ? new Date(election.endDate) < now : false;
 
 
-  if (!election || election.status !== 'ongoing' || !voter || !electionStarted || electionEnded) {
+  if (!election || election.status !== 'active' || !voter || !electionStarted || electionEnded) {
     redirect('/vote');
   }
 

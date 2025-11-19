@@ -17,7 +17,7 @@ export default async function ElectionEditPage({ params }: ElectionEditPageProps
       id: 'new',
       name: '',
       description: '',
-      status: 'pending' as 'pending' | 'ongoing' | 'completed',
+      status: 'pending' as 'pending' | 'active',
       candidates: {},
       committee: [],
       startDate: undefined,

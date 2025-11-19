@@ -4,7 +4,7 @@ export interface Election {
   description: string;
   startDate?: string;
   endDate?: string;
-  status: 'pending' | 'ongoing' | 'completed';
+  status: 'active' | 'pending';
   candidates: Record<string, Candidate>;
   committee?: CommitteeMember[];
   voters?: Voter[];
