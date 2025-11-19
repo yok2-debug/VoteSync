@@ -14,11 +14,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Vote, Loader2 } from 'lucide-react';
-import { db } from '@/lib/firebase';
-import { ref, runTransaction } from 'firebase/database';
 import { useRouter } from 'next/navigation';
 import type { Candidate } from '@/lib/types';
 import { useState } from 'react';
+import { saveVote } from '@/lib/actions';
 
 interface CandidateVoteFormProps {
   electionId: string;
@@ -33,47 +32,9 @@ export function CandidateVoteForm({ electionId, candidate, voterId }: CandidateV
 
   async function handleVote() {
     setIsSubmitting(true);
-    const electionRef = ref(db, `elections/${electionId}`);
-    const voterRef = ref(db, `voters/${voterId}`);
-
     try {
-      // Transaction on election data
-      await runTransaction(electionRef, (election) => {
-        if (election) {
-          // Initialize paths if they don't exist
-          if (!election.votes) election.votes = {};
-          if (!election.results) election.results = {};
-
-          // Check if the voter has already voted in this specific election's data
-          if (election.votes[voterId]) {
-            // Abort transaction if vote already exists in this election's record
-            return; 
-          }
-
-          // Record the vote
-          election.votes[voterId] = candidate.id;
-          
-          // Increment result for the candidate
-          if (!election.results[candidate.id]) {
-            election.results[candidate.id] = 0;
-          }
-          election.results[candidate.id]++;
-        }
-        return election;
-      });
-
-      // Separate transaction for the main voter object
-      await runTransaction(voterRef, (voter) => {
-        if (voter) {
-            if (!voter.hasVoted) {
-                voter.hasVoted = {};
-            }
-            // Mark the voter as having voted for this election
-            voter.hasVoted[electionId] = true;
-        }
-        return voter;
-      });
-
+      await saveVote(electionId, candidate.id, voterId);
+      
       toast({
         title: 'Vote Cast Successfully!',
         description: `Your vote for ${candidate.name} has been recorded.`,

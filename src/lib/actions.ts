@@ -6,7 +6,7 @@ import { createAdminSession, createVoterSession, deleteAdminSession, deleteVoter
 import { revalidatePath } from 'next/cache';
 import * as z from 'zod';
 import { db } from '@/lib/firebase';
-import { ref, remove, get, child, update, set, push } from 'firebase/database';
+import { ref, remove, get, child, update, set, push, runTransaction } from 'firebase/database';
 import type { Category, Election, Voter } from './types';
 import { getVoters } from './data';
 
@@ -322,9 +322,16 @@ export async function importVoters(data: any[]): Promise<{ importedCount: number
   const importedVoters: Voter[] = [];
   
   for (const row of data) {
-    const validation = importVoterSchema.safeParse(row);
+    // Manually handle potential undefined values from CSV parsing
+    const cleanRow = {
+      id: typeof row.id === 'string' ? row.id.trim() : row.id,
+      name: typeof row.name === 'string' ? row.name.trim() : row.name,
+      category: typeof row.category === 'string' ? row.category.trim() : row.category,
+      password: row.password,
+    };
+    
+    const validation = importVoterSchema.safeParse(cleanRow);
     if (!validation.success) {
-      // This case should ideally be caught by the client-side validation, but is here as a safeguard.
       throw new Error(`Invalid data in CSV: ${JSON.stringify(validation.error.flatten().fieldErrors)}`);
     }
 
@@ -362,4 +369,61 @@ export async function importVoters(data: any[]): Promise<{ importedCount: number
   
   revalidatePath('/admin/voters');
   return { importedCount: importedVoters.length, importedVoters: importedVoters };
+}
+
+// Vote Action
+export async function saveVote(electionId: string, candidateId: string, voterId: string): Promise<void> {
+  const electionRef = ref(db, `elections/${electionId}`);
+  const voterRef = ref(db, `voters/${voterId}`);
+
+  try {
+    // Transaction on election data
+    await runTransaction(electionRef, (election) => {
+      if (election) {
+        // Initialize paths if they don't exist
+        if (!election.votes) election.votes = {};
+        if (!election.results) election.results = {};
+
+        // Check if the voter has already voted in this specific election's data
+        if (election.votes[voterId]) {
+          // Abort transaction if vote already exists
+          return;
+        }
+
+        // Record the vote
+        election.votes[voterId] = candidateId;
+
+        // Increment result for the candidate
+        if (!election.results[candidateId]) {
+          election.results[candidateId] = 0;
+        }
+        election.results[candidateId]++;
+      }
+      return election;
+    });
+
+    // Separate transaction for the main voter object
+    await runTransaction(voterRef, (voter) => {
+      if (voter) {
+        if (!voter.hasVoted) {
+          voter.hasVoted = {};
+        }
+        // Mark the voter as having voted for this election
+        voter.hasVoted[electionId] = true;
+      }
+      return voter;
+    });
+
+    revalidatePath('/vote');
+    revalidatePath(`/vote/${electionId}`);
+    revalidatePath('/real-count');
+    revalidatePath('/admin/results');
+    revalidatePath(`/admin/results/${electionId}`);
+  } catch (error) {
+    console.error('Error saving vote:', error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Could not save your vote.');
+  }
 }

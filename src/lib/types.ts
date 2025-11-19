@@ -61,3 +61,11 @@ export interface VoterSessionPayload {
     voterId: string;
     expires?: number;
 }
+
+export interface Vote {
+  id: string;
+  electionId: string;
+  candidateId: string;
+  voterId: string;
+  createdAt: string;
+}
