@@ -25,9 +25,11 @@ export default async function RecapitulationDashboardPage() {
                             <CardDescription>{election.description}</CardDescription>
                         </CardHeader>
                         <CardContent>
-                             <Button className="w-full" disabled>
-                                <FileText className="mr-2 h-4 w-4" />
-                                View Recapitulation (Coming Soon)
+                             <Button asChild className="w-full">
+                                <Link href={`/admin/recapitulation/${election.id}`}>
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    View Recapitulation
+                                </Link>
                             </Button>
                         </CardContent>
                     </Card>
