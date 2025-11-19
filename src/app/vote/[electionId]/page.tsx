@@ -18,9 +18,10 @@ export default async function VotePage({ params }: VotePageProps) {
   if (!session?.voterId) {
     redirect('/');
   }
+  const { electionId } = params;
 
   const [election, voter] = await Promise.all([
-    getElectionById(params.electionId),
+    getElectionById(electionId),
     getVoterById(session.voterId)
   ]);
   

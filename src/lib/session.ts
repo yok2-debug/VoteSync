@@ -48,11 +48,11 @@ async function getSession<T>(cookieName: string): Promise<T | null> {
 }
 
 export async function getAdminSession(): Promise<AdminSessionPayload | null> {
-    return getSession<AdminSessionPayload>(ADMIN_SESSION_COOKIE_NAME);
+    return await getSession<AdminSessionPayload>(ADMIN_SESSION_COOKIE_NAME);
 }
 
 export async function getVoterSession(): Promise<VoterSessionPayload | null> {
-    return getSession<VoterSessionPayload>(VOTER_SESSION_COOKIE_NAME);
+    return await getSession<VoterSessionPayload>(VOTER_SESSION_COOKIE_NAME);
 }
 
 
