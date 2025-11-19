@@ -13,44 +13,51 @@ function PrintCardsPageContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchAndFilterVoters() {
-      setIsLoading(true);
+    async function fetchAndPrintVoters() {
       const voterIdsParam = searchParams.get('voterIds');
-      if (voterIdsParam) {
-        try {
-          const idsToPrint = new Set(voterIdsParam.split(','));
-          // Fetch enriched voters directly
-          const allEnrichedVoters = await getVoters();
-          const filteredVoters = allEnrichedVoters.filter(v => idsToPrint.has(v.id));
-          setVotersToPrint(filteredVoters);
-        } catch (e) {
-            console.error("Failed to fetch voters for printing:", e);
-            setError("Could not load voter data. Please try again.");
-        }
-      } else {
+      if (!voterIdsParam) {
         setError("No voter IDs provided for printing.");
+        setIsLoading(false);
+        return;
       }
-      setIsLoading(false);
-    }
-    
-    fetchAndFilterVoters();
-    
-  }, [searchParams]);
 
-  useEffect(() => {
-    if (!isLoading && votersToPrint.length > 0) {
-      // Small delay to ensure DOM is fully rendered before printing
-      const timer = setTimeout(() => {
-        try {
-            window.print();
-        } catch (e) {
-            console.error("Print failed:", e);
-            setError("Could not open the print dialog.");
+      try {
+        const idsToPrint = new Set(voterIdsParam.split(','));
+        const allEnrichedVoters = await getVoters();
+        const filteredVoters = allEnrichedVoters.filter(v => idsToPrint.has(v.id));
+        
+        if (filteredVoters.length === 0) {
+          setError("No voters found to print. Please check the selection.");
+          setIsLoading(false);
+          return;
         }
-      }, 500);
-      return () => clearTimeout(timer);
+
+        setVotersToPrint(filteredVoters);
+        setIsLoading(false);
+
+        // Crucial: Wait for state to update and DOM to re-render BEFORE printing.
+        setTimeout(() => {
+          try {
+            window.print();
+          } catch (e) {
+            console.error("Print failed:", e);
+            // This error is tricky to show in UI as print dialog might be open/closed.
+          }
+        }, 500);
+
+      } catch (e) {
+        console.error("Failed to fetch voters for printing:", e);
+        setError("Could not load voter data. Please try again.");
+        setIsLoading(false);
+      }
     }
-  }, [isLoading, votersToPrint]);
+    
+    fetchAndPrintVoters();
+    
+    // We only want this effect to run once when the component mounts.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
 
   if (isLoading) {
     return (
@@ -62,8 +69,9 @@ function PrintCardsPageContent() {
 
   if (error) {
      return (
-        <div className="flex min-h-screen flex-col items-center justify-center">
-            <p>Error: {error}</p>
+        <div className="flex min-h-screen flex-col items-center justify-center text-red-600">
+            <p className="font-bold">Error:</p>
+            <p>{error}</p>
         </div>
       );
   }
