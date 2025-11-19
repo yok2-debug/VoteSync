@@ -313,13 +313,20 @@ export async function importVoters(data: any[]): Promise<{ importedCount: number
   const importedVoters: Voter[] = [];
   
   for (const row of data) {
+    let gender = typeof row.gender === 'string' ? row.gender.trim() : '';
+    if (gender.toUpperCase() === 'L') {
+      gender = 'Laki-laki';
+    } else if (gender.toUpperCase() === 'P') {
+      gender = 'Perempuan';
+    }
+
     const cleanRow = {
       id: typeof row.id === 'string' ? row.id.trim() : row.id,
       nik: row.nik ? String(row.nik).trim() : '',
       name: typeof row.name === 'string' ? row.name.trim() : row.name,
       birthPlace: typeof row.birthPlace === 'string' ? row.birthPlace.trim() : '',
       birthDate: typeof row.birthDate === 'string' ? row.birthDate.trim() : '',
-      gender: typeof row.gender === 'string' ? row.gender.trim() : '',
+      gender: gender,
       address: typeof row.address === 'string' ? row.address.trim() : '',
       category: typeof row.category === 'string' ? row.category.trim() : row.category,
       password: row.password,
@@ -348,8 +355,9 @@ export async function importVoters(data: any[]): Promise<{ importedCount: number
       category: categoryId,
       password: rest.password || Math.random().toString(36).substring(2, 8),
     };
+
     if (voterData.gender && !['Laki-laki', 'Perempuan'].includes(voterData.gender)) {
-        throw new Error(`Invalid gender: '${voterData.gender}'. Must be 'Laki-laki' or 'Perempuan'.`);
+        throw new Error(`Invalid gender: '${row.gender}'. Must be 'L', 'P', 'Laki-laki' or 'Perempuan'.`);
     }
 
 

@@ -59,13 +59,21 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
 
         const validated = filteredData.map(row => {
             const errors: string[] = [];
+            
+            let gender = typeof row.gender === 'string' ? row.gender.trim() : '';
+            if (gender.toUpperCase() === 'L') {
+              gender = 'Laki-laki';
+            } else if (gender.toUpperCase() === 'P') {
+              gender = 'Perempuan';
+            }
+
             const cleanRow = {
                 id: typeof row.id === 'string' ? row.id.trim() : row.id,
                 nik: row.nik ? String(row.nik).trim() : '',
                 name: typeof row.name === 'string' ? row.name.trim() : row.name,
                 birthPlace: typeof row.birthPlace === 'string' ? row.birthPlace.trim() : '',
                 birthDate: typeof row.birthDate === 'string' ? row.birthDate.trim() : '',
-                gender: typeof row.gender === 'string' ? row.gender.trim() : '',
+                gender: gender,
                 address: typeof row.address === 'string' ? row.address.trim() : '',
                 category: typeof row.category === 'string' ? row.category.trim() : row.category,
                 password: row.password
@@ -90,7 +98,7 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
             }
             
             if (cleanRow.gender && !['Laki-laki', 'Perempuan'].includes(cleanRow.gender)) {
-                errors.push(`Invalid gender: '${cleanRow.gender}'. Must be 'Laki-laki' or 'Perempuan'.`);
+                errors.push(`Invalid gender: '${row.gender}'. Must be 'L', 'P', 'Laki-laki', or 'Perempuan'.`);
             }
 
             return {
