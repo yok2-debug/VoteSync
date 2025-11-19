@@ -16,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import { performResetAction } from '@/lib/actions';
 
 type ResetSystemDialogProps = {
   action: string;
@@ -33,12 +34,8 @@ export function ResetSystemDialog({ action, title, description }: ResetSystemDia
 
   const handleReset = async () => {
     setIsSubmitting(true);
-    // Placeholder for actual server action call
     try {
-      // await performResetAction(action);
-      console.log(`Performing reset action: ${action}`);
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
+      await performResetAction(action);
       toast({
         title: 'Action Successful',
         description: `${title} has been completed.`,
