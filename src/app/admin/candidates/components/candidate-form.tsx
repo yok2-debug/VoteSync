@@ -20,7 +20,7 @@ import { saveCandidate } from '@/lib/actions';
 import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
-import { Textarea } from '@/components/ui/textarea';
+import { MarkdownEditor } from '@/components/ui/markdown-editor';
 
 const candidateSchema = z.object({
   id: z.string().optional(),
@@ -146,22 +146,20 @@ export function CandidateForm({
               )}
             </div>
             <div className="space-y-2">
-                <Label htmlFor="vision">Vision</Label>
-                <Textarea
-                  id="vision"
-                  {...register('vision')}
-                  placeholder="Enter the candidate's vision..."
-                  className="min-h-[120px]"
-                />
+              <Label htmlFor="vision">Vision</Label>
+              <Controller
+                name="vision"
+                control={control}
+                render={({ field }) => <MarkdownEditor {...field} />}
+              />
             </div>
-             <div className="space-y-2">
-                <Label htmlFor="mission">Mission</Label>
-                <Textarea
-                  id="mission"
-                  {...register('mission')}
-                  placeholder="Enter the candidate's mission..."
-                   className="min-h-[120px]"
-                />
+            <div className="space-y-2">
+              <Label htmlFor="mission">Mission</Label>
+              <Controller
+                name="mission"
+                control={control}
+                render={({ field }) => <MarkdownEditor {...field} />}
+              />
             </div>
             <div className="space-y-2">
                 <Label htmlFor="photo">Photo URL (Optional)</Label>

@@ -13,6 +13,7 @@ import { useEffect, useState } from 'react';
 import { redirect, useParams } from 'next/navigation';
 import Loading from '@/app/loading';
 import type { VoterSessionPayload } from '@/lib/types';
+import ReactMarkdown from 'react-markdown';
 import {
   Dialog,
   DialogContent,
@@ -122,17 +123,17 @@ export default function VotePage() {
                         <div>
                           <h3 className="font-semibold text-lg mb-2">Visi</h3>
                            <div
-                              className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap"
+                              className="prose prose-sm dark:prose-invert max-w-none"
                             >
-                             {candidate.vision || 'Tidak ada visi yang diberikan.'}
+                             <ReactMarkdown>{candidate.vision || 'Tidak ada visi yang diberikan.'}</ReactMarkdown>
                             </div>
                         </div>
                         <div>
                           <h3 className="font-semibold text-lg mt-4 mb-2">Misi</h3>
                            <div
-                              className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap"
+                              className="prose prose-sm dark:prose-invert max-w-none"
                             >
-                              {candidate.mission || 'Tidak ada misi yang diberikan.'}
+                              <ReactMarkdown>{candidate.mission || 'Tidak ada misi yang diberikan.'}</ReactMarkdown>
                             </div>
                         </div>
                       </div>
