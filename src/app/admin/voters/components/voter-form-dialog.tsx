@@ -30,7 +30,7 @@ const voterSchema = z.object({
   id: z.string().min(1, { message: 'Voter ID is required.' }),
   name: z.string().min(3, { message: 'Name must be at least 3 characters.' }),
   category: z.string().min(1, { message: 'Category is required.' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
+  password: z.string().optional(),
 });
 
 type VoterFormData = z.infer<typeof voterSchema>;
@@ -71,7 +71,7 @@ export function VoterFormDialog({
           id: voter.id,
           name: voter.name,
           category: voter.category,
-          password: voter.password || '',
+          password: '', // Always start with empty password field for editing
         });
       } else {
         reset({ id: '', name: '', category: '', password: '' });
@@ -82,8 +82,15 @@ export function VoterFormDialog({
   const onSubmit: SubmitHandler<VoterFormData> = async (data) => {
     setIsSubmitting(true);
     try {
+      let passwordToSave = data.password;
+      if (!isEditing) {
+        // Auto-generate password for new voters
+        passwordToSave = Math.random().toString(36).substring(2, 8);
+      }
+      
       const voterToSave = {
         ...data,
+        password: passwordToSave,
         isEditing,
       };
       
@@ -167,17 +174,19 @@ export function VoterFormDialog({
               )}
             </div>
           </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="password" className="text-right">
-              Password
-            </Label>
-            <div className="col-span-3">
-              <Input id="password" type="password" {...register('password')} className="w-full" placeholder={isEditing ? 'Enter new password' : 'At least 6 characters'} />
-              {errors.password && (
-                <p className="text-sm text-destructive mt-1">{errors.password.message}</p>
-              )}
+          {isEditing && (
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="password" className="text-right">
+                Password
+              </Label>
+              <div className="col-span-3">
+                <Input id="password" type="password" {...register('password')} className="w-full" placeholder="Leave blank to keep current" />
+                {errors.password && (
+                  <p className="text-sm text-destructive mt-1">{errors.password.message}</p>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </form>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>

@@ -3,7 +3,6 @@
 import { getAdminCredentials, getVoterById, getElections, getCategories as getAllCategories, getVoters } from '@/lib/data';
 import { createSession, deleteSession } from '@/lib/session';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 import * as z from 'zod';
 import { db } from '@/lib/firebase';
 import { ref, remove, get, child, update, set, push } from 'firebase/database';
@@ -149,7 +148,7 @@ export async function deleteCategory(categoryId: string): Promise<void> {
 
 
 // Election Actions
-export async function saveElection(formData: FormData): Promise<{ savedElectionId: string }> {
+export async function saveElection(formData: FormData): Promise<{ savedElectionId: string; }> {
   const electionId = formData.get('id') as string;
   
   const rawData = {
@@ -163,15 +162,25 @@ export async function saveElection(formData: FormData): Promise<{ savedElectionI
   let savedElectionId = rawData.id;
 
   try {
-    if (savedElectionId === 'new') {
+    const isNewElection = savedElectionId === 'new';
+    if (isNewElection) {
         const newElectionRef = push(ref(db, `elections`));
         savedElectionId = newElectionRef.key!;
+    }
+    
+    // Fetch existing candidates to avoid overwriting them if they are not in the form
+    let existingCandidates: Record<string, any> = {};
+    if (!isNewElection) {
+        const electionSnapshot = await get(ref(db, `elections/${savedElectionId}/candidates`));
+        if (electionSnapshot.exists()) {
+            existingCandidates = electionSnapshot.val();
+        }
     }
     
     const candidatesObject = rawData.candidates.reduce((acc: any, candidate: any) => {
         let candidateId = candidate.id || '';
         if (candidate.id?.startsWith('temp-') || !candidate.id) {
-          candidateId = push(ref(db, `elections/${savedElectionId}/candidates`)).key;
+          candidateId = push(ref(db, `elections/${savedElectionId}/candidates`)).key!;
         }
 
         acc[candidateId] = { ...candidate, id: candidateId };
@@ -186,6 +195,10 @@ export async function saveElection(formData: FormData): Promise<{ savedElectionI
     };
     
     await set(ref(db, `elections/${savedElectionId}`), electionData);
+    
+    revalidatePath('/admin/elections');
+    revalidatePath(`/admin/elections/${savedElectionId}`);
+    return { savedElectionId };
 
   } catch (error) {
     console.error('Error saving election:', error);
@@ -194,10 +207,6 @@ export async function saveElection(formData: FormData): Promise<{ savedElectionI
     }
     throw new Error('An unknown error occurred while saving the election.');
   }
-
-  revalidatePath('/admin/elections');
-  revalidatePath(`/admin/elections/${savedElectionId}`);
-  return { savedElectionId };
 }
 
 
@@ -217,9 +226,6 @@ export async function saveVoter(voter: Omit<Voter, 'hasVoted'>): Promise<Voter> 
   const { id, ...voterData } = voter;
 
   try {
-    // Check if voter ID (which is the key) already exists for a *different* voter if we are renaming the ID.
-    // This logic is complex if we allow ID changes. For now, we assume the ID is the key and doesn't change.
-    // If it's a new voter, the `id` will be what the user entered. We must check for duplicates.
     if (!voter.isEditing) {
         const existingVoter = await getVoterById(id);
         if (existingVoter) {
@@ -236,6 +242,12 @@ export async function saveVoter(voter: Omit<Voter, 'hasVoted'>): Promise<Voter> 
       // For editing, we merge data to not overwrite `hasVoted` status.
       const snapshot = await get(voterRef);
       const existingData = snapshot.val() || {};
+
+      // Only update password if a new one is provided
+      if (!dataToSave.password) {
+        delete dataToSave.password;
+      }
+      
       await set(voterRef, { ...existingData, ...dataToSave });
     } else {
       // For new voters, we set the data directly.
