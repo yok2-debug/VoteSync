@@ -24,14 +24,16 @@ const toWords = (num: number): string => {
     ];
 
   if (num < 12) return terbilang[num];
-  if (num < 20) return terbilang[num - 10] + ' belas';
-  if (num < 100) return terbilang[Math.floor(num / 10)] + ' puluh ' + terbilang[num % 10];
+  if (num < 20) return toWords(num - 10) + ' belas';
+  if (num < 100) return terbilang[Math.floor(num / 10)] + ' puluh ' + toWords(num % 10);
   if (num < 200) return 'seratus ' + toWords(num - 100);
   if (num < 1000) return terbilang[Math.floor(num / 100)] + ' ratus ' + toWords(num % 100);
   if (num < 2000) return 'seribu ' + toWords(num - 1000);
   if (num < 1000000) return toWords(Math.floor(num / 1000)) + ' ribu ' + toWords(num % 1000);
+  if (num < 1000000000) return toWords(Math.floor(num/1000000)) + ' juta ' + toWords(num % 1000000);
+  if (num < 1000000000000) return toWords(Math.floor(num/1000000000)) + ' milyar ' + toWords(num % 1000000000);
   // Add more cases if needed for larger numbers
-  return '';
+  return num.toString();
 };
 
 type FormattedDateParts = {
@@ -86,6 +88,10 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
           @media print {
             body * {
               visibility: hidden;
+              background: transparent !important;
+              color: #000 !important;
+              box-shadow: none !important;
+              text-shadow: none !important;
             }
             #print-section, #print-section * {
               visibility: visible;
@@ -97,9 +103,13 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
               width: 100%;
               padding: 1rem;
               font-size: 12px;
+              border: none !important;
             }
             .no-print {
                 display: none;
+            }
+            .print-card-header, .print-card-content {
+                border: none !important;
             }
              .print-signature-table {
                 width: 100%;
@@ -110,7 +120,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
             .print-signature-table th,
             .print-signature-table td {
                 padding: 12px 8px;
-                border: 1px solid #ddd;
+                border: 1px solid #000;
                 text-align: left;
                 vertical-align: middle;
             }
@@ -123,7 +133,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
                 position: relative;
             }
             .print-signature-table .signature-dots {
-                border-bottom: 1px dotted #888;
+                border-bottom: 1px dotted #000;
                 width: 100%;
                 position: absolute;
                 bottom: 0;
@@ -139,12 +149,12 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
       </div>
       <div id="print-section">
         <Card className="shadow-none border-0 print:shadow-none print:border-0">
-            <CardHeader className="text-center space-y-2 border-b pb-4">
+            <CardHeader className="text-center space-y-2 border-b pb-4 print-card-header">
                 <h2 className="text-2xl font-bold tracking-tight">BERITA ACARA</h2>
                 <h3 className="text-xl font-semibold uppercase">HASIL PENGHITUNGAN SUARA PEMILIHAN</h3>
                 <h1 className="text-xl font-semibold uppercase">{election.name}</h1>
             </CardHeader>
-            <CardContent className="space-y-8 pt-6">
+            <CardContent className="space-y-8 pt-6 print-card-content">
                 
                 <p>
                     Pada hari ini, <span className="font-bold">{electionDateInfo?.day}</span>, <span>tanggal</span> <span className="font-bold capitalize">{electionDateInfo?.dayWords}</span> <span>bulan</span> <span className="font-bold capitalize">{electionDateInfo?.month}</span> <span>tahun</span> <span className="font-bold capitalize">{electionDateInfo?.yearWords}</span>, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} dengan hasil sebagai berikut:
