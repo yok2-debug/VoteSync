@@ -26,14 +26,8 @@ export function VoterCard({ voter }: VoterCardProps) {
       }}
     >
       <div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', borderBottom: '1px solid #ccc', paddingBottom: '6px' }}>
-          <div style={{ transform: 'scale(0.7)'}}>
-             <Logo />
-          </div>
-          <div>
-            <h2 style={{ fontSize: '10px', fontWeight: 'bold', margin: 0 }}>VoteSync</h2>
-            <p style={{ fontSize: '8px', color: '#666', margin: 0 }}>Kartu Login Pemilih</p>
-          </div>
+        <div style={{ borderBottom: '1px solid #ccc', paddingBottom: '6px', textAlign: 'center' }}>
+          <h2 style={{ fontSize: '10px', fontWeight: 'bold', margin: 0 }}>Kartu Login Pemilih</h2>
         </div>
         <div style={{ marginTop: '8px' }}>
           <p style={{ margin: '0 0 2px 0', fontSize: '8px', color: '#333' }}>Nama Pemilih:</p>
