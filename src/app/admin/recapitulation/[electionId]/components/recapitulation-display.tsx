@@ -274,3 +274,5 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
     </div>
   );
 }
+
+    
