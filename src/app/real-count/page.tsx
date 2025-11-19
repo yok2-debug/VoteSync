@@ -1,13 +1,15 @@
-import { getCategories, getElections, getVoters } from '@/lib/data';
+'use client';
 import { PublicNavbar } from '@/components/public-navbar';
 import { RealCountDisplay } from './components/real-count-display';
+import { useDatabase } from '@/context/database-context';
+import Loading from '../loading';
 
-export default async function RealCountPage() {
-  const [elections, allVoters, allCategories] = await Promise.all([
-    getElections(),
-    getVoters(),
-    getCategories(),
-  ]);
+export default function RealCountPage() {
+  const { elections, voters, categories, isLoading } = useDatabase();
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   const activeElections = elections.filter(e => e.status === 'active');
 
@@ -27,8 +29,8 @@ export default async function RealCountPage() {
                 <RealCountDisplay
                   key={election.id}
                   election={election}
-                  allVoters={allVoters}
-                  allCategories={allCategories}
+                  allVoters={voters}
+                  allCategories={categories}
                 />
               ))
             ) : (

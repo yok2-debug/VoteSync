@@ -1,8 +1,6 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
-import type { Election, Voter, Category, Candidate } from '@/lib/types';
-import { db } from '@/lib/firebase';
-import { ref, onValue } from 'firebase/database';
+import { useMemo } from 'react';
+import type { Election, Voter, Category } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ElectionPieChart } from './election-pie-chart';
@@ -14,8 +12,9 @@ type RealCountDisplayProps = {
 };
 
 export function RealCountDisplay({ election, allVoters, allCategories }: RealCountDisplayProps) {
-  const [liveResults, setLiveResults] = useState<Record<string, number>>(election.results || {});
-  const [liveTotalVotes, setLiveTotalVotes] = useState(Object.keys(election.votes || {}).length);
+  
+  const liveResults = election.results || {};
+  const liveTotalVotes = Object.keys(election.votes || {}).length;
 
   const DPT = useMemo(() => {
     const allowedCategoryIds = allCategories
@@ -25,18 +24,6 @@ export function RealCountDisplay({ election, allVoters, allCategories }: RealCou
     return allVoters.filter(voter => allowedCategoryIds.includes(voter.category)).length;
   }, [election.id, allVoters, allCategories]);
 
-  useEffect(() => {
-    const electionRef = ref(db, `elections/${election.id}`);
-    const unsubscribe = onValue(electionRef, (snapshot) => {
-      const updatedElection: Election = snapshot.val();
-      if (updatedElection) {
-        setLiveResults(updatedElection.results || {});
-        setLiveTotalVotes(Object.keys(updatedElection.votes || {}).length);
-      }
-    });
-
-    return () => unsubscribe();
-  }, [election.id]);
   
   const candidates = useMemo(() => Object.values(election.candidates || {}), [election.candidates]);
   const votesMasukPercentage = DPT > 0 ? (liveTotalVotes / DPT) * 100 : 0;
