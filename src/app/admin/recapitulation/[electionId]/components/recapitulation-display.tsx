@@ -42,7 +42,7 @@ const formatDateToWords = (date: Date) => {
     const dayWords = toWords(day).trim();
     const yearWords = toWords(year).trim();
 
-    return `${dayWords} ${month} ${yearWords}`;
+    return `tanggal ${dayWords} bulan ${month} tahun ${yearWords}`;
 }
 
 
@@ -142,7 +142,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
             <CardContent className="space-y-8 pt-6">
                 
                 <p>
-                    Pada hari ini, <span className="font-bold">{electionDayInfo.day}</span>, tanggal <span className="font-bold capitalize">{electionDayInfo.date}</span>, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} dengan hasil sebagai berikut:
+                    Pada hari ini, <span className="font-bold">{electionDayInfo.day}</span>, <span className="font-bold capitalize">{electionDayInfo.date}</span>, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} dengan hasil sebagai berikut:
                 </p>
 
                 <div>
