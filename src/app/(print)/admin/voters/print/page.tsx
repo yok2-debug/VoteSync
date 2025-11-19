@@ -2,7 +2,7 @@
 'use client';
 import { getVoters } from '@/lib/data';
 import type { Voter } from '@/lib/types';
-import { VoterCard } from './components/voter-card';
+import { VoterCard } from '@/app/admin/voters/print/components/voter-card';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 
@@ -10,16 +10,25 @@ function PrintCardsPageContent() {
   const searchParams = useSearchParams();
   const [votersToPrint, setVotersToPrint] = useState<Voter[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchAndFilterVoters() {
+      setIsLoading(true);
       const voterIdsParam = searchParams.get('voterIds');
       if (voterIdsParam) {
-        const idsToPrint = new Set(voterIdsParam.split(','));
-        // Fetch enriched voters directly
-        const allEnrichedVoters = await getVoters();
-        const filteredVoters = allEnrichedVoters.filter(v => idsToPrint.has(v.id));
-        setVotersToPrint(filteredVoters);
+        try {
+          const idsToPrint = new Set(voterIdsParam.split(','));
+          // Fetch enriched voters directly
+          const allEnrichedVoters = await getVoters();
+          const filteredVoters = allEnrichedVoters.filter(v => idsToPrint.has(v.id));
+          setVotersToPrint(filteredVoters);
+        } catch (e) {
+            console.error("Failed to fetch voters for printing:", e);
+            setError("Could not load voter data. Please try again.");
+        }
+      } else {
+        setError("No voter IDs provided for printing.");
       }
       setIsLoading(false);
     }
@@ -31,23 +40,38 @@ function PrintCardsPageContent() {
   useEffect(() => {
     if (!isLoading && votersToPrint.length > 0) {
       // Small delay to ensure DOM is fully rendered before printing
-      const timer = setTimeout(() => window.print(), 500);
+      const timer = setTimeout(() => {
+        try {
+            window.print();
+        } catch (e) {
+            console.error("Print failed:", e);
+            setError("Could not open the print dialog.");
+        }
+      }, 500);
       return () => clearTimeout(timer);
     }
   }, [isLoading, votersToPrint]);
 
   if (isLoading) {
     return (
-       <div className="flex min-h-screen flex-col items-center justify-center no-print">
-            <p className="text-muted-foreground">Preparing voter cards for printing...</p>
+       <div className="flex min-h-screen flex-col items-center justify-center">
+            <p>Preparing voter cards for printing...</p>
         </div>
     );
+  }
+
+  if (error) {
+     return (
+        <div className="flex min-h-screen flex-col items-center justify-center">
+            <p>Error: {error}</p>
+        </div>
+      );
   }
   
   if (votersToPrint.length === 0) {
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center no-print">
-            <p className="text-muted-foreground">No voters found to print. Please check the selection.</p>
+        <div className="flex min-h-screen flex-col items-center justify-center">
+            <p>No voters found to print. Please check the selection.</p>
         </div>
       );
   }
@@ -60,7 +84,7 @@ function PrintCardsPageContent() {
             size: A4;
             margin: 1cm;
           }
-          body, html {
+          html, body {
             background-color: #fff !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
@@ -68,11 +92,9 @@ function PrintCardsPageContent() {
           .print-container {
              background-color: #fff !important;
           }
-          .no-print {
-            display: none !important;
-          }
            * {
             box-shadow: none !important;
+            text-shadow: none !important;
           }
         }
       `}</style>
@@ -88,8 +110,9 @@ function PrintCardsPageContent() {
 }
 
 export default function PrintPage() {
+  // Wrap with Suspense because useSearchParams() needs it.
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={<div className="flex min-h-screen flex-col items-center justify-center"><p>Loading...</p></div>}>
       <PrintCardsPageContent />
     </Suspense>
   )
