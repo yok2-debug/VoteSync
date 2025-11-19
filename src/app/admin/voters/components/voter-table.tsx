@@ -175,7 +175,7 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
               <Download className="mr-2 h-4 w-4" />
               Export Template
             </Button>
-            <Button variant="outline" onClick={handleImport} disabled>
+            <Button variant="outline" onClick={handleImport}>
               <Upload className="mr-2 h-4 w-4" />
               Import CSV
             </Button>
