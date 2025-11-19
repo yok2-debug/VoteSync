@@ -143,12 +143,12 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
             }
             
              .print-signature-container {
-                padding-top: 2rem;
+                padding-top: 1rem;
              }
 
              .print-signature-table {
                 width: 100%;
-                margin-top: 40px;
+                margin-top: 20px;
                 border-collapse: collapse;
                 page-break-inside: avoid;
             }
@@ -197,7 +197,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
             <CardContent className="space-y-8 pt-6 print-card-content">
                 
                 <p>
-                    Pada hari ini, <b className="capitalize">{electionDateInfo?.day}</b>, <span>tanggal</span> <b className="capitalize">{electionDateInfo?.dayWords}</b> <span>bulan</span> <b className="capitalize">{electionDateInfo?.month}</b> <span>tahun</span> <b className="capitalize">{electionDateInfo?.yearWords}</b>, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} dengan hasil sebagai berikut:
+                    Pada hari ini <b>{electionDateInfo?.day}</b>, <span>tanggal</span> <b className="capitalize">{electionDateInfo?.dayWords}</b> <span>bulan</span> <b className="capitalize">{electionDateInfo?.month}</b> <span>tahun</span> <b className="capitalize">{electionDateInfo?.yearWords}</b>, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} dengan hasil sebagai berikut:
                 </p>
 
                 <div>
