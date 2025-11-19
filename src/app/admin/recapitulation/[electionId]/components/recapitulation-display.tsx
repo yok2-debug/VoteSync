@@ -86,7 +86,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
        <style>
         {`
           @media print {
-            body * {
+            body, body * {
               visibility: hidden;
               background: transparent !important;
               color: #000 !important;
@@ -108,8 +108,9 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
             .no-print {
                 display: none;
             }
-            .print-card-header, .print-card-content {
+            .print-card, .print-card-header, .print-card-content, .print-table {
                 border: none !important;
+                background: #fff !important;
             }
              .print-signature-table {
                 width: 100%;
@@ -148,7 +149,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
         </Button>
       </div>
       <div id="print-section">
-        <Card className="shadow-none border-0 print:shadow-none print:border-0">
+        <Card className="shadow-none border-0 print-card">
             <CardHeader className="text-center space-y-2 border-b pb-4 print-card-header">
                 <h2 className="text-2xl font-bold tracking-tight">BERITA ACARA</h2>
                 <h3 className="text-xl font-semibold uppercase">HASIL PENGHITUNGAN SUARA PEMILIHAN</h3>
@@ -162,7 +163,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
 
                 <div>
                     <h3 className="text-lg font-semibold mb-2">A. Data Pemilih dan Penggunaan Hak Pilih</h3>
-                     <div className="rounded-md border">
+                     <div className="rounded-md border print-table">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -191,7 +192,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
                 
                 <div>
                     <h3 className="text-lg font-semibold mb-2">B. Rincian Perolehan Suara Kandidat</h3>
-                    <div className="rounded-md border">
+                    <div className="rounded-md border print-table">
                         <Table>
                             <TableHeader>
                                 <TableRow>
@@ -212,7 +213,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
                                     <TableCell colSpan={3} className="h-24 text-center">Tidak ada kandidat dalam pemilihan ini.</TableCell>
                                   </TableRow>
                                 )}
-                                <TableRow className="font-bold bg-muted/50">
+                                <TableRow className="font-bold bg-muted/50 print-table">
                                     <TableCell colSpan={2}>Total Seluruh Suara Sah</TableCell>
                                     <TableCell className="text-right">{totalVotesCast}</TableCell>
                                 </TableRow>
