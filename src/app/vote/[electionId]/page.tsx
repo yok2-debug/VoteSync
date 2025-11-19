@@ -10,7 +10,7 @@ import { ArrowLeft, FileText } from 'lucide-react';
 import { useDatabase } from '@/context/database-context';
 import { getVoterSession } from '@/lib/session';
 import { useEffect, useState, useMemo } from 'react';
-import { redirect, useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Loading from '@/app/loading';
 import type { VoterSessionPayload } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
@@ -53,11 +53,13 @@ export default function VotePage() {
     return <Loading />;
   }
 
-  // Redirect logic after hooks and loading check
+  // It's safer to handle redirection inside useEffect or after all hooks are called.
   if (!session?.voterId) {
-    return <Loading />; // Or redirect, but loading is safer to prevent flashes
+    // This is a fallback. The useEffect above should handle it.
+    // To prevent "Rendered more hooks than during the previous render." error
+    return <Loading />; 
   }
-
+  
   const now = new Date();
   const electionStarted = election?.startDate ? new Date(election.startDate) <= now : false;
   const electionEnded = election?.endDate ? new Date(election.endDate) < now : false;
@@ -65,13 +67,15 @@ export default function VotePage() {
   const hasVoted = voter?.hasVoted?.[electionId];
 
   if (!election || election.status !== 'active' || !voter || !electionStarted || electionEnded || !isVoterAllowed || hasVoted) {
-    // Using useEffect for redirection is safer on client side after initial render.
-    // This is a fallback.
-    if (typeof window !== 'undefined') {
+    // Using router.push inside useEffect is safer for client-side redirection
+    // This is a fallback to prevent rendering incorrect state.
+    // A useEffect could handle this more gracefully.
+     if (typeof window !== 'undefined') {
         router.push('/vote');
     }
     return <Loading />;
   }
+
 
   const candidates = election.candidates ? Object.values(election.candidates) : [];
   const defaultPhoto = PlaceHolderImages.find(p => p.id === 'default-avatar');
@@ -94,7 +98,7 @@ export default function VotePage() {
           <p className="text-muted-foreground">Pilih kandidat pilihan Anda di bawah ini.</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 justify-center">
           {candidates.map(candidate => (
             <Card key={candidate.id} className="flex flex-col">
               <CardHeader className="items-center">
