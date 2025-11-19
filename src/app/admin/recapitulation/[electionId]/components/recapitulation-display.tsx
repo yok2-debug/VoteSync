@@ -4,7 +4,8 @@ import type { Election, Voter, Category, CommitteeMember } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useMemo } from 'react';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
+import { id } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
@@ -35,19 +36,15 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
     window.print();
   };
   
-  const formatSchedule = (start?: string, end?: string) => {
-    if (!start || !end) return 'Not set';
-    const startDate = new Date(start);
-    const endDate = new Date(end);
-    const startFormat = format(startDate, 'd MMMM yyyy, HH:mm');
-    const endFormat = format(endDate, 'd MMMM yyyy, HH:mm');
-    return `${startFormat} - ${endFormat}`;
-  }
-  
-  const electionDay = election.endDate ? format(new Date(election.endDate), 'EEEE, d MMMM yyyy') : 'N/A';
-  const electionDuration = election.startDate && election.endDate 
-    ? formatDistanceToNow(new Date(election.startDate), { addSuffix: false }) 
-    : 'N/A';
+  const electionDayInfo = useMemo(() => {
+    if (!election.endDate) return { day: 'N/A', date: 'N/A' };
+    const date = new Date(election.endDate);
+    return {
+      day: format(date, 'EEEE', { locale: id }),
+      date: format(date, 'd MMMM yyyy', { locale: id })
+    }
+  }, [election.endDate]);
+
 
   return (
     <div className="space-y-6">
@@ -117,7 +114,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
             <CardContent className="space-y-8 pt-6">
                 
                 <p>
-                    Pada hari ini, {electionDay}, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} yang diselenggarakan selama {electionDuration} terhitung sejak {formatSchedule(election.startDate, election.endDate)}.
+                    Pada hari {electionDayInfo.day}, tanggal {electionDayInfo.date}, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} dengan hasil sebagai berikut:
                 </p>
 
                 <div>
