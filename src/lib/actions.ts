@@ -1,3 +1,4 @@
+
 'use server';
 
 import { getAdminCredentials, getVoterById, getCategories } from '@/lib/data';
@@ -323,7 +324,8 @@ export async function importVoters(data: any[]): Promise<{ importedCount: number
   for (const row of data) {
     const validation = importVoterSchema.safeParse(row);
     if (!validation.success) {
-      throw new Error(`Invalid data in CSV: ${validation.error.flatten().fieldErrors}`);
+      // This case should ideally be caught by the client-side validation, but is here as a safeguard.
+      throw new Error(`Invalid data in CSV: ${JSON.stringify(validation.error.flatten().fieldErrors)}`);
     }
 
     const { id, name, category, password } = validation.data;
@@ -331,19 +333,22 @@ export async function importVoters(data: any[]): Promise<{ importedCount: number
     if (existingVoterIds.has(id)) {
         throw new Error(`Voter with ID "${id}" already exists.`);
     }
+    
+    const normalizedCategory = normalizeCategory(category);
+    const categoryId = categoryNameMap.get(normalizedCategory);
 
-    const categoryId = categoryNameMap.get(normalizeCategory(category));
     if (!categoryId) {
         throw new Error(`Category "${category}" not found for voter "${name}".`);
     }
 
-    votersToImport[`voters/${id}`] = {
+    const voterData = {
       name,
       category: categoryId,
       password: password || Math.random().toString(36).substring(2, 8),
     };
-    
-    importedVoters.push({ id, name, category: categoryId, password: votersToImport[`voters/${id}`].password });
+
+    votersToImport[`voters/${id}`] = voterData;
+    importedVoters.push({ id, ...voterData });
   }
 
   if (Object.keys(votersToImport).length > 0) {

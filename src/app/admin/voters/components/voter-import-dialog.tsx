@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -45,7 +46,6 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
   
   useEffect(() => {
     async function validateData() {
-        // Filter out rows that are completely empty
         const filteredData = data.filter(row => row && typeof row === 'object' && Object.values(row).some(val => val !== null && val !== ''));
 
         if (!open || filteredData.length === 0) {
@@ -103,16 +103,15 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
 
   const handleConfirmImport = async () => {
     setIsSubmitting(true);
-    const dataToImport = validatedData.filter(row => row.isValid).map(row => {
-      const categoryId = categoryNameMap.get(normalizeCategory(row.data.category));
-      return { ...row.data, category: categoryId };
-    });
+    const dataToImport = validatedData
+      .filter(row => row.isValid)
+      .map(row => row.data);
     
     try {
         await onSave(dataToImport);
         onOpenChange(false);
     } catch(e) {
-        // Errors will be caught and toasted by the parent component
+        // Errors will be caught and toasted by the parent component (voter-table)
     } finally {
         setIsSubmitting(false);
     }
