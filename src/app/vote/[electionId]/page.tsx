@@ -49,12 +49,19 @@ export default function VotePage() {
   
   const isLoading = isDbLoading || isSessionLoading;
 
+  useEffect(() => {
+    if (!isLoading && (!election || !voter)) {
+        // Redirect if election or voter not found after loading
+        router.push('/vote');
+    }
+  }, [isLoading, election, voter, router]);
+
   if (isLoading) {
     return <Loading />;
   }
 
   // It's safer to handle redirection inside useEffect or after all hooks are called.
-  if (!session?.voterId) {
+  if (!session?.voterId || !election || !voter) {
     // This is a fallback. The useEffect above should handle it.
     // To prevent "Rendered more hooks than during the previous render." error
     return <Loading />; 
@@ -66,10 +73,7 @@ export default function VotePage() {
   const isVoterAllowed = category?.allowedElections?.includes(electionId);
   const hasVoted = voter?.hasVoted?.[electionId];
 
-  if (!election || election.status !== 'active' || !voter || !electionStarted || electionEnded || !isVoterAllowed || hasVoted) {
-    // Using router.push inside useEffect is safer for client-side redirection
-    // This is a fallback to prevent rendering incorrect state.
-    // A useEffect could handle this more gracefully.
+  if (election.status !== 'active' || !electionStarted || electionEnded || !isVoterAllowed || hasVoted) {
      if (typeof window !== 'undefined') {
         router.push('/vote');
     }
@@ -97,52 +101,53 @@ export default function VotePage() {
           <h1 className="text-3xl font-bold tracking-tight">{election.name}</h1>
           <p className="text-muted-foreground">Pilih kandidat pilihan Anda di bawah ini.</p>
         </div>
-
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 justify-center">
-          {candidates.map(candidate => (
-            <Card key={candidate.id} className="flex flex-col">
-              <CardHeader className="items-center">
-                 <Image
-                    src={candidate.photo || defaultPhoto?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
-                    alt={`Photo of ${candidate.name}`}
-                    width={150}
-                    height={150}
-                    className="rounded-full border-4 border-primary object-cover"
-                    data-ai-hint={defaultPhoto?.imageHint || 'person portrait'}
-                  />
-                <CardTitle className="pt-4">{candidate.name}</CardTitle>
-              </CardHeader>
-              <CardContent className="flex-grow flex flex-col justify-center items-center">
-                 <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="secondary">
-                        <FileText className="mr-2 h-4 w-4" />
-                        Lihat Visi & Misi
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-2xl">
-                      <DialogHeader>
-                        <DialogTitle>{candidate.name}</DialogTitle>
-                        <DialogDescription>
-                          Visi dan Misi Kandidat
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4 max-h-[60vh] overflow-y-auto p-1">
-                        <article className="prose dark:prose-invert max-w-none">
-                          <h3 className="font-semibold text-lg mb-2">Visi</h3>
-                          <ReactMarkdown>{candidate.vision || 'Tidak ada visi yang diberikan.'}</ReactMarkdown>
-                          <h3 className="font-semibold text-lg mt-4 mb-2">Misi</h3>
-                          <ReactMarkdown>{candidate.mission || 'Tidak ada misi yang diberikan.'}</ReactMarkdown>
-                        </article>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-              </CardContent>
-              <div className="p-6 pt-0">
-                <CandidateVoteForm electionId={election.id} candidate={candidate} voterId={session.voterId!} />
-              </div>
-            </Card>
-          ))}
+        <div className="flex justify-center">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {candidates.map(candidate => (
+                <Card key={candidate.id} className="flex flex-col">
+                <CardHeader className="items-center">
+                    <Image
+                        src={candidate.photo || defaultPhoto?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
+                        alt={`Photo of ${candidate.name}`}
+                        width={150}
+                        height={150}
+                        className="rounded-full border-4 border-primary object-cover"
+                        data-ai-hint={defaultPhoto?.imageHint || 'person portrait'}
+                    />
+                    <CardTitle className="pt-4">{candidate.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow flex flex-col justify-center items-center">
+                    <Dialog>
+                        <DialogTrigger asChild>
+                        <Button variant="secondary">
+                            <FileText className="mr-2 h-4 w-4" />
+                            Lihat Visi & Misi
+                        </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle>{candidate.name}</DialogTitle>
+                            <DialogDescription>
+                            Visi dan Misi Kandidat
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 max-h-[60vh] overflow-y-auto p-1">
+                            <article className="prose dark:prose-invert max-w-none">
+                            <h3 className="font-semibold text-lg mb-2">Visi</h3>
+                            <ReactMarkdown>{candidate.vision || 'Tidak ada visi yang diberikan.'}</ReactMarkdown>
+                            <h3 className="font-semibold text-lg mt-4 mb-2">Misi</h3>
+                            <ReactMarkdown>{candidate.mission || 'Tidak ada misi yang diberikan.'}</ReactMarkdown>
+                            </article>
+                        </div>
+                        </DialogContent>
+                    </Dialog>
+                </CardContent>
+                <div className="p-6 pt-0">
+                    <CandidateVoteForm electionId={election.id} candidate={candidate} voterId={session.voterId!} />
+                </div>
+                </Card>
+            ))}
+            </div>
         </div>
       </div>
     </main>
