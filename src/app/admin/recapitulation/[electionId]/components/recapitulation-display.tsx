@@ -1,6 +1,6 @@
 'use client';
 
-import type { Election, Voter, Category } from '@/lib/types';
+import type { Election, Voter, Category, CommitteeMember } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useMemo } from 'react';
@@ -137,6 +137,31 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
                         </Table>
                     </div>
                 </div>
+
+                {election.committee && election.committee.length > 0 && (
+                  <div>
+                    <Separator className="my-6" />
+                    <h3 className="text-lg font-semibold mb-4 text-center">Election Committee</h3>
+                     <div className="rounded-md border">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead>Role</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {election.committee.map((member, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell className="font-medium">{member.name}</TableCell>
+                                        <TableCell>{member.role}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                  </div>
+                )}
             </CardContent>
         </Card>
       </div>

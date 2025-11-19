@@ -2,7 +2,7 @@
 import { useForm, useFieldArray, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { Election, Candidate, Category } from '@/lib/types';
+import type { Election, Candidate, CommitteeMember } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,12 +26,17 @@ import { Trash2, PlusCircle, Loader2, CalendarIcon } from 'lucide-react';
 import { saveElection } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useState } from 'react';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format, setHours, setMinutes, getHours, getMinutes } from 'date-fns';
+
+const committeeMemberSchema = z.object({
+  name: z.string().min(1, 'Committee member name is required.'),
+  role: z.enum(['Ketua', 'Anggota']),
+});
 
 const candidateSchema = z.object({
   id: z.string().optional(),
@@ -49,6 +54,7 @@ const electionSchema = z.object({
   startDate: z.date().optional(),
   endDate: z.date().optional(),
   candidates: z.array(candidateSchema).min(2, 'At least two candidates are required.'),
+  committee: z.array(committeeMemberSchema).optional(),
 }).refine(data => {
     if (data.startDate && data.endDate) {
       return data.endDate > data.startDate;
@@ -78,12 +84,18 @@ export function ElectionForm({ election }: ElectionFormProps) {
       startDate: election.startDate ? new Date(election.startDate) : undefined,
       endDate: election.endDate ? new Date(election.endDate) : undefined,
       candidates: election.candidates ? Object.values(election.candidates) : [],
+      committee: election.committee || [],
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields: candidateFields, append: appendCandidate, remove: removeCandidate } = useFieldArray({
     control: form.control,
     name: 'candidates',
+  });
+
+  const { fields: committeeFields, append: appendCommittee, remove: removeCommittee } = useFieldArray({
+    control: form.control,
+    name: 'committee',
   });
 
   const onSubmit = async (data: ElectionFormData) => {
@@ -101,6 +113,8 @@ export function ElectionForm({ election }: ElectionFormProps) {
         formData.append('endDate', data.endDate.toISOString());
     }
     formData.append('candidates', JSON.stringify(data.candidates));
+    formData.append('committee', JSON.stringify(data.committee || []));
+
 
     try {
       const result = await saveElection(formData);
@@ -342,18 +356,81 @@ export function ElectionForm({ election }: ElectionFormProps) {
 
         <Card>
           <CardHeader>
+            <CardTitle>Election Committee</CardTitle>
+            <CardDescription>Manage the committee members for this election.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {committeeFields.map((field, index) => (
+              <div key={field.id} className="p-4 border rounded-lg relative space-y-4">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 text-destructive hover:bg-destructive/10"
+                  onClick={() => removeCommittee(index)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor={`committee.${index}.name`}>Member Name</Label>
+                    <Input
+                      id={`committee.${index}.name`}
+                      {...form.register(`committee.${index}.name`)}
+                    />
+                    {form.formState.errors.committee?.[index]?.name && (
+                      <p className="text-sm text-destructive">{form.formState.errors.committee?.[index]?.name?.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`committee.${index}.role`}>Role</Label>
+                    <Controller
+                      control={form.control}
+                      name={`committee.${index}.role`}
+                      render={({ field }) => (
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Ketua">Ketua</SelectItem>
+                            <SelectItem value="Anggota">Anggota</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                     {form.formState.errors.committee?.[index]?.role && (
+                      <p className="text-sm text-destructive">{form.formState.errors.committee?.[index]?.role?.message}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => appendCommittee({ name: '', role: 'Anggota' })}
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Committee Member
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>Candidates</CardTitle>
             <CardDescription>Manage the candidates for this election.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {fields.map((field, index) => (
+            {candidateFields.map((field, index) => (
               <div key={field.id} className="p-4 border rounded-lg relative space-y-4">
                  <Button
                   type="button"
                   variant="ghost"
                   size="icon"
                   className="absolute top-2 right-2 text-destructive hover:bg-destructive/10"
-                  onClick={() => remove(index)}
+                  onClick={() => removeCandidate(index)}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -400,7 +477,7 @@ export function ElectionForm({ election }: ElectionFormProps) {
             <Button
               type="button"
               variant="outline"
-              onClick={() => append({ id: `temp-${Date.now()}`, name: '', vision: '', mission: '', photo: '' })}
+              onClick={() => appendCandidate({ id: `temp-${Date.now()}`, name: '', vision: '', mission: '', photo: '' })}
             >
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Candidate

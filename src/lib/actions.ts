@@ -163,10 +163,11 @@ export async function saveElection(formData: FormData): Promise<{ savedElectionI
     id: electionId,
     name: formData.get('name') as string,
     description: formData.get('description') as string,
-    status: formData.get('status') as 'pending' | 'ongoing' | 'completed',
+    status: formData.get('status') as 'pending' | 'active',
     startDate: formData.get('startDate') as string | null,
     endDate: formData.get('endDate') as string | null,
     candidates: JSON.parse(formData.get('candidates') as string),
+    committee: JSON.parse(formData.get('committee') as string),
   };
   
   let savedElectionId = rawData.id;
@@ -176,14 +177,6 @@ export async function saveElection(formData: FormData): Promise<{ savedElectionI
     if (isNewElection) {
         const newElectionRef = push(ref(db, `elections`));
         savedElectionId = newElectionRef.key!;
-    }
-    
-    let existingCandidates: Record<string, any> = {};
-    if (!isNewElection) {
-        const electionSnapshot = await get(ref(db, `elections/${savedElectionId}/candidates`));
-        if (electionSnapshot.exists()) {
-            existingCandidates = electionSnapshot.val();
-        }
     }
     
     const candidatesObject = rawData.candidates.reduce((acc: any, candidate: any) => {
@@ -201,6 +194,7 @@ export async function saveElection(formData: FormData): Promise<{ savedElectionI
         description: rawData.description,
         status: rawData.status,
         candidates: candidatesObject,
+        committee: rawData.committee || [],
     };
 
     if (rawData.startDate) {
@@ -210,7 +204,13 @@ export async function saveElection(formData: FormData): Promise<{ savedElectionI
         electionData.endDate = rawData.endDate;
     }
     
-    await set(ref(db, `elections/${savedElectionId}`), electionData);
+    const electionSnapshot = await get(ref(db, `elections/${savedElectionId}`));
+    const existingData = electionSnapshot.val() || {};
+
+    await set(ref(db, `elections/${savedElectionId}`), {
+        ...existingData,
+        ...electionData
+    });
     
     revalidatePath('/admin/elections');
     revalidatePath(`/admin/elections/${savedElectionId}`);
