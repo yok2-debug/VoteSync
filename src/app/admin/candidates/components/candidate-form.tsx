@@ -1,12 +1,12 @@
 'use client';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from '@/components/ui/dialog';
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,7 @@ import { saveCandidate } from '@/lib/actions';
 import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { WysiwygEditor } from '@/components/ui/wysiwyg-editor';
+import { useRouter } from 'next/navigation';
 
 const candidateSchema = z.object({
   id: z.string().optional(),
@@ -32,24 +33,19 @@ const candidateSchema = z.object({
 
 type CandidateFormData = z.infer<typeof candidateSchema>;
 
-interface CandidateFormDialogProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  initialData: { candidate: Candidate, electionId: string } | null;
-  onSave: () => void;
+interface CandidateFormProps {
+  initialData: { candidate: Partial<Candidate>, electionId?: string } | null;
   allElections: Election[];
 }
 
-export function CandidateFormDialog({
-  open,
-  onOpenChange,
+export function CandidateForm({
   initialData,
-  onSave,
   allElections,
-}: CandidateFormDialogProps) {
+}: CandidateFormProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const isEditing = !!initialData;
+  const isEditing = !!initialData?.candidate?.id;
 
   const {
     register,
@@ -62,27 +58,25 @@ export function CandidateFormDialog({
   });
 
   useEffect(() => {
-    if (open) {
-      if (initialData) {
-        reset({
-            id: initialData.candidate.id,
-            electionId: initialData.electionId,
-            name: initialData.candidate.name,
-            vision: initialData.candidate.vision || '',
-            mission: initialData.candidate.mission || '',
-            photo: initialData.candidate.photo || '',
-        });
-      } else {
-        reset({ id: `new-${Date.now()}`, electionId: '', name: '', vision: '', mission: '', photo: '' });
-      }
+    if (initialData) {
+      reset({
+          id: initialData.candidate.id,
+          electionId: initialData.electionId || '',
+          name: initialData.candidate.name || '',
+          vision: initialData.candidate.vision || '',
+          mission: initialData.candidate.mission || '',
+          photo: initialData.candidate.photo || '',
+      });
+    } else {
+      reset({ id: `new-${Date.now()}`, electionId: '', name: '', vision: '', mission: '', photo: '' });
     }
-  }, [initialData, reset, open]);
+  }, [initialData, reset]);
 
   const onSubmit: SubmitHandler<CandidateFormData> = async (data) => {
     setIsSubmitting(true);
     try {
-      const candidateToSave = {
-        id: data.id!,
+      const candidateToSave: Candidate = {
+        id: data.id || `new-${Date.now()}`,
         name: data.name,
         vision: data.vision,
         mission: data.mission,
@@ -96,8 +90,9 @@ export function CandidateFormDialog({
         description: `"${data.name}" has been successfully saved.`,
       });
       
-      onSave();
-      onOpenChange(false);
+      router.push('/admin/candidates');
+      router.refresh();
+
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -110,15 +105,15 @@ export function CandidateFormDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Candidate' : 'Add New Candidate'}</DialogTitle>
-          <DialogDescription>
-            {isEditing ? 'Update the details for this candidate.' : 'Enter the details for the new candidate.'}
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} id="candidate-form" className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <Card>
+          <CardHeader>
+              <CardTitle>{isEditing ? 'Edit Candidate' : 'Add New Candidate'}</CardTitle>
+              <CardDescription>
+                  {isEditing ? 'Update the details for this candidate.' : 'Enter the details for the new candidate.'}
+              </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
            <div className="space-y-2">
               <Label htmlFor="electionId">Election</Label>
                <Controller
@@ -182,17 +177,17 @@ export function CandidateFormDialog({
                 <Label htmlFor="photo">Photo URL (Optional)</Label>
                 <Input id="photo" {...register('photo')} placeholder="https://example.com/photo.jpg" />
             </div>
-        </form>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+        </CardContent>
+        <CardFooter className="flex justify-end gap-2">
+          <Button variant="outline" type="button" onClick={() => router.push('/admin/candidates')} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button type="submit" form="candidate-form" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Saving...' : 'Save'}
+            {isSubmitting ? 'Saving...' : 'Save Candidate'}
           </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </CardFooter>
+      </Card>
+    </form>
   );
 }

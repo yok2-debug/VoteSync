@@ -32,8 +32,8 @@ import { useToast } from '@/hooks/use-toast';
 import { deleteCandidate } from '@/lib/actions';
 import Image from 'next/image';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CandidateFormDialog } from './candidate-form-dialog';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useRouter } from 'next/navigation';
 
 type CandidateTableProps = {
   allElections: Election[];
@@ -42,11 +42,11 @@ type CandidateTableProps = {
 export function CandidateTable({ allElections }: CandidateTableProps) {
   const [filter, setFilter] = useState('');
   const [electionFilter, setElectionFilter] = useState('all');
-  const [showFormDialog, setShowFormDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<{ candidate: Candidate, electionId: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
   
   const allCandidates = useMemo(() => {
     return allElections.flatMap(election => 
@@ -65,13 +65,11 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
     ), [allCandidates, filter, electionFilter]);
 
   const handleAdd = () => {
-    setSelectedCandidate(null);
-    setShowFormDialog(true);
+    router.push('/admin/candidates/new');
   };
   
   const handleEdit = (candidate: Candidate, electionId: string) => {
-    setSelectedCandidate({ candidate, electionId });
-    setShowFormDialog(true);
+    router.push(`/admin/candidates/${electionId}/${candidate.id}`);
   };
 
   const handleDelete = (candidate: Candidate, electionId: string) => {
@@ -97,11 +95,6 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
       setShowDeleteDialog(false);
       setSelectedCandidate(null);
     }
-  };
-
-  const onFormSave = () => {
-    // The context handles state updates, so we don't need to manually update the local state.
-    // The dialog will close itself on successful save.
   };
 
   const defaultPhoto = PlaceHolderImages.find(p => p.id === 'default-avatar');
@@ -193,14 +186,6 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
           </TableBody>
         </Table>
       </div>
-
-       <CandidateFormDialog
-        open={showFormDialog}
-        onOpenChange={setShowFormDialog}
-        initialData={selectedCandidate}
-        onSave={onFormSave}
-        allElections={allElections}
-      />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
