@@ -57,7 +57,7 @@ export default function PrintCardsPage() {
           }
         }
       `}</style>
-      <div className="p-4 bg-gray-100 min-h-screen">
+      <div className="p-4 min-h-screen">
         <div className="grid grid-cols-4 gap-2">
           {voters.map(voter => (
             <VoterCard key={voter.id} voter={voter} />
