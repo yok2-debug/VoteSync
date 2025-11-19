@@ -110,7 +110,16 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
             .no-print {
                 display: none;
             }
-            .print-card, .print-card-header, .print-card-content {
+            .print-card {
+                border: none !important;
+                background: #fff !important;
+            }
+            .print-card-header {
+                border: none !important;
+                background: #fff !important;
+                padding-top: 0 !important;
+            }
+            .print-card-content {
                 border: none !important;
                 background: #fff !important;
             }
