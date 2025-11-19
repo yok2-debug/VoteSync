@@ -67,7 +67,7 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
       return;
     }
     const url = `/admin/voters/print?voterIds=${voterIds.join(',')}`;
-    window.open(url, '_blank');
+    window.location.href = url;
   };
 
   const handleExportTemplate = () => {
