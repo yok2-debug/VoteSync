@@ -170,10 +170,8 @@ export async function saveElection(formData: FormData) {
     
     const candidatesObject = rawData.candidates.reduce((acc: any, candidate: any) => {
         let candidateId = candidate.id || '';
-        if (!candidateId.startsWith('temp-')) {
-           candidateId = push(ref(db, `elections/${id}/candidates`)).key;
-        }
-        if (candidate.id && candidate.id.startsWith('temp-')) {
+        // If it's a new candidate (temp id) or has no id, generate a new one.
+        if (candidate.id?.startsWith('temp-') || !candidate.id) {
           candidateId = push(ref(db, `elections/${id}/candidates`)).key;
         }
 
@@ -193,9 +191,9 @@ export async function saveElection(formData: FormData) {
   } catch (error) {
     console.error('Error saving election:', error);
     if (error instanceof Error) {
-      return { success: false, error: error.message };
+      throw new Error(error.message);
     }
-    return { success: false, error: 'An unknown error occurred.' };
+    throw new Error('An unknown error occurred while saving the election.');
   }
 
   revalidatePath('/admin/elections');
