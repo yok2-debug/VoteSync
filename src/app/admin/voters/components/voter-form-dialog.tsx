@@ -16,7 +16,6 @@ import * as z from 'zod';
 import { useEffect, useState } from 'react';
 import type { Voter, Category } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { saveVoter } from '@/lib/actions';
 import { Loader2 } from 'lucide-react';
 import {
   Select,
@@ -50,7 +49,6 @@ export function VoterFormDialog({
   categories,
   onSave,
 }: VoterFormDialogProps) {
-  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditing = !!voter;
 
@@ -91,24 +89,12 @@ export function VoterFormDialog({
       const voterToSave = {
         ...data,
         password: passwordToSave,
-        isEditing,
       };
       
-      const saved = await saveVoter(voterToSave);
-
-      toast({
-        title: `Voter ${isEditing ? 'updated' : 'created'}`,
-        description: `"${data.name}" has been successfully saved.`,
-      });
-      
-      onSave({ ...saved, isNew: !isEditing });
+      onSave({ ...voterToSave, isNew: !isEditing });
       onOpenChange(false);
     } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error saving voter',
-        description: error instanceof Error ? error.message : 'An unknown error occurred.',
-      });
+       // Error is handled by the parent component's onSave handler
     } finally {
       setIsSubmitting(false);
     }

@@ -30,19 +30,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { deleteVoter, importVoters } from '@/lib/actions';
+import { deleteVoter, importVoters, saveVoter } from '@/lib/actions';
 import { ResetPasswordDialog } from './reset-password-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Papa from 'papaparse';
 import { VoterImportDialog } from './voter-import-dialog';
 
 type VoterTableProps = {
-  initialVoters: Voter[];
+  voters: Voter[];
   categories: Category[];
 };
 
-export function VoterTable({ initialVoters, categories }: VoterTableProps) {
-  const [voters, setVoters] = useState<Voter[]>(initialVoters);
+export function VoterTable({ voters, categories }: VoterTableProps) {
   const [filter, setFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [showFormDialog, setShowFormDialog] = useState(false);
@@ -129,10 +128,7 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
         title: 'Import Successful',
         description: `${result.importedCount} voters were successfully imported.`,
       });
-      // Refresh voter list
-      const updatedVoters = [...voters, ...result.importedVoters];
-      setVoters(updatedVoters);
-      
+      // The DatabaseProvider will automatically refresh the data
     } catch (error) {
        toast({
         variant: 'destructive',
@@ -169,7 +165,6 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
     setIsDeleting(true);
     try {
       await deleteVoter(selectedVoter.id);
-      setVoters(voters.filter((v) => v.id !== selectedVoter.id));
       toast({ title: 'Voter deleted successfully.' });
     } catch (error) {
        toast({
@@ -184,11 +179,20 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
     }
   };
   
-  const onFormSave = (savedVoter: Voter & { isNew?: boolean }) => {
-    if (savedVoter.isNew) {
-      setVoters([...voters, savedVoter]);
-    } else {
-      setVoters(voters.map((v) => v.id === savedVoter.id ? savedVoter : v));
+  const onFormSave = async (voterToSave: Voter & { isNew?: boolean }) => {
+    try {
+      const isEditing = !voterToSave.isNew;
+      await saveVoter({ ...voterToSave, isEditing });
+      toast({
+        title: `Voter ${isEditing ? 'updated' : 'created'}`,
+        description: `"${voterToSave.name}" has been successfully saved.`,
+      });
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'Error saving voter',
+        description: error instanceof Error ? error.message : 'An unknown error occurred.',
+      });
     }
   };
 
