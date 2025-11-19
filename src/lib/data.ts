@@ -18,7 +18,7 @@ export async function getVoterById(voterId: string): Promise<Voter | null> {
   try {
     const snapshot = await get(ref(db, `voters/${voterId}`));
     if (snapshot.exists()) {
-        return { id: snapshot.key, ...snapshot.val() };
+        return { id: snapshot.key!, ...snapshot.val() };
     }
     return null;
   } catch (error) {

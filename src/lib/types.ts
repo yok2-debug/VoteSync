@@ -4,7 +4,8 @@ export interface Election {
   description: string;
   status: 'pending' | 'ongoing' | 'completed';
   candidates: Record<string, Candidate>;
-  committee: CommitteeMember[];
+  committee?: CommitteeMember[];
+  voters?: Voter[];
   votes?: Record<string, string>; // { [voterId]: candidateId }
   results?: Record<string, number>; // { [candidateId]: voteCount }
 }
@@ -12,9 +13,9 @@ export interface Election {
 export interface Candidate {
   id: string;
   name: string;
-  photo: string;
-  vision: string;
-  mission: string;
+  photo?: string;
+  vision?: string;
+  mission?: string;
 }
 
 export interface CommitteeMember {

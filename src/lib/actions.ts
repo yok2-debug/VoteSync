@@ -1,13 +1,13 @@
 'use server';
 
-import { getAdminCredentials, getVoterById, getElections, getCategories as getAllCategories } from '@/lib/data';
+import { getAdminCredentials, getVoterById, getElections, getCategories as getAllCategories, getVoters } from '@/lib/data';
 import { createSession, deleteSession } from '@/lib/session';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import * as z from 'zod';
 import { db } from '@/lib/firebase';
 import { ref, remove, get, child, update, set, push } from 'firebase/database';
-import type { Category } from './types';
+import type { Category, Election, Voter } from './types';
 
 const voterLoginSchema = z.object({
   voterId: z.string(),
@@ -130,20 +130,10 @@ export async function saveCategory(category: { id?: string; name: string }): Pro
 
 export async function deleteCategory(categoryId: string): Promise<void> {
     try {
-      // First, check if any voters are using this category
-      const allElections = await getElections();
-      const isCategoryInUse = allElections.some(election => 
-        election.voters?.some((voter: Voter) => voter.category === categoryId)
-      );
+      const allVoters = await getVoters();
+      const isCategoryInUse = allVoters.some(voter => voter.category === categoryId);
   
       if (isCategoryInUse) {
-        throw new Error('Cannot delete category. It is currently assigned to one or more voters in an election.');
-      }
-      
-      const allCategories = await getAllCategories();
-      const isCategoryInUseByVoter = allCategories.some(category => category.id === categoryId);
-
-      if(isCategoryInUseByVoter) {
         throw new Error('Cannot delete category. It is currently assigned to one or more voters.');
       }
   
@@ -155,5 +145,70 @@ export async function deleteCategory(categoryId: string): Promise<void> {
         throw error;
       }
       throw new Error('Could not delete category. Please try again.');
+    }
+}
+
+
+// Election Actions
+export async function saveElection(formData: FormData) {
+  const electionId = formData.get('id') as string;
+  
+  const rawData = {
+    id: electionId,
+    name: formData.get('name') as string,
+    description: formData.get('description') as string,
+    status: formData.get('status') as 'pending' | 'ongoing' | 'completed',
+    candidates: JSON.parse(formData.get('candidates') as string),
+  };
+  
+  try {
+    let id = rawData.id;
+    if (id === 'new') {
+        const newElectionRef = push(ref(db, `elections`));
+        id = newElectionRef.key!;
+    }
+    
+    const candidatesObject = rawData.candidates.reduce((acc: any, candidate: any) => {
+        let candidateId = candidate.id || '';
+        if (!candidateId.startsWith('temp-')) {
+           candidateId = push(ref(db, `elections/${id}/candidates`)).key;
+        }
+        if (candidate.id && candidate.id.startsWith('temp-')) {
+          candidateId = push(ref(db, `elections/${id}/candidates`)).key;
+        }
+
+        acc[candidateId] = { ...candidate, id: candidateId };
+        return acc;
+    }, {});
+
+    const electionData = {
+        name: rawData.name,
+        description: rawData.description,
+        status: rawData.status,
+        candidates: candidatesObject,
+    };
+    
+    await set(ref(db, `elections/${id}`), electionData);
+
+  } catch (error) {
+    console.error('Error saving election:', error);
+    if (error instanceof Error) {
+      return { success: false, error: error.message };
+    }
+    return { success: false, error: 'An unknown error occurred.' };
+  }
+
+  revalidatePath('/admin/elections');
+  revalidatePath(`/admin/elections/${electionId}`);
+  redirect('/admin/elections');
+}
+
+export async function deleteElection(electionId: string): Promise<void> {
+    try {
+        await remove(ref(db, `elections/${electionId}`));
+        revalidatePath('/admin/elections');
+    } catch (error) {
+        console.error('Error deleting election:', error);
+        throw new Error('Could not delete election. Please try again.');
     }
 }

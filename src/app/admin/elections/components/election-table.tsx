@@ -16,9 +16,22 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { useRouter } from 'next/navigation';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { deleteElection } from '@/lib/actions';
 
 type ElectionTableProps = {
   initialElections: Election[];
@@ -27,6 +40,11 @@ type ElectionTableProps = {
 export function ElectionTable({ initialElections }: ElectionTableProps) {
   const [elections, setElections] = useState<Election[]>(initialElections);
   const [filter, setFilter] = useState('');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedElection, setSelectedElection] = useState<Election | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
+  const { toast } = useToast();
 
   const filteredElections = elections.filter((election) =>
     election.name.toLowerCase().includes(filter.toLowerCase())
@@ -44,6 +62,39 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
         return <Badge>{status}</Badge>;
     }
   };
+  
+  const handleAdd = () => {
+    router.push('/admin/elections/new');
+  };
+
+  const handleEdit = (election: Election) => {
+    router.push(`/admin/elections/${election.id}`);
+  };
+
+  const handleDelete = (election: Election) => {
+    setSelectedElection(election);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedElection) return;
+    setIsDeleting(true);
+    try {
+      await deleteElection(selectedElection.id);
+      setElections(elections.filter((e) => e.id !== selectedElection.id));
+      toast({ title: 'Election deleted successfully.' });
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'Error deleting election',
+        description: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+      setSelectedElection(null);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -54,7 +105,7 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
           onChange={(e) => setFilter(e.target.value)}
           className="max-w-sm"
         />
-        <Button onClick={() => alert('Add election functionality not implemented yet.')}>
+        <Button onClick={handleAdd}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Election
         </Button>
@@ -66,7 +117,7 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
               <TableHead>Name</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Candidates</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead className="w-[100px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -76,7 +127,7 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
                   <TableCell className="font-medium">{election.name}</TableCell>
                   <TableCell>{getStatusBadge(election.status)}</TableCell>
                   <TableCell>{election.candidates ? Object.keys(election.candidates).length : 0}</TableCell>
-                  <TableCell>
+                  <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
@@ -85,8 +136,12 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => alert('Edit functionality not implemented yet.')}>Edit</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600" onClick={() => alert('Delete functionality not implemented yet.')}>
+                        <DropdownMenuItem onClick={() => handleEdit(election)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(election)}>
+                          <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -104,6 +159,25 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
           </TableBody>
         </Table>
       </div>
+
+       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the election
+              "{selectedElection?.name}" and all of its associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
+              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
