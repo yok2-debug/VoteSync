@@ -92,7 +92,6 @@ export function ElectionForm({ election, allCategories }: ElectionFormProps) {
         description: `The election "${data.name}" has been saved successfully.`,
       });
       router.push('/admin/elections');
-      router.refresh();
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -161,31 +160,40 @@ export function ElectionForm({ election, allCategories }: ElectionFormProps) {
                 <FormField
                   control={form.control}
                   name="allowedCategories"
-                  render={({ field }) => (
+                  render={() => (
                     <FormItem className="space-y-3">
                       {allCategories.map((item) => (
-                        <FormItem
+                        <FormField
                           key={item.id}
-                          className="flex flex-row items-start space-x-3 space-y-0"
-                        >
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.includes(item.id)}
-                              onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([...(field.value || []), item.id])
-                                  : field.onChange(
-                                      field.value?.filter(
-                                        (value) => value !== item.id
-                                      )
-                                    );
-                              }}
-                            />
-                          </FormControl>
-                          <FormLabel className="font-normal">
-                            {item.name}
-                          </FormLabel>
-                        </FormItem>
+                          control={form.control}
+                          name="allowedCategories"
+                          render={({ field }) => {
+                            return (
+                              <FormItem
+                                key={item.id}
+                                className="flex flex-row items-start space-x-3 space-y-0"
+                              >
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value?.includes(item.id)}
+                                    onCheckedChange={(checked) => {
+                                      return checked
+                                        ? field.onChange([...field.value, item.id])
+                                        : field.onChange(
+                                            field.value?.filter(
+                                              (value) => value !== item.id
+                                            )
+                                          )
+                                    }}
+                                  />
+                                </FormControl>
+                                <FormLabel className="font-normal">
+                                  {item.name}
+                                </FormLabel>
+                              </FormItem>
+                            )
+                          }}
+                        />
                       ))}
                       <FormMessage />
                     </FormItem>

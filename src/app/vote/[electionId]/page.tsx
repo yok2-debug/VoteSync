@@ -16,7 +16,7 @@ type VotePageProps = {
 export default async function VotePage({ params }: VotePageProps) {
   const session = await getSession();
   if (!session?.voterId) {
-    redirect('/vote');
+    redirect('/');
   }
 
   const [election, voter] = await Promise.all([
@@ -29,7 +29,8 @@ export default async function VotePage({ params }: VotePageProps) {
   }
 
   // Check if voter category is allowed
-  if (!election.allowedCategories?.includes(voter.category)) {
+  if (!Array.isArray(election.allowedCategories) || !election.allowedCategories.includes(voter.category)) {
+    // Redirect if category not allowed
     redirect('/vote');
   }
   

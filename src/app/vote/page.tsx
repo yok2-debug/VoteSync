@@ -24,12 +24,14 @@ export default async function VoterDashboardPage() {
   const voter: Voter | null = voterSnapshot.exists() ? voterSnapshot.val() : null;
 
   if (!voter) {
+    // This might happen if the voter is deleted while logged in.
     redirect('/');
   }
 
   const ongoingElections = elections.filter(e => {
     const isOngoing = e.status === 'ongoing';
-    const isAllowed = e.allowedCategories?.includes(voter.category);
+    // Ensure allowedCategories is an array before checking
+    const isAllowed = Array.isArray(e.allowedCategories) && e.allowedCategories.includes(voter.category);
     return isOngoing && isAllowed;
   });
 
