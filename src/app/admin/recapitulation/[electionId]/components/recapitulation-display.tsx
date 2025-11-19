@@ -117,9 +117,12 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
                 color: #000 !important;
                 border-collapse: collapse !important;
             }
-            .print-table th, .print-table td, .print-table tr {
+            .print-table th, .print-table td {
                 border: 1px solid #000 !important;
                 color: #000 !important;
+            }
+            .print-table tr {
+                border: none !important;
             }
             .print-table thead {
                 background-color: #f2f2f2 !important;
@@ -137,6 +140,9 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
                 border: 1px solid #000;
                 text-align: left;
                 vertical-align: middle;
+            }
+            .print-signature-table tr {
+                border: none !important;
             }
             .print-signature-table .no-col { width: 5%; text-align: center; }
             .print-signature-table .name-col { width: 30%; }
@@ -274,5 +280,3 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
     </div>
   );
 }
-
-    
