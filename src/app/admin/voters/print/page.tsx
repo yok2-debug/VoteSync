@@ -73,7 +73,7 @@ function PrintCardsPageContent() {
           .print-container {
              background-color: #fff !important;
           }
-          .no-print {
+          .no-print, [class*="loading"] {
             display: none !important;
           }
            * {
