@@ -48,16 +48,20 @@ export default function PrintCardsPage() {
             size: A4;
             margin: 1cm;
           }
-          body {
+          body, .print-container {
+            background-color: transparent !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
           .no-print {
             display: none !important;
           }
+           * {
+            box-shadow: none !important;
+          }
         }
       `}</style>
-      <div className="p-4 min-h-screen">
+      <div className="p-4 min-h-screen print-container">
         <div className="grid grid-cols-4 gap-2">
           {voters.map(voter => (
             <VoterCard key={voter.id} voter={voter} />
