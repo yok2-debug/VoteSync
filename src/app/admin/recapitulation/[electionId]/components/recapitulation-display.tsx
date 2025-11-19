@@ -84,9 +84,10 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
                 text-align: left;
                 vertical-align: middle;
             }
+            .print-signature-table .no-col { width: 5%; text-align: center; }
             .print-signature-table .name-col { width: 30%; }
             .print-signature-table .role-col { width: 25%; }
-            .print-signature-table .signature-col { width: 45%; }
+            .print-signature-table .signature-col { width: 40%; }
             .print-signature-table .signature-box {
                 height: 50px;
                 position: relative;
@@ -190,6 +191,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
                      <table className="print-signature-table">
                         <thead>
                             <tr>
+                                <th className="no-col">No.</th>
                                 <th className="name-col">Nama</th>
                                 <th className="role-col">Jabatan</th>
                                 <th className="signature-col">Tanda Tangan</th>
@@ -198,6 +200,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
                          <tbody>
                             {election.committee.map((member, index) => (
                                 <tr key={`committee-member-${index}`}>
+                                    <td className="text-center">{index + 1}</td>
                                     <td>{member.name}</td>
                                     <td>{member.role}</td>
                                     <td>
