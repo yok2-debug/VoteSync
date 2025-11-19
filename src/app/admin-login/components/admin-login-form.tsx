@@ -20,25 +20,25 @@ import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-const voterLoginSchema = z.object({
-  voterId: z.string().min(1, { message: 'Voter ID is required.' }),
+const adminLoginSchema = z.object({
+  username: z.string().min(1, { message: 'Username is required.' }),
   password: z.string().min(1, { message: 'Password is required.' }),
 });
 
-export function LoginForm() {
+export function AdminLoginForm() {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const form = useForm<z.infer<typeof voterLoginSchema>>({
-    resolver: zodResolver(voterLoginSchema),
-    defaultValues: { voterId: '', password: '' },
+  const form = useForm<z.infer<typeof adminLoginSchema>>({
+    resolver: zodResolver(adminLoginSchema),
+    defaultValues: { username: 'admin', password: '' },
   });
 
-  async function handleVoterLogin(values: z.infer<typeof voterLoginSchema>) {
+  async function handleAdminLogin(values: z.infer<typeof adminLoginSchema>) {
     setIsSubmitting(true);
     try {
-      const result = await login(values, 'voter');
+      const result = await login(values, 'admin');
       if (result.success) {
         toast({
           title: 'Login Successful',
@@ -62,15 +62,15 @@ export function LoginForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleVoterLogin)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleAdminLogin)} className="space-y-4">
         <FormField
           control={form.control}
-          name="voterId"
+          name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Voter ID</FormLabel>
+              <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="Your Voter ID" {...field} />
+                <Input placeholder="admin" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -83,7 +83,7 @@ export function LoginForm() {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="Your Password" {...field} />
+                <Input type="password" placeholder="••••••••" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -91,7 +91,7 @@ export function LoginForm() {
         />
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Login
+          Login as Admin
         </Button>
       </form>
     </Form>
