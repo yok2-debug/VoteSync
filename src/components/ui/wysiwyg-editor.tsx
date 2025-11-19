@@ -1,7 +1,8 @@
 'use client';
 import 'quill/dist/quill.snow.css';
-import { useMemo } from 'react';
 import dynamic from 'next/dynamic';
+
+const ReactQuill = dynamic(() => import('react-quilljs'), { ssr: false });
 
 interface WysiwygEditorProps {
   value: string;
@@ -11,9 +12,6 @@ interface WysiwygEditorProps {
 }
 
 export function WysiwygEditor({ value, onChange, placeholder, className }: WysiwygEditorProps) {
-
-  // Dynamically import ReactQuill to ensure it only runs on the client-side.
-  const { ReactQuill } = useMemo(() => dynamic(() => import('react-quilljs'), { ssr: false }), []);
   
   const modules = {
     toolbar: [
