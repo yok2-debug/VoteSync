@@ -5,6 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { CandidateVoteForm } from './components/candidate-vote-form';
+import { VoterLogoutButton } from '../components/voter-logout-button';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 
 
 type VotePageProps = {
@@ -52,6 +56,16 @@ export default async function VotePage({ params }: VotePageProps) {
   return (
     <main className="flex min-h-screen flex-col items-center bg-background p-4 sm:p-8">
       <div className="w-full max-w-6xl space-y-8">
+        <header className="flex w-full items-center justify-between">
+          <Button asChild variant="outline">
+            <Link href="/vote">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Kembali
+            </Link>
+          </Button>
+          <VoterLogoutButton />
+        </header>
+
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight">{election.name}</h1>
           <p className="text-muted-foreground">Select your chosen candidate below.</p>
