@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import type { Voter, Category } from '@/lib/types';
 import {
   Table,
@@ -57,12 +57,12 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
 
   const categoryMap = new Map(categories.map((c) => [c.id, c.name]));
 
-  const filteredVoters = voters.filter(
+  const filteredVoters = useMemo(() => voters.filter(
     (voter) =>
       (voter.name.toLowerCase().includes(filter.toLowerCase()) ||
       voter.id.toLowerCase().includes(filter.toLowerCase())) &&
       (categoryFilter === 'all' || voter.category === categoryFilter)
-  );
+  ), [voters, filter, categoryFilter]);
 
   const handlePrint = () => {
     const voterIds = filteredVoters.map(v => v.id);
@@ -104,7 +104,7 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
         header: true,
         skipEmptyLines: true,
         complete: (results) => {
-          setImportedData(results.data);
+          setImportedData(results.data.filter(row => Object.values(row).some(val => val !== '' && val !== null)));
           setShowImportDialog(true);
         },
         error: (error: any) => {
@@ -202,8 +202,8 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
           className="hidden"
           accept=".csv"
         />
-      <div className="flex justify-between items-center gap-2">
-        <div className="flex gap-2">
+      <div className="flex justify-between items-center gap-2 flex-wrap">
+        <form className="flex gap-2">
            <Input
             placeholder="Filter by name or ID..."
             value={filter}
@@ -223,9 +223,9 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </form>
         <div className="flex gap-2 flex-wrap">
-           <Button variant="outline" onClick={handlePrint}>
+           <Button variant="outline" onClick={handlePrint} type="button">
               <Printer className="mr-2 h-4 w-4" />
               Print Cards
             </Button>
