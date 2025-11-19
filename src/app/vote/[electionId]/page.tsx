@@ -120,22 +120,12 @@ export default function VotePage() {
                         </DialogDescription>
                       </DialogHeader>
                       <div className="space-y-4 max-h-[60vh] overflow-y-auto p-1">
-                        <div>
+                        <article className="prose dark:prose-invert max-w-none">
                           <h3 className="font-semibold text-lg mb-2">Visi</h3>
-                           <div
-                              className="prose prose-sm dark:prose-invert max-w-none"
-                            >
-                             <ReactMarkdown>{candidate.vision || 'Tidak ada visi yang diberikan.'}</ReactMarkdown>
-                            </div>
-                        </div>
-                        <div>
+                          <ReactMarkdown>{candidate.vision || 'Tidak ada visi yang diberikan.'}</ReactMarkdown>
                           <h3 className="font-semibold text-lg mt-4 mb-2">Misi</h3>
-                           <div
-                              className="prose prose-sm dark:prose-invert max-w-none"
-                            >
-                              <ReactMarkdown>{candidate.mission || 'Tidak ada misi yang diberikan.'}</ReactMarkdown>
-                            </div>
-                        </div>
+                          <ReactMarkdown>{candidate.mission || 'Tidak ada misi yang diberikan.'}</ReactMarkdown>
+                        </article>
                       </div>
                     </DialogContent>
                   </Dialog>
