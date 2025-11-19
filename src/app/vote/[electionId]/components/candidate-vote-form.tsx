@@ -13,13 +13,12 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Vote } from 'lucide-react';
+import { Vote, Loader2 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { ref, runTransaction } from 'firebase/database';
 import { useRouter } from 'next/navigation';
 import type { Candidate } from '@/lib/types';
 import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
 
 interface CandidateVoteFormProps {
   electionId: string;
@@ -35,29 +34,26 @@ export function CandidateVoteForm({ electionId, candidate, voterId }: CandidateV
   async function handleVote() {
     setIsSubmitting(true);
     const electionRef = ref(db, `elections/${electionId}`);
-  
+    const voterRef = ref(db, `voters/${voterId}`);
+
     try {
-      const { committed, snapshot } = await runTransaction(electionRef, (election) => {
+      // Transaction on election data
+      await runTransaction(electionRef, (election) => {
         if (election) {
-          // Double-check hasVoted status inside transaction for safety
-          const voterHasVotedPath = `voters/${voterId}/hasVoted/${electionId}`;
-          // This read is not transactional but is a good safeguard
-          if (election.voters?.[voterId]?.hasVoted?.[electionId]) {
-            return; // Abort transaction
+          // Initialize paths if they don't exist
+          if (!election.votes) election.votes = {};
+          if (!election.results) election.results = {};
+
+          // Check if the voter has already voted in this specific election's data
+          if (election.votes[voterId]) {
+            // Abort transaction if vote already exists in this election's record
+            return; 
           }
 
-          // Mark voter as having voted for this election
-          if (!election.voters) election.voters = {};
-          if (!election.voters[voterId]) election.voters[voterId] = {};
-          if (!election.voters[voterId].hasVoted) election.voters[voterId].hasVoted = {};
-          election.voters[voterId].hasVoted[electionId] = true;
-
           // Record the vote
-          if (!election.votes) election.votes = {};
           election.votes[voterId] = candidate.id;
           
-          // Increment result
-          if (!election.results) election.results = {};
+          // Increment result for the candidate
           if (!election.results[candidate.id]) {
             election.results[candidate.id] = 0;
           }
@@ -66,14 +62,17 @@ export function CandidateVoteForm({ electionId, candidate, voterId }: CandidateV
         return election;
       });
 
-      if (!committed) {
-         throw new Error("You may have already voted or an error occurred.");
-      }
-      
-      // Separate transaction for the voter object
-      const voterRef = ref(db, `voters/${voterId}/hasVoted/${electionId}`);
-      await set(voterRef, true);
-
+      // Separate transaction for the main voter object
+      await runTransaction(voterRef, (voter) => {
+        if (voter) {
+            if (!voter.hasVoted) {
+                voter.hasVoted = {};
+            }
+            // Mark the voter as having voted for this election
+            voter.hasVoted[electionId] = true;
+        }
+        return voter;
+      });
 
       toast({
         title: 'Vote Cast Successfully!',
