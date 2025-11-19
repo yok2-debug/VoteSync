@@ -51,19 +51,11 @@ export default function VotePage() {
 
   useEffect(() => {
     if (!isLoading && (!election || !voter)) {
-        // Redirect if election or voter not found after loading
         router.push('/vote');
     }
   }, [isLoading, election, voter, router]);
 
-  if (isLoading) {
-    return <Loading />;
-  }
-
-  // It's safer to handle redirection inside useEffect or after all hooks are called.
-  if (!session?.voterId || !election || !voter) {
-    // This is a fallback. The useEffect above should handle it.
-    // To prevent "Rendered more hooks than during the previous render." error
+  if (isLoading || !session?.voterId || !election || !voter) {
     return <Loading />; 
   }
   
@@ -79,7 +71,6 @@ export default function VotePage() {
     }
     return <Loading />;
   }
-
 
   const candidates = election.candidates ? Object.values(election.candidates) : [];
   const defaultPhoto = PlaceHolderImages.find(p => p.id === 'default-avatar');
