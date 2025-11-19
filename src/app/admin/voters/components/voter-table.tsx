@@ -41,9 +41,12 @@ type VoterTableProps = {
   categories: Category[];
 };
 
+const ITEMS_PER_PAGE = 100;
+
 export function VoterTable({ voters, categories }: VoterTableProps) {
   const [filter, setFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
@@ -63,6 +66,14 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
       (voter.nik && voter.nik.includes(filter))) &&
       (categoryFilter === 'all' || voter.category === categoryFilter)
   ), [voters, filter, categoryFilter]);
+
+  const totalPages = Math.ceil(filteredVoters.length / ITEMS_PER_PAGE);
+  const paginatedVoters = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredVoters.slice(startIndex, endIndex);
+  }, [filteredVoters, currentPage]);
+
 
   const handlePrint = () => {
     const voterIds = filteredVoters.map(v => v.id);
@@ -261,8 +272,8 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredVoters.length > 0 ? (
-              filteredVoters.map((voter) => (
+            {paginatedVoters.length > 0 ? (
+              paginatedVoters.map((voter) => (
                 <TableRow key={voter.id}>
                   <TableCell className="font-mono">{voter.id}</TableCell>
                   <TableCell className="font-mono">{voter.nik || 'N/A'}</TableCell>
@@ -304,6 +315,33 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
             )}
           </TableBody>
         </Table>
+      </div>
+
+       <div className="flex items-center justify-between py-4">
+          <div className="text-sm text-muted-foreground">
+            Showing {paginatedVoters.length} of {filteredVoters.length} voters.
+          </div>
+          <div className="flex items-center gap-2">
+              <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+              >
+                  Previous
+              </Button>
+              <span className="text-sm">
+                  Page {currentPage} of {totalPages}
+              </span>
+              <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+              >
+                  Next
+              </Button>
+          </div>
       </div>
 
       <VoterFormDialog
