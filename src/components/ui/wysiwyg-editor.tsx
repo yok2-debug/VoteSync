@@ -13,7 +13,7 @@ interface WysiwygEditorProps {
 export function WysiwygEditor({ value, onChange, placeholder, className }: WysiwygEditorProps) {
 
   // Dynamically import ReactQuill to ensure it only runs on the client-side.
-  const ReactQuill = useMemo(() => dynamic(() => import('react-quilljs'), { ssr: false }), []);
+  const { ReactQuill } = useMemo(() => dynamic(() => import('react-quilljs'), { ssr: false }), []);
   
   const modules = {
     toolbar: [
