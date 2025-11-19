@@ -1,16 +1,16 @@
-import { getCategories, getElectionById } from '@/lib/data';
+'use client';
 import { ElectionForm } from '../components/election-form';
-import { redirect } from 'next/navigation';
+import { redirect, useParams } from 'next/navigation';
+import { useDatabase } from '@/context/database-context';
+import Loading from '@/app/loading';
 
-type ElectionEditPageProps = {
-  params: {
-    electionId: string;
-  };
-};
+export default function ElectionEditPage() {
+  const { electionId } = useParams() as { electionId: string };
+  const { elections, isLoading } = useDatabase();
 
-export default async function ElectionEditPage({ params }: ElectionEditPageProps) {
-  const { electionId } = params;
-  const categories = await getCategories();
+  if (isLoading) {
+    return <Loading />;
+  }
 
   if (electionId === 'new') {
     const newElection = {
@@ -34,7 +34,7 @@ export default async function ElectionEditPage({ params }: ElectionEditPageProps
     );
   }
 
-  const election = await getElectionById(electionId);
+  const election = elections.find(e => e.id === electionId);
 
   if (!election) {
     redirect('/admin/elections');

@@ -1,21 +1,18 @@
-import { getElectionById, getVoters, getCategories } from '@/lib/data';
-import { redirect } from 'next/navigation';
+'use client';
+import { redirect, useParams } from 'next/navigation';
 import { RecapitulationDisplay } from './components/recapitulation-display';
+import { useDatabase } from '@/context/database-context';
+import Loading from '@/app/loading';
 
-type RecapitulationPageProps = {
-  params: {
-    electionId: string;
-  };
-};
+export default function RecapitulationPage() {
+  const { electionId } = useParams() as { electionId: string };
+  const { elections, voters, categories, isLoading } = useDatabase();
 
-export default async function RecapitulationPage({ params }: RecapitulationPageProps) {
-  const { electionId } = params;
+  if (isLoading) {
+    return <Loading />;
+  }
 
-  const [election, allVoters, allCategories] = await Promise.all([
-    getElectionById(electionId),
-    getVoters(),
-    getCategories(),
-  ]);
+  const election = elections.find(e => e.id === electionId);
 
   if (!election) {
     redirect('/admin/recapitulation');
@@ -31,8 +28,8 @@ export default async function RecapitulationPage({ params }: RecapitulationPageP
       </div>
       <RecapitulationDisplay 
         election={election} 
-        allVoters={allVoters}
-        allCategories={allCategories}
+        allVoters={voters}
+        allCategories={categories}
       />
     </div>
   );

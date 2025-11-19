@@ -1,6 +1,4 @@
-import { getElectionById, getVoterById, getCategoryById } from '@/lib/data';
-import { getVoterSession } from '@/lib/session';
-import { redirect } from 'next/navigation';
+'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
@@ -9,36 +7,48 @@ import { VoterLogoutButton } from '../components/voter-logout-button';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
+import { useDatabase } from '@/context/database-context';
+import { getVoterSession } from '@/lib/session';
+import { useEffect, useState } from 'react';
+import { redirect, useParams } from 'next/navigation';
+import Loading from '@/app/loading';
+import type { VoterSessionPayload } from '@/lib/types';
 
+export default function VotePage() {
+  const { electionId } = useParams() as { electionId: string };
+  const { elections, voters, categories, isLoading } = useDatabase();
+  const [session, setSession] = useState<VoterSessionPayload | null>(null);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
 
-type VotePageProps = {
-  params: {
-    electionId: string;
-  };
-};
+  useEffect(() => {
+    async function fetchSession() {
+      const voterSession = await getVoterSession();
+      setSession(voterSession);
+      setIsSessionLoading(false);
+    }
+    fetchSession();
+  }, []);
+  
+  if (isLoading || isSessionLoading) {
+    return <Loading />;
+  }
 
-export default async function VotePage({ params }: VotePageProps) {
-  const session = await getVoterSession();
   if (!session?.voterId) {
     redirect('/');
   }
-  const { electionId } = params;
-
-  const [election, voter] = await Promise.all([
-    getElectionById(electionId),
-    getVoterById(session.voterId)
-  ]);
   
+  const election = elections.find(e => e.id === electionId);
+  const voter = voters.find(v => v.id === session.voterId);
+
   const now = new Date();
   const electionStarted = election?.startDate ? new Date(election.startDate) <= now : false;
   const electionEnded = election?.endDate ? new Date(election.endDate) < now : false;
-
 
   if (!election || election.status !== 'active' || !voter || !electionStarted || electionEnded) {
     redirect('/vote');
   }
 
-  const category = await getCategoryById(voter.category);
+  const category = categories.find(c => c.id === voter.category);
 
   // Check if voter category is allowed
   if (!category?.allowedElections?.includes(election.id)) {

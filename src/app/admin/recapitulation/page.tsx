@@ -1,12 +1,17 @@
-
-import { getElections } from '@/lib/data';
+'use client';
+import { useDatabase } from '@/context/database-context';
+import Loading from '@/app/loading';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { FileText } from 'lucide-react';
 
-export default async function RecapitulationDashboardPage() {
-    const elections = await getElections();
+export default function RecapitulationDashboardPage() {
+    const { elections, isLoading } = useDatabase();
+
+    if (isLoading) {
+        return <Loading />;
+    }
 
     return (
         <div className="flex flex-col gap-6">

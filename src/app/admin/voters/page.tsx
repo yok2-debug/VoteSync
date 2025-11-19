@@ -1,11 +1,14 @@
-import { getVoters, getCategories } from '@/lib/data';
+'use client';
 import { VoterTable } from './components/voter-table';
+import { useDatabase } from '@/context/database-context';
+import Loading from '@/app/loading';
 
-export default async function VotersPage() {
-  const [voters, categories] = await Promise.all([
-    getVoters(),
-    getCategories(),
-  ]);
+export default function VotersPage() {
+  const { voters, categories, isLoading } = useDatabase();
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <div className="flex flex-col gap-6">

@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import type { Election, Candidate } from '@/lib/types';
-import { db } from '@/lib/firebase';
-import { ref, onValue } from 'firebase/database';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Button } from '@/components/ui/button';
@@ -27,36 +25,12 @@ type Prediction = {
 };
 
 export function ResultsDisplay({ election }: ResultsDisplayProps) {
-  const [results, setResults] = useState<Record<string, number>>({});
-  const [totalVotes, setTotalVotes] = useState(0);
   const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [isPredicting, setIsPredicting] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const votesRef = ref(db, `elections/${election.id}/votes`);
-    const unsubscribe = onValue(votesRef, (snapshot) => {
-      const votes: Record<string, string> = snapshot.val() || {};
-      const voteCounts: Record<string, number> = {};
-      
-      Object.values(election.candidates).forEach(c => {
-        voteCounts[c.id] = 0;
-      });
-
-      let count = 0;
-      for (const voterId in votes) {
-        const candidateId = votes[voterId];
-        if (candidateId in voteCounts) {
-          voteCounts[candidateId]++;
-        }
-        count++;
-      }
-      setResults(voteCounts);
-      setTotalVotes(count);
-    });
-
-    return () => unsubscribe();
-  }, [election.id, election.candidates]);
+  const results = election.results || {};
+  const totalVotes = Object.keys(election.votes || {}).length;
 
   const chartData: VoteData[] = useMemo(() => {
     return Object.entries(results).map(([candidateId, voteCount]) => ({
@@ -69,9 +43,7 @@ export function ResultsDisplay({ election }: ResultsDisplayProps) {
     setIsPredicting(true);
     setPrediction(null);
     try {
-        const votesRef = ref(db, `elections/${election.id}/votes`);
-        const snapshot = await onValue(votesRef, () => {}); // A way to get current data
-        const currentVotes = (snapshot as any).val() || {};
+        const currentVotes = election.votes || {};
 
         if (Object.keys(currentVotes).length < 10) {
             toast({

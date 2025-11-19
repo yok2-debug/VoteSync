@@ -1,30 +1,46 @@
-import { getElections, getVoterById, getCategoryById } from '@/lib/data';
-import { getVoterSession } from '@/lib/session';
+'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import type { Voter } from '@/lib/types';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Check, Vote as VoteIcon, Lock, Clock } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { VoterLogoutButton } from './components/voter-logout-button';
+import { useDatabase } from '@/context/database-context';
+import { getVoterSession } from '@/lib/session';
+import { useEffect, useState } from 'react';
+import Loading from '../loading';
+import type { VoterSessionPayload } from '@/lib/types';
 
-export default async function VoterDashboardPage() {
-  const session = await getVoterSession();
+export default function VoterDashboardPage() {
+  const { elections, voters, categories, isLoading } = useDatabase();
+  const [session, setSession] = useState<VoterSessionPayload | null>(null);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchSession() {
+      const voterSession = await getVoterSession();
+      setSession(voterSession);
+      setIsSessionLoading(false);
+    }
+    fetchSession();
+  }, []);
+
+  if (isLoading || isSessionLoading) {
+    return <Loading />;
+  }
+  
   if (!session?.voterId) {
     redirect('/');
   }
 
-  const voter = await getVoterById(session.voterId);
+  const voter = voters.find(v => v.id === session.voterId);
 
   if (!voter) {
     // This might happen if the voter is deleted while logged in.
     redirect('/');
   }
   
-  const [elections, category] = await Promise.all([
-    getElections(),
-    getCategoryById(voter.category),
-  ]);
+  const category = categories.find(c => c.id === voter.category);
 
   // 1. Filter for active elections
   // 2. Filter for elections allowed for the voter's category

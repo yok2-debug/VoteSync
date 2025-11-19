@@ -1,20 +1,16 @@
-import { getCategories, getElections, getVoters } from '@/lib/data';
+'use client';
+
+import { useDatabase } from '@/context/database-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Vote, Users, Box, CheckCircle, Clock } from 'lucide-react';
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import Loading from '@/app/loading';
 
-async function Dashboard() {
-  const [elections, voters, categories] = await Promise.all([
-    getElections(),
-    getVoters(),
-    getCategories(),
-  ]);
+function Dashboard() {
+  const { elections, voters, categories, isLoading } = useDatabase();
 
-  if (!elections) {
-    // A sensible default if elections can't be fetched might be to go to the creation page
-    // For now, redirecting to the same section is fine.
-    redirect('/admin/elections');
+  if (isLoading) {
+    return <Loading />;
   }
   
   const now = new Date();

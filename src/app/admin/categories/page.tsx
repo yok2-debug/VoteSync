@@ -1,11 +1,14 @@
-import { getCategories, getElections } from '@/lib/data';
+'use client';
 import { CategoryTable } from './components/category-table';
+import { useDatabase } from '@/context/database-context';
+import Loading from '@/app/loading';
 
-export default async function CategoriesPage() {
-  const [categories, elections] = await Promise.all([
-    getCategories(),
-    getElections(),
-  ]);
+export default function CategoriesPage() {
+  const { categories, elections, isLoading } = useDatabase();
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <div className="flex flex-col gap-6">

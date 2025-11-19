@@ -1,8 +1,14 @@
-import { getElections } from '@/lib/data';
+'use client';
 import { ElectionTable } from './components/election-table';
+import { useDatabase } from '@/context/database-context';
+import Loading from '@/app/loading';
 
-export default async function ElectionsPage() {
-  const elections = await getElections();
+export default function ElectionsPage() {
+  const { elections, isLoading } = useDatabase();
+
+  if (isLoading) {
+    return <Loading />;
+  }
 
   return (
     <div className="flex flex-col gap-6">
