@@ -6,13 +6,21 @@ import { CandidateVoteForm } from './components/candidate-vote-form';
 import { VoterLogoutButton } from '../components/voter-logout-button';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 import { useDatabase } from '@/context/database-context';
 import { getVoterSession } from '@/lib/session';
 import { useEffect, useState } from 'react';
 import { redirect, useParams } from 'next/navigation';
 import Loading from '@/app/loading';
 import type { VoterSessionPayload } from '@/lib/types';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 export default function VotePage() {
   const { electionId } = useParams() as { electionId: string };
@@ -78,7 +86,7 @@ export default function VotePage() {
 
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight">{election.name}</h1>
-          <p className="text-muted-foreground">Select your chosen candidate below.</p>
+          <p className="text-muted-foreground">Pilih kandidat pilihan Anda di bawah ini.</p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -95,15 +103,33 @@ export default function VotePage() {
                   />
                 <CardTitle className="pt-4">{candidate.name}</CardTitle>
               </CardHeader>
-              <CardContent className="flex-grow space-y-4">
-                <div>
-                  <h3 className="font-semibold">Vision</h3>
-                  <p className="text-sm text-muted-foreground">{candidate.vision || 'No vision provided.'}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold">Mission</h3>
-                  <p className="text-sm text-muted-foreground">{candidate.mission || 'No mission provided.'}</p>
-                </div>
+              <CardContent className="flex-grow flex flex-col justify-center items-center">
+                 <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="secondary">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Lihat Visi & Misi
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>{candidate.name}</DialogTitle>
+                        <DialogDescription>
+                          Visi dan Misi Kandidat
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
+                        <div>
+                          <h3 className="font-semibold text-lg">Visi</h3>
+                          <p className="text-sm text-muted-foreground">{candidate.vision || 'Tidak ada visi yang diberikan.'}</p>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg">Misi</h3>
+                          <p className="text-sm text-muted-foreground">{candidate.mission || 'Tidak ada misi yang diberikan.'}</p>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
               </CardContent>
               <div className="p-6 pt-0">
                 <CandidateVoteForm electionId={election.id} candidate={candidate} voterId={session.voterId!} />
