@@ -47,18 +47,17 @@ function VoteDashboardContent() {
   }, [elections, category]);
 
   useEffect(() => {
-    // This effect handles redirection safely after the component has rendered.
-    if (!isSessionLoading && (!session?.voterId || !voter)) {
+    if (!isSessionLoading && !session?.voterId) {
         router.push('/');
     }
-  }, [isSessionLoading, session, voter, router]);
-
-  const isLoading = isDbLoading || isSessionLoading;
+  }, [isSessionLoading, session, router]);
   
+  const isLoading = isDbLoading || isSessionLoading;
+
   if (isLoading) {
     return <Loading />;
   }
-  
+
   // If the session is invalid, we render null while the useEffect redirects.
   if (!session?.voterId || !voter) {
     return null;
