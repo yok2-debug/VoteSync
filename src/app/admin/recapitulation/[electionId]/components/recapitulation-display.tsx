@@ -132,6 +132,9 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
                 border: 1px solid #000 !important;
                 color: #000 !important;
             }
+            .print-table th {
+                text-align: center !important;
+            }
             .print-table tr {
                 border: none !important;
             }
@@ -149,15 +152,17 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
             .print-signature-table td {
                 padding: 12px 8px;
                 border: 1px solid #000;
-                text-align: left;
                 vertical-align: middle;
             }
+             .print-signature-table th {
+                text-align: center;
+             }
             .print-signature-table tr {
                 border: none !important;
             }
-            .print-signature-table .no-col { width: 5%; text-align: center; }
-            .print-signature-table .name-col { width: 30%; }
-            .print-signature-table .role-col { width: 25%; }
+            .print-signature-table .no-col { width: 5%; }
+            .print-signature-table .name-col { width: 30%; text-align: left;}
+            .print-signature-table .role-col { width: 25%; text-align: left;}
             .print-signature-table .signature-col { width: 40%; }
             .print-signature-table .signature-box {
                 height: 50px;
