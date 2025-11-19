@@ -39,7 +39,7 @@ export function RealCountDisplay({ election, allVoters, allCategories }: RealCou
   }, [election.id]);
   
   const candidates = useMemo(() => Object.values(election.candidates || {}), [election.candidates]);
-  const votes masukPercentage = DPT > 0 ? (liveTotalVotes / DPT) * 100 : 0;
+  const votesMasukPercentage = DPT > 0 ? (liveTotalVotes / DPT) * 100 : 0;
 
   const chartData = useMemo(() => {
     return candidates.map((candidate, index) => ({
@@ -61,9 +61,9 @@ export function RealCountDisplay({ election, allVoters, allCategories }: RealCou
                 <span>Suara Masuk</span>
                 <span>{liveTotalVotes} dari {DPT} Pemilih</span>
             </div>
-            <Progress value={votes masukPercentage} />
+            <Progress value={votesMasukPercentage} />
             <div className="text-right text-xs text-muted-foreground">
-                {votes masukPercentage.toFixed(2)}%
+                {votesMasukPercentage.toFixed(2)}%
             </div>
         </div>
 
