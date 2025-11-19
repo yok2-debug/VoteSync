@@ -12,7 +12,7 @@ import { getVoterSession } from '@/lib/session';
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Loading from '@/app/loading';
-import type { VoterSessionPayload } from '@/lib/types';
+import type { Voter, VoterSessionPayload, Election, Category } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 import {
   Dialog,
@@ -23,7 +23,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 
-export default function VotePage() {
+function VotePageContent() {
   const { electionId } = useParams() as { electionId: string };
   const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
@@ -55,7 +55,7 @@ export default function VotePage() {
     }
   }, [isLoading, election, voter, router]);
 
-  if (isLoading || !session?.voterId || !election || !voter) {
+  if (isLoading || !session?.voterId || !election || !voter || !category) {
     return <Loading />; 
   }
   
@@ -92,55 +92,58 @@ export default function VotePage() {
           <h1 className="text-3xl font-bold tracking-tight">{election.name}</h1>
           <p className="text-muted-foreground">Pilih kandidat pilihan Anda di bawah ini.</p>
         </div>
-        <div className="flex justify-center">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {candidates.map(candidate => (
-                <Card key={candidate.id} className="flex flex-col">
-                <CardHeader className="items-center">
-                    <Image
-                        src={candidate.photo || defaultPhoto?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
-                        alt={`Photo of ${candidate.name}`}
-                        width={150}
-                        height={150}
-                        className="rounded-full border-4 border-primary object-cover"
-                        data-ai-hint={defaultPhoto?.imageHint || 'person portrait'}
-                    />
-                    <CardTitle className="pt-4">{candidate.name}</CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow flex flex-col justify-center items-center">
-                    <Dialog>
-                        <DialogTrigger asChild>
-                        <Button variant="secondary">
-                            <FileText className="mr-2 h-4 w-4" />
-                            Lihat Visi & Misi
-                        </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-2xl">
-                        <DialogHeader>
-                            <DialogTitle>{candidate.name}</DialogTitle>
-                            <DialogDescription>
-                            Visi dan Misi Kandidat
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4 max-h-[60vh] overflow-y-auto p-1">
-                            <article className="prose dark:prose-invert max-w-none">
-                            <h3 className="font-semibold text-lg mb-2">Visi</h3>
-                            <ReactMarkdown>{candidate.vision || 'Tidak ada visi yang diberikan.'}</ReactMarkdown>
-                            <h3 className="font-semibold text-lg mt-4 mb-2">Misi</h3>
-                            <ReactMarkdown>{candidate.mission || 'Tidak ada misi yang diberikan.'}</ReactMarkdown>
-                            </article>
-                        </div>
-                        </DialogContent>
-                    </Dialog>
-                </CardContent>
-                <div className="p-6 pt-0">
-                    <CandidateVoteForm electionId={election.id} candidate={candidate} voterId={session.voterId!} />
-                </div>
-                </Card>
-            ))}
-            </div>
+        <div className="grid justify-center gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {candidates.map(candidate => (
+              <Card key={candidate.id} className="flex flex-col">
+              <CardHeader className="items-center">
+                  <Image
+                      src={candidate.photo || defaultPhoto?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
+                      alt={`Photo of ${candidate.name}`}
+                      width={150}
+                      height={150}
+                      className="rounded-full border-4 border-primary object-cover"
+                      data-ai-hint={defaultPhoto?.imageHint || 'person portrait'}
+                  />
+                  <CardTitle className="pt-4">{candidate.name}</CardTitle>
+              </CardHeader>
+              <CardContent className="flex-grow flex flex-col justify-center items-center">
+                  <Dialog>
+                      <DialogTrigger asChild>
+                      <Button variant="secondary">
+                          <FileText className="mr-2 h-4 w-4" />
+                          Lihat Visi & Misi
+                      </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-2xl">
+                      <DialogHeader>
+                          <DialogTitle>{candidate.name}</DialogTitle>
+                          <DialogDescription>
+                          Visi dan Misi Kandidat
+                          </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 max-h-[60vh] overflow-y-auto p-1">
+                          <article className="prose dark:prose-invert max-w-none">
+                          <h3 className="font-semibold text-lg mb-2">Visi</h3>
+                          <ReactMarkdown>{candidate.vision || 'Tidak ada visi yang diberikan.'}</ReactMarkdown>
+                          <h3 className="font-semibold text-lg mt-4 mb-2">Misi</h3>
+                          <ReactMarkdown>{candidate.mission || 'Tidak ada misi yang diberikan.'}</ReactMarkdown>
+                          </article>
+                      </div>
+                      </DialogContent>
+                  </Dialog>
+              </CardContent>
+              <div className="p-6 pt-0">
+                  <CandidateVoteForm electionId={election.id} candidate={candidate} voterId={session.voterId!} />
+              </div>
+              </Card>
+          ))}
         </div>
       </div>
     </main>
   );
+}
+
+
+export default function VotePage() {
+  return <VotePageContent />;
 }
