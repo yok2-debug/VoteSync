@@ -4,17 +4,7 @@ import { getVoters } from '@/lib/data';
 import type { Voter } from '@/lib/types';
 import { VoterCard } from './components/voter-card';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import Loading from '@/app/loading';
-import { DatabaseProvider } from '@/context/database-context';
-
-export default function PrintCardsPage() {
-  return (
-    <DatabaseProvider>
-      <PrintCardsPageContent />
-    </DatabaseProvider>
-  )
-}
+import { useEffect, useState, Suspense } from 'react';
 
 function PrintCardsPageContent() {
   const searchParams = useSearchParams();
@@ -47,7 +37,11 @@ function PrintCardsPageContent() {
   }, [isLoading, votersToPrint]);
 
   if (isLoading) {
-    return <Loading />;
+    return (
+       <div className="flex min-h-screen flex-col items-center justify-center no-print">
+            <p className="text-muted-foreground">Preparing voter cards for printing...</p>
+        </div>
+    );
   }
   
   if (votersToPrint.length === 0) {
@@ -74,7 +68,7 @@ function PrintCardsPageContent() {
           .print-container {
              background-color: #fff !important;
           }
-          .no-print, [class*="loading"], .loading-logo {
+          .no-print {
             display: none !important;
           }
            * {
@@ -91,4 +85,12 @@ function PrintCardsPageContent() {
       </div>
     </>
   );
+}
+
+export default function PrintPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PrintCardsPageContent />
+    </Suspense>
+  )
 }
