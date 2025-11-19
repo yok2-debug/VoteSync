@@ -23,6 +23,7 @@ import {
   Settings,
   Users,
   Vote,
+  UserSquare,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { logout } from '@/lib/actions';
@@ -66,6 +67,7 @@ export function AdminSidebar() {
   const menuItems = [
     { href: '/admin/dashboard', icon: <Home />, label: 'Dashboard' },
     { href: '/admin/elections', icon: <Vote />, label: 'Elections' },
+    { href: '/admin/candidates', icon: <UserSquare />, label: 'Candidates' },
     { href: '/admin/voters', icon: <Users />, label: 'Voters' },
     { href: '/admin/categories', icon: <Box />, label: 'Categories' },
     { href: '/admin/results', icon: <BarChart2 />, label: 'Results' },

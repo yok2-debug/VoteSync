@@ -38,14 +38,6 @@ const committeeMemberSchema = z.object({
   role: z.enum(['Ketua', 'Anggota']),
 });
 
-const candidateSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(1, 'Candidate name is required.'),
-  vision: z.string().optional(),
-  mission: z.string().optional(),
-  photo: z.string().optional(),
-});
-
 const electionSchema = z.object({
   id: z.string(),
   name: z.string().min(3, 'Election name must be at least 3 characters.'),
@@ -53,7 +45,6 @@ const electionSchema = z.object({
   status: z.enum(['pending', 'active']),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
-  candidates: z.array(candidateSchema).min(2, 'At least two candidates are required.'),
   committee: z.array(committeeMemberSchema).optional(),
 }).refine(data => {
     if (data.startDate && data.endDate) {
@@ -83,14 +74,8 @@ export function ElectionForm({ election }: ElectionFormProps) {
       status: election.status || 'pending',
       startDate: election.startDate ? new Date(election.startDate) : undefined,
       endDate: election.endDate ? new Date(election.endDate) : undefined,
-      candidates: election.candidates ? Object.values(election.candidates) : [],
       committee: election.committee || [],
     },
-  });
-
-  const { fields: candidateFields, append: appendCandidate, remove: removeCandidate } = useFieldArray({
-    control: form.control,
-    name: 'candidates',
   });
 
   const { fields: committeeFields, append: appendCommittee, remove: removeCommittee } = useFieldArray({
@@ -112,7 +97,6 @@ export function ElectionForm({ election }: ElectionFormProps) {
     if (data.endDate) {
         formData.append('endDate', data.endDate.toISOString());
     }
-    formData.append('candidates', JSON.stringify(data.candidates));
     formData.append('committee', JSON.stringify(data.committee || []));
 
 
@@ -413,74 +397,6 @@ export function ElectionForm({ election }: ElectionFormProps) {
             >
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Committee Member
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Candidates</CardTitle>
-            <CardDescription>Manage the candidates for this election.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {candidateFields.map((field, index) => (
-              <div key={field.id} className="p-4 border rounded-lg relative space-y-4">
-                 <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-2 right-2 text-destructive hover:bg-destructive/10"
-                  onClick={() => removeCandidate(index)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-                <div className="space-y-2">
-                  <Label htmlFor={`candidates.${index}.name`}>Candidate Name</Label>
-                  <Input
-                    id={`candidates.${index}.name`}
-                    {...form.register(`candidates.${index}.name` as const)}
-                  />
-                   {form.formState.errors.candidates?.[index]?.name && (
-                      <p className="text-sm text-destructive">{form.formState.errors.candidates?.[index]?.name?.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`candidates.${index}.vision`}>Vision</Label>
-                  <Textarea
-                    id={`candidates.${index}.vision`}
-                    {...form.register(`candidates.${index}.vision` as const)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`candidates.${index}.mission`}>Mission</Label>
-                  <Textarea
-                    id={`candidates.${index}.mission`}
-                    {...form.register(`candidates.${index}.mission` as const)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor={`candidates.${index}.photo`}>Photo URL (Optional)</Label>
-                  <Input
-                    id={`candidates.${index}.photo`}
-                    {...form.register(`candidates.${index}.photo` as const)}
-                    placeholder="https://example.com/photo.jpg"
-                  />
-                </div>
-              </div>
-            ))}
-            {form.formState.errors.candidates?.root && (
-              <p className="text-sm text-destructive">{form.formState.errors.candidates.root.message}</p>
-            )}
-             {form.formState.errors.candidates && !form.formState.errors.candidates.root && (
-              <p className="text-sm text-destructive">Please add at least two candidates.</p>
-            )}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => appendCandidate({ id: `temp-${Date.now()}`, name: '', vision: '', mission: '', photo: '' })}
-            >
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Candidate
             </Button>
           </CardContent>
         </Card>

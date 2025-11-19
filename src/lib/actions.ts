@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache';
 import * as z from 'zod';
 import { db } from '@/lib/firebase';
 import { ref, remove, get, child, update, set, push, runTransaction } from 'firebase/database';
-import type { Category, Election, Voter } from './types';
+import type { Category, Election, Voter, Candidate } from './types';
 import { getVoters } from './data';
 
 
@@ -167,7 +167,6 @@ export async function saveElection(formData: FormData): Promise<{ savedElectionI
     status: formData.get('status') as 'pending' | 'active',
     startDate: formData.get('startDate') as string | null,
     endDate: formData.get('endDate') as string | null,
-    candidates: JSON.parse(formData.get('candidates') as string),
     committee: JSON.parse(formData.get('committee') as string),
   };
   
@@ -180,21 +179,10 @@ export async function saveElection(formData: FormData): Promise<{ savedElectionI
         savedElectionId = newElectionRef.key!;
     }
     
-    const candidatesObject = rawData.candidates.reduce((acc: any, candidate: any) => {
-        let candidateId = candidate.id || '';
-        if (candidate.id?.startsWith('temp-') || !candidate.id) {
-          candidateId = push(ref(db, `elections/${savedElectionId}/candidates`)).key!;
-        }
-
-        acc[candidateId] = { ...candidate, id: candidateId };
-        return acc;
-    }, {});
-
-    const electionData: Partial<Election> = {
+    const electionData: Partial<Omit<Election, 'id' | 'candidates'>> = {
         name: rawData.name,
         description: rawData.description,
         status: rawData.status,
-        candidates: candidatesObject,
         committee: rawData.committee || [],
     };
 
@@ -426,4 +414,59 @@ export async function saveVote(electionId: string, candidateId: string, voterId:
     }
     throw new Error('Could not save your vote.');
   }
+}
+
+// Candidate Actions
+export async function saveCandidate(candidate: Candidate, electionId: string): Promise<void> {
+  try {
+    let candidateId = candidate.id;
+    const electionCandidatesRef = ref(db, `elections/${electionId}/candidates`);
+
+    if (!candidateId || candidate.id.startsWith('new-')) {
+      candidateId = push(electionCandidatesRef).key!;
+    }
+    
+    const candidateRef = ref(db, `elections/${electionId}/candidates/${candidateId}`);
+    await set(candidateRef, { ...candidate, id: candidateId });
+    
+    revalidatePath('/admin/candidates');
+    revalidatePath(`/admin/elections/${electionId}`);
+
+  } catch (error) {
+    console.error('Error saving candidate:', error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Could not save candidate.');
+  }
+}
+
+export async function deleteCandidate(candidateId: string, electionId: string): Promise<void> {
+    try {
+        const candidateRef = ref(db, `elections/${electionId}/candidates/${candidateId}`);
+        const electionVotesRef = ref(db, `elections/${electionId}/votes`);
+        const electionResultsRef = ref(db, `elections/${electionId}/results/${candidateId}`);
+
+        const votesSnapshot = await get(electionVotesRef);
+        if (votesSnapshot.exists()) {
+            const votes = votesSnapshot.val();
+            const hasVotes = Object.values(votes).some(vote => vote === candidateId);
+            if (hasVotes) {
+                throw new Error("Cannot delete candidate. They have already received votes in this election.");
+            }
+        }
+        
+        await remove(candidateRef);
+        await remove(electionResultsRef);
+
+        revalidatePath('/admin/candidates');
+        revalidatePath(`/admin/elections/${electionId}`);
+
+    } catch (error) {
+        console.error('Error deleting candidate:', error);
+        if (error instanceof Error) {
+            throw error;
+        }
+        throw new Error('Could not delete candidate.');
+    }
 }
