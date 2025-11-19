@@ -311,7 +311,7 @@ const importVoterSchema = z.object({
 
 export async function importVoters(data: any[]): Promise<{ importedCount: number, importedVoters: Voter[] }> {
   const categories = await getCategories();
-  const categoryNameMap = new Map(categories.map(c => [c.name.toLowerCase(), c.id]));
+  const categoryNameMap = new Map(categories.map(c => [c.name.trim().toLowerCase(), c.id]));
   const allVoters = await getVoters();
   const existingVoterIds = new Set(allVoters.map(v => v.id));
 
@@ -330,7 +330,7 @@ export async function importVoters(data: any[]): Promise<{ importedCount: number
         throw new Error(`Voter with ID "${id}" already exists.`);
     }
 
-    const categoryId = categoryNameMap.get(category.toLowerCase());
+    const categoryId = categoryNameMap.get(category.trim().toLowerCase());
     if (!categoryId) {
         throw new Error(`Category "${category}" not found for voter "${name}".`);
     }

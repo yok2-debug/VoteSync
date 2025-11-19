@@ -37,7 +37,7 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
   const [validatedData, setValidatedData] = useState<ValidatedRow[]>([]);
   const { toast } = useToast();
 
-  const categoryNameMap = useMemo(() => new Map(categories.map(c => [c.name.toLowerCase(), c.id])), [categories]);
+  const categoryNameMap = useMemo(() => new Map(categories.map(c => [c.name.trim().toLowerCase(), c.id])), [categories]);
   
   useEffect(() => {
     async function validateData() {
@@ -54,27 +54,33 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
 
         const validated = filteredData.map(row => {
             const errors: string[] = [];
+            const cleanRow = {
+                id: typeof row.id === 'string' ? row.id.trim() : row.id,
+                name: typeof row.name === 'string' ? row.name.trim() : row.name,
+                category: typeof row.category === 'string' ? row.category.trim() : row.category,
+                password: row.password
+            };
             
-            if (!row.id || typeof row.id !== 'string' || row.id.trim() === '') {
+            if (!cleanRow.id) {
                 errors.push('Missing or invalid ID.');
-            } else if (existingVoterIds.has(row.id)) {
-                errors.push(`ID '${row.id}' already exists in the database.`);
-            } else if (currentImportIds.has(row.id)) {
-                errors.push(`Duplicate ID '${row.id}' within this import file.`);
+            } else if (existingVoterIds.has(cleanRow.id)) {
+                errors.push(`ID '${cleanRow.id}' already exists in the database.`);
+            } else if (currentImportIds.has(cleanRow.id)) {
+                errors.push(`Duplicate ID '${cleanRow.id}' within this import file.`);
             } else {
-                currentImportIds.add(row.id);
+                currentImportIds.add(cleanRow.id);
             }
             
-            if (!row.name || typeof row.name !== 'string' || row.name.trim() === '') {
+            if (!cleanRow.name) {
                 errors.push('Missing name.');
             }
             
-            if (!row.category || !categoryNameMap.has(row.category.toLowerCase())) {
-                errors.push(`Category '${row.category}' is not a valid, existing category.`);
+            if (!cleanRow.category || !categoryNameMap.has(cleanRow.category.toLowerCase())) {
+                errors.push(`Category '${cleanRow.category}' is not a valid, existing category.`);
             }
 
             return {
-                data: row,
+                data: cleanRow,
                 isValid: errors.length === 0,
                 errors
             };
