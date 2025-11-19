@@ -108,10 +108,22 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
             .no-print {
                 display: none;
             }
-            .print-card, .print-card-header, .print-card-content, .print-table {
+            .print-card, .print-card-header, .print-card-content {
                 border: none !important;
                 background: #fff !important;
             }
+            .print-table {
+                border: 1px solid #000 !important;
+                color: #000 !important;
+            }
+            .print-table th, .print-table td, .print-table tr {
+                border-color: #000 !important;
+                color: #000 !important;
+            }
+            .print-table thead {
+                background-color: #f2f2f2 !important;
+            }
+
              .print-signature-table {
                 width: 100%;
                 margin-top: 40px;
@@ -150,7 +162,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
       </div>
       <div id="print-section">
         <Card className="shadow-none border-0 print-card">
-            <CardHeader className="text-center space-y-2 border-b pb-4 print-card-header">
+            <CardHeader className="text-center space-y-2 border-b-2 border-black pb-4 print-card-header">
                 <h2 className="text-2xl font-bold tracking-tight">BERITA ACARA</h2>
                 <h3 className="text-xl font-semibold uppercase">HASIL PENGHITUNGAN SUARA PEMILIHAN</h3>
                 <h1 className="text-xl font-semibold uppercase">{election.name}</h1>
