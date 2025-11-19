@@ -1,40 +1,51 @@
+
 'use client';
-import { getVoterById } from '@/lib/data';
+import { getVoters } from '@/lib/data';
 import type { Voter } from '@/lib/types';
 import { VoterCard } from './components/voter-card';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Loading from '@/app/loading';
-import { useDatabase } from '@/context/database-context';
+import { DatabaseProvider } from '@/context/database-context';
 
 export default function PrintCardsPage() {
+  return (
+    <DatabaseProvider>
+      <PrintCardsPageContent />
+    </DatabaseProvider>
+  )
+}
+
+function PrintCardsPageContent() {
   const searchParams = useSearchParams();
-  const { voters: allVoters, isLoading: isDbLoading } = useDatabase();
   const [votersToPrint, setVotersToPrint] = useState<Voter[]>([]);
-  const [isProcessing, setIsProcessing] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (isDbLoading) return;
-
-    const voterIdsParam = searchParams.get('voterIds');
-    if (voterIdsParam) {
-      const idsToPrint = new Set(voterIdsParam.split(','));
-      const filteredVoters = allVoters.filter(v => idsToPrint.has(v.id));
-      setVotersToPrint(filteredVoters);
+    async function fetchAndFilterVoters() {
+      const voterIdsParam = searchParams.get('voterIds');
+      if (voterIdsParam) {
+        const idsToPrint = new Set(voterIdsParam.split(','));
+        // Fetch enriched voters directly
+        const allEnrichedVoters = await getVoters();
+        const filteredVoters = allEnrichedVoters.filter(v => idsToPrint.has(v.id));
+        setVotersToPrint(filteredVoters);
+      }
+      setIsLoading(false);
     }
-    setIsProcessing(false);
     
-  }, [searchParams, allVoters, isDbLoading]);
+    fetchAndFilterVoters();
+    
+  }, [searchParams]);
 
   useEffect(() => {
-    if (!isProcessing && votersToPrint.length > 0) {
-      // Small delay to ensure content is rendered before printing
+    if (!isLoading && votersToPrint.length > 0) {
       const timer = setTimeout(() => window.print(), 500);
       return () => clearTimeout(timer);
     }
-  }, [isProcessing, votersToPrint]);
+  }, [isLoading, votersToPrint]);
 
-  if (isProcessing) {
+  if (isLoading) {
     return <Loading />;
   }
 
