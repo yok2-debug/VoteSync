@@ -122,16 +122,18 @@ export default function VotePage() {
                         <div>
                           <h3 className="font-semibold text-lg mb-2">Visi</h3>
                            <div
-                              className="prose prose-sm dark:prose-invert max-w-none"
-                              dangerouslySetInnerHTML={{ __html: candidate.vision || 'Tidak ada visi yang diberikan.' }}
-                            />
+                              className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap"
+                            >
+                             {candidate.vision || 'Tidak ada visi yang diberikan.'}
+                            </div>
                         </div>
                         <div>
                           <h3 className="font-semibold text-lg mt-4 mb-2">Misi</h3>
                            <div
-                              className="prose prose-sm dark:prose-invert max-w-none"
-                              dangerouslySetInnerHTML={{ __html: candidate.mission || 'Tidak ada misi yang diberikan.' }}
-                            />
+                              className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap"
+                            >
+                              {candidate.mission || 'Tidak ada misi yang diberikan.'}
+                            </div>
                         </div>
                       </div>
                     </DialogContent>
