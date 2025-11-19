@@ -159,46 +159,37 @@ export function ElectionForm({ election, allCategories }: ElectionFormProps) {
             </CardHeader>
             <CardContent>
                 <FormField
-                    control={form.control}
-                    name="allowedCategories"
-                    render={() => (
-                        <FormItem className="space-y-3">
-                            {allCategories.map((item) => (
-                                <FormField
-                                    key={item.id}
-                                    control={form.control}
-                                    name="allowedCategories"
-                                    render={({ field }) => {
-                                        return (
-                                            <FormItem
-                                                key={item.id}
-                                                className="flex flex-row items-start space-x-3 space-y-0"
-                                            >
-                                                <FormControl>
-                                                    <Checkbox
-                                                        checked={field.value?.includes(item.id)}
-                                                        onCheckedChange={(checked) => {
-                                                            return checked
-                                                                ? field.onChange([...(field.value || []), item.id])
-                                                                : field.onChange(
-                                                                    field.value?.filter(
-                                                                        (value) => value !== item.id
-                                                                    )
-                                                                )
-                                                        }}
-                                                    />
-                                                </FormControl>
-                                                <FormLabel className="font-normal">
-                                                    {item.name}
-                                                </FormLabel>
-                                            </FormItem>
-                                        )
-                                    }}
-                                />
-                            ))}
-                            <FormMessage />
+                  control={form.control}
+                  name="allowedCategories"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      {allCategories.map((item) => (
+                        <FormItem
+                          key={item.id}
+                          className="flex flex-row items-start space-x-3 space-y-0"
+                        >
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value?.includes(item.id)}
+                              onCheckedChange={(checked) => {
+                                return checked
+                                  ? field.onChange([...(field.value || []), item.id])
+                                  : field.onChange(
+                                      field.value?.filter(
+                                        (value) => value !== item.id
+                                      )
+                                    );
+                              }}
+                            />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            {item.name}
+                          </FormLabel>
                         </FormItem>
-                    )}
+                      ))}
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
             </CardContent>
         </Card>
