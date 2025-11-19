@@ -32,16 +32,21 @@ type ValidatedRow = {
   errors: string[];
 };
 
+// Helper function to normalize category names for robust matching
+const normalizeCategory = (name: string) => name.replace(/\s+/g, '').toLowerCase();
+
+
 export function VoterImportDialog({ open, onOpenChange, data, categories, onSave }: VoterImportDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validatedData, setValidatedData] = useState<ValidatedRow[]>([]);
   const { toast } = useToast();
 
-  const categoryNameMap = useMemo(() => new Map(categories.map(c => [c.name.trim().toLowerCase(), c.id])), [categories]);
+  const categoryNameMap = useMemo(() => new Map(categories.map(c => [normalizeCategory(c.name), c.id])), [categories]);
   
   useEffect(() => {
     async function validateData() {
-        const filteredData = data.filter(row => row.id || row.name || row.category);
+        // Filter out rows that are completely empty
+        const filteredData = data.filter(row => row && typeof row === 'object' && Object.values(row).some(val => val !== null && val !== ''));
 
         if (!open || filteredData.length === 0) {
             setValidatedData([]);
@@ -75,7 +80,7 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
                 errors.push('Missing name.');
             }
             
-            if (!cleanRow.category || !categoryNameMap.has(cleanRow.category.toLowerCase())) {
+            if (!cleanRow.category || !categoryNameMap.has(normalizeCategory(cleanRow.category))) {
                 errors.push(`Category '${cleanRow.category}' is not a valid, existing category.`);
             }
 
@@ -99,7 +104,7 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
   const handleConfirmImport = async () => {
     setIsSubmitting(true);
     const dataToImport = validatedData.filter(row => row.isValid).map(row => {
-      const categoryId = categoryNameMap.get(row.data.category.toLowerCase());
+      const categoryId = categoryNameMap.get(normalizeCategory(row.data.category));
       return { ...row.data, category: categoryId };
     });
     
