@@ -93,6 +93,9 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
               box-shadow: none !important;
               text-shadow: none !important;
             }
+            b, strong {
+                font-weight: bold !important;
+            }
             #print-section, #print-section * {
               visibility: visible;
             }
@@ -101,9 +104,8 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
               left: 0;
               top: 0;
               width: 100%;
-              padding: 1rem;
+              padding: 0 1rem;
               font-size: 12px;
-              border: none !important;
             }
             .no-print {
                 display: none;
@@ -113,9 +115,9 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
                 background: #fff !important;
             }
             .print-table {
-                border: none !important;
                 color: #000 !important;
                 border-collapse: collapse !important;
+                border: none !important;
             }
             .print-table th, .print-table td {
                 border: 1px solid #000 !important;
@@ -177,7 +179,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
             <CardContent className="space-y-8 pt-6 print-card-content">
                 
                 <p>
-                    Pada hari ini, <span className="font-bold">{electionDateInfo?.day}</span>, <span>tanggal</span> <span className="font-bold capitalize">{electionDateInfo?.dayWords}</span> <span>bulan</span> <span className="font-bold capitalize">{electionDateInfo?.month}</span> <span>tahun</span> <span className="font-bold capitalize">{electionDateInfo?.yearWords}</span>, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} dengan hasil sebagai berikut:
+                    Pada hari ini, <b className="capitalize">{electionDateInfo?.day}</b>, <span>tanggal</span> <b className="capitalize">{electionDateInfo?.dayWords}</b> <span>bulan</span> <b className="capitalize">{electionDateInfo?.month}</b> <span>tahun</span> <b className="capitalize">{electionDateInfo?.yearWords}</b>, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} dengan hasil sebagai berikut:
                 </p>
 
                 <div>
