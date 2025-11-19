@@ -85,6 +85,10 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
     <div className="space-y-6">
        <style>
         {`
+          @page {
+            margin-top: 1.5cm;
+            margin-bottom: 1cm;
+          }
           @media print {
             body, body * {
               visibility: hidden;
@@ -148,7 +152,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
 
              .print-signature-table {
                 width: 100%;
-                margin-top: 20px;
+                margin-top: 0;
                 border-collapse: collapse;
                 page-break-inside: avoid;
             }
