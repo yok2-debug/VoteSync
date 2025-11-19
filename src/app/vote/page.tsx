@@ -13,19 +13,23 @@ import type { VoterSessionPayload } from '@/lib/types';
 import { DatabaseProvider } from '@/context/database-context';
 
 function VoteDashboardContent() {
+  const router = useRouter();
   const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
-    async function fetchSession() {
+    async function fetchSessionAndCheck() {
       const voterSession = await getVoterSession();
       setSession(voterSession);
       setIsSessionLoading(false);
+
+      if (!voterSession?.voterId) {
+          router.push('/');
+      }
     }
-    fetchSession();
-  }, []);
+    fetchSessionAndCheck();
+  }, [router]);
 
   const voter = useMemo(() => {
     if (!session?.voterId) return null;
@@ -45,22 +49,11 @@ function VoteDashboardContent() {
         return isActive && isAllowed;
     });
   }, [elections, category]);
-
-  useEffect(() => {
-    if (!isSessionLoading && !session?.voterId) {
-        router.push('/');
-    }
-  }, [isSessionLoading, session, router]);
   
   const isLoading = isDbLoading || isSessionLoading;
 
-  if (isLoading) {
+  if (isLoading || !session?.voterId || !voter) {
     return <Loading />;
-  }
-
-  // If the session is invalid, we render null while the useEffect redirects.
-  if (!session?.voterId || !voter) {
-    return null;
   }
 
   const now = new Date();
