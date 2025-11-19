@@ -40,6 +40,7 @@ function PrintCardsPageContent() {
 
   useEffect(() => {
     if (!isLoading && votersToPrint.length > 0) {
+      // Small delay to ensure DOM is fully rendered before printing
       const timer = setTimeout(() => window.print(), 500);
       return () => clearTimeout(timer);
     }
@@ -48,10 +49,10 @@ function PrintCardsPageContent() {
   if (isLoading) {
     return <Loading />;
   }
-
+  
   if (votersToPrint.length === 0) {
       return (
-        <div className="flex min-h-screen flex-col items-center justify-center">
+        <div className="flex min-h-screen flex-col items-center justify-center no-print">
             <p className="text-muted-foreground">No voters found to print. Please check the selection.</p>
         </div>
       );
@@ -73,7 +74,7 @@ function PrintCardsPageContent() {
           .print-container {
              background-color: #fff !important;
           }
-          .no-print, [class*="loading"] {
+          .no-print, [class*="loading"], .loading-logo {
             display: none !important;
           }
            * {
