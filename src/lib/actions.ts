@@ -1,12 +1,14 @@
 'use server';
 
-import { getAdminCredentials, getVoterById, getElections, getCategories as getAllCategories, getVoters } from '@/lib/data';
+import { getAdminCredentials, getVoterById } from '@/lib/data';
 import { createSession, deleteSession } from '@/lib/session';
 import { revalidatePath } from 'next/cache';
 import * as z from 'zod';
 import { db } from '@/lib/firebase';
 import { ref, remove, get, child, update, set, push } from 'firebase/database';
 import type { Category, Election, Voter } from './types';
+import { getVoters } from './data';
+
 
 const voterLoginSchema = z.object({
   voterId: z.string(),
@@ -157,6 +159,7 @@ export async function saveElection(formData: FormData): Promise<{ savedElectionI
     description: formData.get('description') as string,
     status: formData.get('status') as 'pending' | 'ongoing' | 'completed',
     candidates: JSON.parse(formData.get('candidates') as string),
+    allowedCategories: JSON.parse(formData.get('allowedCategories') as string),
   };
   
   let savedElectionId = rawData.id;
@@ -168,7 +171,6 @@ export async function saveElection(formData: FormData): Promise<{ savedElectionI
         savedElectionId = newElectionRef.key!;
     }
     
-    // Fetch existing candidates to avoid overwriting them if they are not in the form
     let existingCandidates: Record<string, any> = {};
     if (!isNewElection) {
         const electionSnapshot = await get(ref(db, `elections/${savedElectionId}/candidates`));
@@ -192,6 +194,7 @@ export async function saveElection(formData: FormData): Promise<{ savedElectionI
         description: rawData.description,
         status: rawData.status,
         candidates: candidatesObject,
+        allowedCategories: rawData.allowedCategories,
     };
     
     await set(ref(db, `elections/${savedElectionId}`), electionData);
@@ -233,30 +236,25 @@ export async function saveVoter(voter: Omit<Voter, 'hasVoted'>): Promise<Voter> 
         }
     }
     
-    // We don't save the `isEditing` flag to the database.
     const { isEditing, ...dataToSave } = voterData;
 
     const voterRef = ref(db, `voters/${id}`);
     
     if (voter.isEditing) {
-      // For editing, we merge data to not overwrite `hasVoted` status.
       const snapshot = await get(voterRef);
       const existingData = snapshot.val() || {};
-
-      // Only update password if a new one is provided
+      
       if (!dataToSave.password) {
-        delete dataToSave.password;
+        dataToSave.password = existingData.password;
       }
       
       await set(voterRef, { ...existingData, ...dataToSave });
     } else {
-      // For new voters, we set the data directly.
       await set(voterRef, dataToSave);
     }
 
     revalidatePath('/admin/voters');
     
-    // Return the full voter object as it is in the database.
     const newSnapshot = await get(voterRef);
     return { id, ...newSnapshot.val() };
 

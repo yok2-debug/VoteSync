@@ -2,7 +2,7 @@
 import { useForm, useFieldArray, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { Election, Candidate } from '@/lib/types';
+import type { Election, Candidate, Category } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,11 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Trash2, PlusCircle, Loader2 } from 'lucide-react';
 import { saveElection } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+
 
 const candidateSchema = z.object({
   id: z.string().optional(),
@@ -42,15 +45,17 @@ const electionSchema = z.object({
   description: z.string().min(10, 'Description must be at least 10 characters.'),
   status: z.enum(['pending', 'ongoing', 'completed']),
   candidates: z.array(candidateSchema).min(2, 'At least two candidates are required.'),
+  allowedCategories: z.array(z.string()).min(1, 'At least one voter category must be selected.'),
 });
 
 type ElectionFormData = z.infer<typeof electionSchema>;
 
 interface ElectionFormProps {
   election: Election;
+  allCategories: Category[];
 }
 
-export function ElectionForm({ election }: ElectionFormProps) {
+export function ElectionForm({ election, allCategories }: ElectionFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,6 +65,7 @@ export function ElectionForm({ election }: ElectionFormProps) {
     defaultValues: {
       ...election,
       candidates: election.candidates ? Object.values(election.candidates) : [],
+      allowedCategories: election.allowedCategories || [],
     },
   });
 
@@ -77,9 +83,10 @@ export function ElectionForm({ election }: ElectionFormProps) {
     formData.append('description', data.description);
     formData.append('status', data.status);
     formData.append('candidates', JSON.stringify(data.candidates));
+    formData.append('allowedCategories', JSON.stringify(data.allowedCategories));
 
     try {
-      await saveElection(formData);
+      const result = await saveElection(formData);
       toast({
         title: `Election ${data.id === 'new' ? 'created' : 'updated'}`,
         description: `The election "${data.name}" has been saved successfully.`,
@@ -98,126 +105,182 @@ export function ElectionForm({ election }: ElectionFormProps) {
   };
 
   return (
-    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-      <Card>
-        <CardHeader>
-          <CardTitle>Election Details</CardTitle>
-          <CardDescription>Provide basic information about the election.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Election Name</Label>
-            <Input id="name" {...form.register('name')} />
-            {form.formState.errors.name && (
-              <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea id="description" {...form.register('description')} />
-            {form.formState.errors.description && (
-              <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>
-            )}
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Controller
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="ongoing">Ongoing</SelectItem>
-                            <SelectItem value="completed">Completed</SelectItem>
-                        </SelectContent>
-                    </Select>
-                )}
-            />
-            {form.formState.errors.status && (
-              <p className="text-sm text-destructive">{form.formState.errors.status.message}</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Candidates</CardTitle>
-          <CardDescription>Manage the candidates for this election.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {fields.map((field, index) => (
-            <div key={field.id} className="p-4 border rounded-lg relative space-y-4">
-               <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2 text-destructive hover:bg-destructive/10"
-                onClick={() => remove(index)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-              <div className="space-y-2">
-                <Label htmlFor={`candidates.${index}.name`}>Candidate Name</Label>
-                <Input
-                  id={`candidates.${index}.name`}
-                  {...form.register(`candidates.${index}.name` as const)}
-                />
-                 {form.formState.errors.candidates?.[index]?.name && (
-                    <p className="text-sm text-destructive">{form.formState.errors.candidates?.[index]?.name?.message}</p>
-                )}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor={`candidates.${index}.vision`}>Vision</Label>
-                <Textarea
-                  id={`candidates.${index}.vision`}
-                  {...form.register(`candidates.${index}.vision` as const)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor={`candidates.${index}.mission`}>Mission</Label>
-                <Textarea
-                  id={`candidates.${index}.mission`}
-                  {...form.register(`candidates.${index}.mission` as const)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor={`candidates.${index}.photo`}>Photo URL (Optional)</Label>
-                <Input
-                  id={`candidates.${index}.photo`}
-                  {...form.register(`candidates.${index}.photo` as const)}
-                  placeholder="https://example.com/photo.jpg"
-                />
-              </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Election Details</CardTitle>
+            <CardDescription>Provide basic information about the election.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Election Name</Label>
+              <Input id="name" {...form.register('name')} />
+              {form.formState.errors.name && (
+                <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+              )}
             </div>
-          ))}
-          {form.formState.errors.candidates?.root && (
-            <p className="text-sm text-destructive">{form.formState.errors.candidates.root.message}</p>
-          )}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => append({ id: `temp-${Date.now()}`, name: '', vision: '', mission: '', photo: '' })}
-          >
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Candidate
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea id="description" {...form.register('description')} />
+              {form.formState.errors.description && (
+                <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="status">Status</Label>
+              <Controller
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                              <SelectItem value="pending">Pending</SelectItem>
+                              <SelectItem value="ongoing">Ongoing</SelectItem>
+                              <SelectItem value="completed">Completed</SelectItem>
+                          </SelectContent>
+                      </Select>
+                  )}
+              />
+              {form.formState.errors.status && (
+                <p className="text-sm text-destructive">{form.formState.errors.status.message}</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Allowed Voter Categories</CardTitle>
+                <CardDescription>Select which categories of voters can participate in this election.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <FormField
+                    control={form.control}
+                    name="allowedCategories"
+                    render={() => (
+                        <FormItem className="space-y-3">
+                            {allCategories.map((item) => (
+                                <FormField
+                                    key={item.id}
+                                    control={form.control}
+                                    name="allowedCategories"
+                                    render={({ field }) => {
+                                        return (
+                                            <FormItem
+                                                key={item.id}
+                                                className="flex flex-row items-start space-x-3 space-y-0"
+                                            >
+                                                <FormControl>
+                                                    <Checkbox
+                                                        checked={field.value?.includes(item.id)}
+                                                        onCheckedChange={(checked) => {
+                                                            return checked
+                                                                ? field.onChange([...(field.value || []), item.id])
+                                                                : field.onChange(
+                                                                    field.value?.filter(
+                                                                        (value) => value !== item.id
+                                                                    )
+                                                                )
+                                                        }}
+                                                    />
+                                                </FormControl>
+                                                <FormLabel className="font-normal">
+                                                    {item.name}
+                                                </FormLabel>
+                                            </FormItem>
+                                        )
+                                    }}
+                                />
+                            ))}
+                            <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Candidates</CardTitle>
+            <CardDescription>Manage the candidates for this election.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {fields.map((field, index) => (
+              <div key={field.id} className="p-4 border rounded-lg relative space-y-4">
+                 <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 text-destructive hover:bg-destructive/10"
+                  onClick={() => remove(index)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+                <div className="space-y-2">
+                  <Label htmlFor={`candidates.${index}.name`}>Candidate Name</Label>
+                  <Input
+                    id={`candidates.${index}.name`}
+                    {...form.register(`candidates.${index}.name` as const)}
+                  />
+                   {form.formState.errors.candidates?.[index]?.name && (
+                      <p className="text-sm text-destructive">{form.formState.errors.candidates?.[index]?.name?.message}</p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`candidates.${index}.vision`}>Vision</Label>
+                  <Textarea
+                    id={`candidates.${index}.vision`}
+                    {...form.register(`candidates.${index}.vision` as const)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`candidates.${index}.mission`}>Mission</Label>
+                  <Textarea
+                    id={`candidates.${index}.mission`}
+                    {...form.register(`candidates.${index}.mission` as const)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`candidates.${index}.photo`}>Photo URL (Optional)</Label>
+                  <Input
+                    id={`candidates.${index}.photo`}
+                    {...form.register(`candidates.${index}.photo` as const)}
+                    placeholder="https://example.com/photo.jpg"
+                  />
+                </div>
+              </div>
+            ))}
+            {form.formState.errors.candidates?.root && (
+              <p className="text-sm text-destructive">{form.formState.errors.candidates.root.message}</p>
+            )}
+             {form.formState.errors.candidates && !form.formState.errors.candidates.root && (
+              <p className="text-sm text-destructive">Please add at least two candidates.</p>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => append({ id: `temp-${Date.now()}`, name: '', vision: '', mission: '', photo: '' })}
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Add Candidate
+            </Button>
+          </CardContent>
+        </Card>
+        
+        <div className="flex justify-end gap-2">
+           <Button type="button" variant="outline" onClick={() => router.push('/admin/elections')} disabled={isSubmitting}>
+            Cancel
           </Button>
-        </CardContent>
-      </Card>
-      
-      <div className="flex justify-end gap-2">
-         <Button type="button" variant="outline" onClick={() => router.push('/admin/elections')} disabled={isSubmitting}>
-          Cancel
-        </Button>
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isSubmitting ? 'Saving...' : 'Save Election'}
-        </Button>
-      </div>
-    </form>
+          <Button type="submit" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isSubmitting ? 'Saving...' : 'Save Election'}
+          </Button>
+        </div>
+      </form>
+    </Form>
   );
 }

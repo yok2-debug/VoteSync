@@ -1,4 +1,4 @@
-import { getElectionById } from '@/lib/data';
+import { getElectionById, getCategories } from '@/lib/data';
 import { ElectionForm } from '../components/election-form';
 import { redirect } from 'next/navigation';
 
@@ -10,7 +10,8 @@ type ElectionEditPageProps = {
 
 export default async function ElectionEditPage({ params }: ElectionEditPageProps) {
   const { electionId } = params;
-  
+  const categories = await getCategories();
+
   if (electionId === 'new') {
     const newElection = {
       id: 'new',
@@ -19,6 +20,7 @@ export default async function ElectionEditPage({ params }: ElectionEditPageProps
       status: 'pending' as 'pending' | 'ongoing' | 'completed',
       candidates: {},
       committee: [],
+      allowedCategories: [],
     };
     return (
       <div className="flex flex-col gap-6">
@@ -26,7 +28,7 @@ export default async function ElectionEditPage({ params }: ElectionEditPageProps
           <h1 className="text-3xl font-bold tracking-tight">Create New Election</h1>
           <p className="text-muted-foreground">Fill in the details for the new election.</p>
         </div>
-        <ElectionForm election={newElection} />
+        <ElectionForm election={newElection} allCategories={categories} />
       </div>
     );
   }
@@ -43,7 +45,7 @@ export default async function ElectionEditPage({ params }: ElectionEditPageProps
         <h1 className="text-3xl font-bold tracking-tight">Edit Election</h1>
         <p className="text-muted-foreground">Manage the details for "{election.name}".</p>
       </div>
-      <ElectionForm election={election} />
+      <ElectionForm election={election} allCategories={categories} />
     </div>
   );
 }

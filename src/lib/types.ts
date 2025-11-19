@@ -8,6 +8,7 @@ export interface Election {
   voters?: Voter[];
   votes?: Record<string, string>; // { [voterId]: candidateId }
   results?: Record<string, number>; // { [candidateId]: voteCount }
+  allowedCategories?: string[]; // Array of category IDs
 }
 
 export interface Candidate {

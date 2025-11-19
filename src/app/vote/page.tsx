@@ -22,7 +22,15 @@ export default async function VoterDashboardPage() {
 
   const voter: Voter | null = voterSnapshot.exists() ? voterSnapshot.val() : null;
 
-  const ongoingElections = elections.filter(e => e.status === 'ongoing');
+  if (!voter) {
+    redirect('/');
+  }
+
+  const ongoingElections = elections.filter(e => {
+    const isOngoing = e.status === 'ongoing';
+    const isAllowed = e.allowedCategories?.includes(voter.category);
+    return isOngoing && isAllowed;
+  });
 
   return (
     <main className="flex min-h-screen flex-col items-center bg-background p-4 sm:p-8">
@@ -64,7 +72,7 @@ export default async function VoterDashboardPage() {
         ) : (
           <Card>
             <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground">There are no ongoing elections at the moment.</p>
+              <p className="text-muted-foreground">There are no ongoing elections available for your category at the moment.</p>
             </CardContent>
           </Card>
         )}

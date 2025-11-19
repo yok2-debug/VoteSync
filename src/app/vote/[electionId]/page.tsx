@@ -1,25 +1,9 @@
-import { getElectionById } from '@/lib/data';
+import { getElectionById, getVoterById } from '@/lib/data';
 import { getSession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { db } from '@/lib/firebase';
-import { ref, runTransaction } from 'firebase/database';
-import { revalidatePath } from 'next/cache';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Vote } from 'lucide-react';
 import { CandidateVoteForm } from './components/candidate-vote-form';
 
 
@@ -31,9 +15,26 @@ type VotePageProps = {
 
 export default async function VotePage({ params }: VotePageProps) {
   const session = await getSession();
-  const election = await getElectionById(params.electionId);
+  if (!session?.voterId) {
+    redirect('/vote');
+  }
 
-  if (!session?.voterId || !election || election.status !== 'ongoing') {
+  const [election, voter] = await Promise.all([
+    getElectionById(params.electionId),
+    getVoterById(session.voterId)
+  ]);
+  
+  if (!election || election.status !== 'ongoing' || !voter) {
+    redirect('/vote');
+  }
+
+  // Check if voter category is allowed
+  if (!election.allowedCategories?.includes(voter.category)) {
+    redirect('/vote');
+  }
+  
+  // Check if voter has already voted
+  if (voter.hasVoted?.[election.id]) {
     redirect('/vote');
   }
 
