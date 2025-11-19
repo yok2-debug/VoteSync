@@ -46,14 +46,16 @@ function VoteDashboardContent() {
   }, [elections, category]);
 
   const isLoading = isDbLoading || isSessionLoading;
-
+  
   if (isLoading) {
     return <Loading />;
   }
   
   if (!session?.voterId || !voter) {
-    redirect('/');
-    return null;
+    // This should ideally trigger a redirect, but we ensure it happens after hooks.
+    // The middleware should handle the primary redirection.
+    // For client-side, we can use a useEffect for redirection.
+    return <Loading />; // Or a redirect component
   }
 
   const now = new Date();
