@@ -42,7 +42,7 @@ type VoterTableProps = {
 export function VoterTable({ initialVoters, categories }: VoterTableProps) {
   const [voters, setVoters] = useState<Voter[]>(initialVoters);
   const [filter, setFilter] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
@@ -56,7 +56,7 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
     (voter) =>
       (voter.name.toLowerCase().includes(filter.toLowerCase()) ||
       voter.id.toLowerCase().includes(filter.toLowerCase())) &&
-      (categoryFilter === '' || voter.category === categoryFilter)
+      (categoryFilter === 'all' || voter.category === categoryFilter)
   );
 
   const handlePrint = () => {
@@ -157,7 +157,7 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
               <SelectValue placeholder="Filter by category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value="all">All Categories</SelectItem>
               {categories.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   {category.name}
