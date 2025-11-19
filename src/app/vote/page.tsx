@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Check, Vote as VoteIcon } from 'lucide-react';
 import { redirect } from 'next/navigation';
+import { VoterLogoutButton } from './components/voter-logout-button';
 
 export default async function VoterDashboardPage() {
   const session = await getSession();
@@ -35,9 +36,12 @@ export default async function VoterDashboardPage() {
   return (
     <main className="flex min-h-screen flex-col items-center bg-background p-4 sm:p-8">
       <div className="w-full max-w-4xl space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight">Voter Dashboard</h1>
-          <p className="text-muted-foreground">Welcome, {voter?.name || 'Voter'}! Please cast your vote.</p>
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="text-center sm:text-left">
+              <h1 className="text-3xl font-bold tracking-tight">Voter Dashboard</h1>
+              <p className="text-muted-foreground">Welcome, {voter?.name || 'Voter'}! Please cast your vote.</p>
+            </div>
+            <VoterLogoutButton />
         </div>
 
         {ongoingElections.length > 0 ? (
