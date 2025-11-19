@@ -70,7 +70,6 @@ export function AdminSidebar() {
     { href: '/admin/candidates', icon: <UserSquare />, label: 'Candidates' },
     { href: '/admin/voters', icon: <Users />, label: 'Voters' },
     { href: '/admin/categories', icon: <Box />, label: 'Categories' },
-    { href: '/admin/results', icon: <BarChart2 />, label: 'Results' },
     { href: '/admin/recapitulation', icon: <FileText />, label: 'Recapitulation' },
     { href: '/admin/settings', icon: <Settings />, label: 'Settings' },
   ];
