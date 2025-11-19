@@ -69,7 +69,7 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
   };
   
   const handleEdit = (candidate: Candidate, electionId: string) => {
-    router.push(`/admin/candidates/${electionId}/${candidate.id}`);
+    router.push(`/admin/candidates/edit/${electionId}/${candidate.id}`);
   };
 
   const handleDelete = (candidate: Candidate, electionId: string) => {
