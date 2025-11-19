@@ -20,10 +20,8 @@ export function WysiwygEditor({ value, onChange, placeholder, className }: Wysiw
   
   const modules = {
     toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
+      ['bold', 'italic'],
       [{'list': 'ordered'}, {'list': 'bullet'}],
-      ['link'],
       ['clean']
     ],
   };
