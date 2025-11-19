@@ -34,15 +34,24 @@ const toWords = (num: number): string => {
   return '';
 };
 
-const formatDateToWords = (date: Date) => {
+type FormattedDateParts = {
+    day: string;
+    dayWords: string;
+    month: string;
+    yearWords: string;
+}
+
+const formatDateToWords = (date: Date): FormattedDateParts => {
     const day = date.getDate();
     const year = date.getFullYear();
     const month = format(date, 'MMMM', { locale: localeID });
     
-    const dayWords = toWords(day).trim();
-    const yearWords = toWords(year).trim();
-
-    return `tanggal ${dayWords} bulan ${month} tahun ${yearWords}`;
+    return {
+        day: format(date, 'EEEE', { locale: localeID }),
+        dayWords: toWords(day).trim(),
+        month: month,
+        yearWords: toWords(year).trim(),
+    };
 }
 
 
@@ -64,13 +73,9 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
     window.print();
   };
   
-  const electionDayInfo = useMemo(() => {
-    if (!election.endDate) return { day: 'N/A', date: 'N/A' };
-    const date = new Date(election.endDate);
-    return {
-      day: format(date, 'EEEE', { locale: localeID }),
-      date: formatDateToWords(date)
-    }
+  const electionDateInfo = useMemo(() => {
+    if (!election.endDate) return null;
+    return formatDateToWords(new Date(election.endDate));
   }, [election.endDate]);
 
 
@@ -142,7 +147,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
             <CardContent className="space-y-8 pt-6">
                 
                 <p>
-                    Pada hari ini, <span className="font-bold">{electionDayInfo.day}</span>, <span className="font-bold capitalize">{electionDayInfo.date}</span>, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} dengan hasil sebagai berikut:
+                    Pada hari ini, <span className="font-bold">{electionDateInfo?.day}</span>, <span>tanggal</span> <span className="font-bold capitalize">{electionDateInfo?.dayWords}</span> <span>bulan</span> <span className="font-bold capitalize">{electionDateInfo?.month}</span> <span>tahun</span> <span className="font-bold capitalize">{electionDateInfo?.yearWords}</span>, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} dengan hasil sebagai berikut:
                 </p>
 
                 <div>
