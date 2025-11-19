@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Check, Vote as VoteIcon, Lock, Clock } from 'lucide-react';
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { VoterLogoutButton } from './components/voter-logout-button';
 import { useDatabase } from '@/context/database-context';
 import { getVoterSession } from '@/lib/session';
@@ -16,6 +16,7 @@ function VoteDashboardContent() {
   const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchSession() {
@@ -45,17 +46,22 @@ function VoteDashboardContent() {
     });
   }, [elections, category]);
 
+  useEffect(() => {
+    // This effect handles redirection safely after the component has rendered.
+    if (!isSessionLoading && (!session?.voterId || !voter)) {
+        router.push('/');
+    }
+  }, [isSessionLoading, session, voter, router]);
+
   const isLoading = isDbLoading || isSessionLoading;
   
   if (isLoading) {
     return <Loading />;
   }
   
+  // If the session is invalid, we render null while the useEffect redirects.
   if (!session?.voterId || !voter) {
-    // This should ideally trigger a redirect, but we ensure it happens after hooks.
-    // The middleware should handle the primary redirection.
-    // For client-side, we can use a useEffect for redirection.
-    return <Loading />; // Or a redirect component
+    return null;
   }
 
   const now = new Date();
