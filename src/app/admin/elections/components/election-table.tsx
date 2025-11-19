@@ -97,6 +97,15 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
     }
   };
 
+  const formatSchedule = (start?: string, end?: string) => {
+    if (!start || !end) return 'Not set';
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const startFormat = format(startDate, 'd MMM yyyy, HH:mm');
+    const endFormat = format(endDate, 'd MMM yyyy, HH:mm');
+    return `${startFormat} - ${endFormat}`;
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -128,9 +137,7 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
                 <TableRow key={election.id}>
                   <TableCell className="font-medium">{election.name}</TableCell>
                   <TableCell>
-                    {election.startDate && election.endDate
-                      ? `${format(new Date(election.startDate), 'd MMM yyyy')} - ${format(new Date(election.endDate), 'd MMM yyyy')}`
-                      : 'Not set'}
+                    {formatSchedule(election.startDate, election.endDate)}
                   </TableCell>
                   <TableCell>{getStatusBadge(election.status)}</TableCell>
                   <TableCell>{election.candidates ? Object.keys(election.candidates).length : 0}</TableCell>
@@ -188,3 +195,5 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
     </div>
   );
 }
+
+    

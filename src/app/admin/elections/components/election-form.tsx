@@ -27,11 +27,11 @@ import { saveElection } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, setHours, setMinutes, getHours, getMinutes } from 'date-fns';
 
 const candidateSchema = z.object({
   id: z.string().optional(),
@@ -55,14 +55,14 @@ const electionSchema = z.object({
     }
     return true;
 }, {
-    message: "End date must be after start date.",
+    message: "End date and time must be after start date and time.",
     path: ["endDate"],
 });
 
 type ElectionFormData = z.infer<typeof electionSchema>;
 
 interface ElectionFormProps {
-  election: Omit<Election, 'allowedCategories'>;
+  election: Omit<Election, 'allowedCategories' | 'allowedElections'>;
 }
 
 export function ElectionForm({ election }: ElectionFormProps) {
@@ -119,6 +119,9 @@ export function ElectionForm({ election }: ElectionFormProps) {
     }
   };
 
+  const hours = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
+  const minutes = Array.from({ length: 60 }, (_, i) => i.toString().padStart(2, '0'));
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -142,42 +145,88 @@ export function ElectionForm({ election }: ElectionFormProps) {
                 <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>
               )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                     control={form.control}
                     name="startDate"
                     render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                        <FormLabel>Start Date</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
+                        <FormItem className="flex flex-col gap-2">
+                        <FormLabel>Start Date & Time</FormLabel>
+                        <div className="flex gap-2">
+                           <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full justify-start text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {field.value ? (
+                                        format(field.value, "PPP")
+                                    ) : (
+                                        <span>Pick a date</span>
+                                    )}
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={(date) => {
+                                        const current = field.value || new Date();
+                                        const newDate = setMinutes(setHours(date || current, getHours(current)), getMinutes(current));
+                                        field.onChange(newDate);
+                                    }}
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                         <div className="flex gap-2">
+                               <Controller
+                                name="startDate"
+                                control={form.control}
+                                render={({ field: timeField }) => (
+                                    <Select
+                                        value={timeField.value ? getHours(timeField.value).toString().padStart(2, '0') : '00'}
+                                        onValueChange={(hour) => {
+                                            const newDate = setHours(timeField.value || new Date(), parseInt(hour));
+                                            timeField.onChange(newDate);
+                                        }}
+                                        disabled={!timeField.value}
+                                    >
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            {hours.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
                                 )}
-                                >
-                                {field.value ? (
-                                    format(field.value, "PPP")
-                                ) : (
-                                    <span>Pick a date</span>
+                                />
+                               <Controller
+                                name="startDate"
+                                control={form.control}
+                                render={({ field: timeField }) => (
+                                    <Select
+                                        value={timeField.value ? getMinutes(timeField.value).toString().padStart(2, '0') : '00'}
+                                        onValueChange={(minute) => {
+                                            const newDate = setMinutes(timeField.value || new Date(), parseInt(minute));
+                                            timeField.onChange(newDate);
+                                        }}
+                                        disabled={!timeField.value}
+                                    >
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            {minutes.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
                                 )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
-                        {form.formState.errors.startDate && <p className="text-sm text-destructive">{form.formState.errors.startDate.message}</p>}
+                                />
+                            </div>
+                        <FormMessage />
                         </FormItem>
                     )}
                 />
@@ -185,37 +234,83 @@ export function ElectionForm({ election }: ElectionFormProps) {
                     control={form.control}
                     name="endDate"
                     render={({ field }) => (
-                        <FormItem className="flex flex-col">
-                        <FormLabel>End Date</FormLabel>
-                        <Popover>
-                            <PopoverTrigger asChild>
-                            <FormControl>
-                                <Button
-                                variant={"outline"}
-                                className={cn(
-                                    "pl-3 text-left font-normal",
-                                    !field.value && "text-muted-foreground"
+                         <FormItem className="flex flex-col gap-2">
+                        <FormLabel>End Date & Time</FormLabel>
+                        <div className="flex gap-2">
+                           <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full justify-start text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {field.value ? (
+                                        format(field.value, "PPP")
+                                    ) : (
+                                        <span>Pick a date</span>
+                                    )}
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={(date) => {
+                                        const current = field.value || new Date();
+                                        const newDate = setMinutes(setHours(date || current, getHours(current)), getMinutes(current));
+                                        field.onChange(newDate);
+                                    }}
+                                    initialFocus
+                                />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                         <div className="flex gap-2">
+                               <Controller
+                                name="endDate"
+                                control={form.control}
+                                render={({ field: timeField }) => (
+                                    <Select
+                                        value={timeField.value ? getHours(timeField.value).toString().padStart(2, '0') : '00'}
+                                        onValueChange={(hour) => {
+                                            const newDate = setHours(timeField.value || new Date(), parseInt(hour));
+                                            timeField.onChange(newDate);
+                                        }}
+                                        disabled={!timeField.value}
+                                    >
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            {hours.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
                                 )}
-                                >
-                                {field.value ? (
-                                    format(field.value, "PPP")
-                                ) : (
-                                    <span>Pick a date</span>
+                                />
+                               <Controller
+                                name="endDate"
+                                control={form.control}
+                                render={({ field: timeField }) => (
+                                    <Select
+                                        value={timeField.value ? getMinutes(timeField.value).toString().padStart(2, '0') : '00'}
+                                        onValueChange={(minute) => {
+                                            const newDate = setMinutes(timeField.value || new Date(), parseInt(minute));
+                                            timeField.onChange(newDate);
+                                        }}
+                                        disabled={!timeField.value}
+                                    >
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            {minutes.map(m => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
                                 )}
-                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                </Button>
-                            </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-auto p-0" align="start">
-                            <Calendar
-                                mode="single"
-                                selected={field.value}
-                                onSelect={field.onChange}
-                                initialFocus
-                            />
-                            </PopoverContent>
-                        </Popover>
-                         {form.formState.errors.endDate && <p className="text-sm text-destructive">{form.formState.errors.endDate.message}</p>}
+                                />
+                            </div>
+                        <FormMessage />
                         </FormItem>
                     )}
                 />
@@ -326,3 +421,5 @@ export function ElectionForm({ election }: ElectionFormProps) {
     </Form>
   );
 }
+
+    
