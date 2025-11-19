@@ -155,6 +155,7 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
             <TableRow>
               <TableHead>Voter ID</TableHead>
               <TableHead>Name</TableHead>
+              <TableHead>Password</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Has Voted</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -166,6 +167,7 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
                 <TableRow key={voter.id}>
                   <TableCell className="font-mono">{voter.id}</TableCell>
                   <TableCell className="font-medium">{voter.name}</TableCell>
+                  <TableCell className="font-mono">{voter.password}</TableCell>
                   <TableCell>{categoryMap.get(voter.category) || 'N/A'}</TableCell>
                   <TableCell>{voter.hasVoted && Object.keys(voter.hasVoted).length > 0 ? 'Yes' : 'No'}</TableCell>
                   <TableCell className="text-right">
@@ -196,7 +198,7 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   No voters found.
                 </TableCell>
               </TableRow>
