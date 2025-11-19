@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -23,29 +24,25 @@ export function middleware(request: NextRequest) {
   const voterSession = getSessionFromCookie(request, VOTER_SESSION_COOKIE_NAME);
   const { pathname } = request.nextUrl;
 
-  const isLoginPage = pathname === '/';
-  const isAdminLoginPage = pathname === '/admin-login';
-
-  // If a voter has a session and is on the main login page, redirect to their dashboard.
-  if (voterSession && isLoginPage) {
-    return NextResponse.redirect(new URL('/vote', request.url));
-  }
-  
-  // If an admin has a session and is on the admin-login page, redirect to their dashboard.
-  if (adminSession && isAdminLoginPage) {
-    return NextResponse.redirect(new URL('/admin/dashboard', request.url));
-  }
-
-  // Protected routes
   const isAccessingAdminArea = pathname.startsWith('/admin');
   const isAccessingVoteArea = pathname.startsWith('/vote');
 
-  // If user tries to access admin area without admin session, redirect to admin login
+  // If a voter is already logged in, redirect them from the main login page to their dashboard.
+  if (voterSession && pathname === '/') {
+    return NextResponse.redirect(new URL('/vote', request.url));
+  }
+  
+  // If an admin is already logged in, redirect them from the admin login page to their dashboard.
+  if (adminSession && pathname === '/admin-login') {
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+  }
+
+  // If a non-admin user tries to access the admin area, redirect to the admin login page.
   if (isAccessingAdminArea && !adminSession) {
     return NextResponse.redirect(new URL('/admin-login', request.url));
   }
   
-  // If user tries to access vote area without voter session, redirect to main login
+  // If a non-voter user tries to access the voting area, redirect to the main login page.
   if (isAccessingVoteArea && !voterSession) {
      return NextResponse.redirect(new URL('/', request.url));
   }
@@ -54,5 +51,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // Apply middleware to all relevant paths
   matcher: ['/', '/admin/:path*', '/vote/:path*', '/admin-login'],
 };
