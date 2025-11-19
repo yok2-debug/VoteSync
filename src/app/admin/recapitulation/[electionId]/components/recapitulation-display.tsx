@@ -4,9 +4,9 @@ import type { Election, Voter, Category, CommitteeMember } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useMemo } from 'react';
-import { format } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Printer, Users, UserCheck } from 'lucide-react';
+import { Printer } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 type RecapitulationDisplayProps = {
@@ -29,7 +29,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
     return allVoters.filter(voter => allowedCategoryIds.includes(voter.category)).length;
   }, [election.id, allVoters, allCategories]);
 
-  const participationPercentage = DPT > 0 ? ((totalVotesCast / DPT) * 100).toFixed(2) : 0;
+  const votersWhoDidNotVote = DPT - totalVotesCast;
   
   const handlePrint = () => {
     window.print();
@@ -39,11 +39,15 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
     if (!start || !end) return 'Not set';
     const startDate = new Date(start);
     const endDate = new Date(end);
-    const startFormat = format(startDate, 'd MMM yyyy, HH:mm');
-    const endFormat = format(endDate, 'd MMM yyyy, HH:mm');
+    const startFormat = format(startDate, 'd MMMM yyyy, HH:mm');
+    const endFormat = format(endDate, 'd MMMM yyyy, HH:mm');
     return `${startFormat} - ${endFormat}`;
   }
-
+  
+  const electionDay = election.endDate ? format(new Date(election.endDate), 'EEEE, d MMMM yyyy') : 'N/A';
+  const electionDuration = election.startDate && election.endDate 
+    ? formatDistanceToNow(new Date(election.startDate), { addSuffix: false }) 
+    : 'N/A';
 
   return (
     <div className="space-y-6">
@@ -61,9 +65,21 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
               left: 0;
               top: 0;
               width: 100%;
+              padding: 1rem;
+              font-size: 12px;
             }
             .no-print {
                 display: none;
+            }
+             .print-signature-table {
+                width: 100%;
+                margin-top: 50px;
+                border-collapse: collapse;
+                text-align: center;
+            }
+            .print-signature-table td {
+                padding: 40px 10px;
+                width: 50%;
             }
           }
         `}
@@ -71,95 +87,110 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
       <div className="flex justify-end gap-2 no-print">
         <Button onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" />
-            Print Report
+            Print Berita Acara
         </Button>
       </div>
       <div id="print-section">
-        <Card>
-            <CardHeader className="text-center space-y-2">
-                <h2 className="text-2xl font-bold tracking-tight">ELECTION RECAPITULATION</h2>
-                <h1 className="text-xl font-semibold">{election.name}</h1>
-                <p className="text-muted-foreground">{formatSchedule(election.startDate, election.endDate)}</p>
+        <Card className="shadow-none border-0 print:shadow-none print:border-0">
+            <CardHeader className="text-center space-y-2 border-b pb-4">
+                <h2 className="text-2xl font-bold tracking-tight">BERITA ACARA</h2>
+                <h3 className="text-xl font-semibold uppercase">HASIL PENGHITUNGAN SUARA PEMILIHAN</h3>
+                <h1 className="text-xl font-semibold uppercase">{election.name}</h1>
             </CardHeader>
-            <CardContent className="space-y-8 pt-4">
+            <CardContent className="space-y-8 pt-6">
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Total DPT (Eligible Voters)</CardTitle>
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{DPT}</div>
-                      <p className="text-xs text-muted-foreground">Total voters who have the right to vote</p>
-                    </CardContent>
-                  </Card>
-                   <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Total Votes Cast</CardTitle>
-                      <UserCheck className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold">{totalVotesCast}</div>
-                      <p className="text-xs text-muted-foreground">{participationPercentage}% participation rate from DPT</p>
-                    </CardContent>
-                  </Card>
-                </div>
-                
+                <p>
+                    Pada hari ini, {electionDay}, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} yang diselenggarakan selama {electionDuration} terhitung sejak {formatSchedule(election.startDate, election.endDate)}.
+                </p>
+
                 <div>
-                    <h3 className="text-lg font-semibold mb-2 text-center">Final Vote Summary</h3>
-                    <div className="rounded-md border">
+                    <h3 className="text-lg font-semibold mb-2">A. Data Pemilih dan Penggunaan Hak Pilih</h3>
+                     <div className="rounded-md border">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[100px]">No.</TableHead>
-                                    <TableHead>Candidate</TableHead>
-                                    <TableHead className="text-right">Votes</TableHead>
-                                    <TableHead className="text-right">Percentage</TableHead>
+                                    <TableHead>Uraian</TableHead>
+                                    <TableHead className="text-right">Jumlah</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {candidates.length > 0 ? candidates.map((candidate, index) => (
-                                    <TableRow key={candidate.id}>
-                                        <TableCell>{index + 1}</TableCell>
-                                        <TableCell className="font-medium">{candidate.name}</TableCell>
-                                        <TableCell className="text-right">{election.results?.[candidate.id] || 0}</TableCell>
-                                        <TableCell className="text-right">
-                                            {totalVotesCast > 0 ? (((election.results?.[candidate.id] || 0) / totalVotesCast) * 100).toFixed(2) : '0.00'}%
-                                        </TableCell>
-                                    </TableRow>
-                                )) : (
-                                  <TableRow>
-                                    <TableCell colSpan={4} className="h-24 text-center">No candidates in this election.</TableCell>
-                                  </TableRow>
-                                )}
+                                <TableRow>
+                                    <TableCell>Jumlah Pemilih dalam Daftar Pemilih Tetap (DPT)</TableCell>
+                                    <TableCell className="text-right font-bold">{DPT}</TableCell>
+                                </TableRow>
+                                 <TableRow>
+                                    <TableCell>Jumlah Pemilih yang Menggunakan Hak Pilih</TableCell>
+                                    <TableCell className="text-right font-bold">{totalVotesCast}</TableCell>
+                                </TableRow>
+                                 <TableRow>
+                                    <TableCell>Jumlah Pemilih yang Tidak Menggunakan Hak Pilih</TableCell>
+                                    <TableCell className="text-right font-bold">{votersWhoDidNotVote}</TableCell>
+                                </TableRow>
                             </TableBody>
                         </Table>
                     </div>
                 </div>
 
-                {election.committee && election.committee.length > 0 && (
-                  <div>
-                    <Separator className="my-6" />
-                    <h3 className="text-lg font-semibold mb-4 text-center">Election Committee</h3>
-                     <div className="rounded-md border">
+                
+                <div>
+                    <h3 className="text-lg font-semibold mb-2">B. Rincian Perolehan Suara Kandidat</h3>
+                    <div className="rounded-md border">
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Name</TableHead>
-                                    <TableHead>Role</TableHead>
+                                    <TableHead className="w-[80px]">No. Urut</TableHead>
+                                    <TableHead>Nama Kandidat</TableHead>
+                                    <TableHead className="text-right">Jumlah Suara Sah</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {election.committee.map((member, index) => (
-                                    <TableRow key={index}>
-                                        <TableCell className="font-medium">{member.name}</TableCell>
-                                        <TableCell>{member.role}</TableCell>
+                                {candidates.length > 0 ? candidates.map((candidate, index) => (
+                                    <TableRow key={candidate.id}>
+                                        <TableCell className="text-center">{index + 1}</TableCell>
+                                        <TableCell className="font-medium">{candidate.name}</TableCell>
+                                        <TableCell className="text-right font-bold">{election.results?.[candidate.id] || 0}</TableCell>
                                     </TableRow>
-                                ))}
+                                )) : (
+                                  <TableRow>
+                                    <TableCell colSpan={3} className="h-24 text-center">Tidak ada kandidat dalam pemilihan ini.</TableCell>
+                                  </TableRow>
+                                )}
+                                <TableRow className="font-bold bg-muted/50">
+                                    <TableCell colSpan={2}>Total Seluruh Suara Sah</TableCell>
+                                    <TableCell className="text-right">{totalVotesCast}</TableCell>
+                                </TableRow>
                             </TableBody>
                         </Table>
                     </div>
+                </div>
+
+                <p>
+                    Demikian Berita Acara ini dibuat dengan sebenar-benarnya untuk dapat dipergunakan sebagaimana mestinya.
+                </p>
+
+                {election.committee && election.committee.length > 0 && (
+                  <div className="pt-8">
+                     <h3 className="text-lg font-semibold mb-4 text-center">Panitia Pemilihan</h3>
+                     <table className="print-signature-table">
+                         <tbody>
+                            <tr>
+                                {election.committee.filter(p => p.role === 'Ketua').map((member, index) => (
+                                     <td key={`ketua-${index}`}>
+                                        <div>{member.role}</div>
+                                        <div className="h-24"></div>
+                                        <div className="font-bold underline">{member.name}</div>
+                                    </td>
+                                ))}
+                                {election.committee.filter(p => p.role === 'Anggota').slice(0,1).map((member, index) => (
+                                     <td key={`anggota-${index}`}>
+                                        <div>{member.role}</div>
+                                        <div className="h-24"></div>
+                                        <div className="font-bold underline">{member.name}</div>
+                                    </td>
+                                ))}
+                            </tr>
+                         </tbody>
+                     </table>
                   </div>
                 )}
             </CardContent>
