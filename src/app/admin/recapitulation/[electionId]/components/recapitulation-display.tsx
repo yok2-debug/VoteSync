@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useMemo } from 'react';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
-import { Printer } from 'lucide-react';
+import { Printer, Users, UserCheck } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 type RecapitulationDisplayProps = {
   election: Election;
@@ -15,14 +16,20 @@ type RecapitulationDisplayProps = {
 };
 
 export function RecapitulationDisplay({ election, allVoters, allCategories }: RecapitulationDisplayProps) {
-  const categoryMap = useMemo(() => new Map(allCategories.map(c => [c.id, c.name])), [allCategories]);
   const candidates = useMemo(() => Object.values(election.candidates || {}), [election.candidates]);
-  const totalVotes = useMemo(() => Object.keys(election.votes || {}).length, [election.votes]);
+  const totalVotesCast = useMemo(() => Object.keys(election.votes || {}).length, [election.votes]);
 
-  const participatingVoters = useMemo(() => {
-    const voterIds = Object.keys(election.votes || {});
-    return allVoters.filter(v => voterIds.includes(v.id));
-  }, [election.votes, allVoters]);
+  const DPT = useMemo(() => {
+    // Find categories allowed in this election
+    const allowedCategoryIds = allCategories
+      .filter(cat => cat.allowedElections?.includes(election.id))
+      .map(cat => cat.id);
+    
+    // Count voters belonging to those categories
+    return allVoters.filter(voter => allowedCategoryIds.includes(voter.category)).length;
+  }, [election.id, allVoters, allCategories]);
+
+  const participationPercentage = DPT > 0 ? ((totalVotesCast / DPT) * 100).toFixed(2) : 0;
   
   const handlePrint = () => {
     window.print();
@@ -69,70 +76,62 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
       </div>
       <div id="print-section">
         <Card>
-            <CardHeader className="text-center">
-                <CardTitle className="text-2xl">ELECTION RECAPITULATION</CardTitle>
-                <CardDescription className="text-lg">{election.name}</CardDescription>
+            <CardHeader className="text-center space-y-2">
+                <h2 className="text-2xl font-bold tracking-tight">ELECTION RECAPITULATION</h2>
+                <h1 className="text-xl font-semibold">{election.name}</h1>
+                <p className="text-muted-foreground">{formatSchedule(election.startDate, election.endDate)}</p>
             </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div><strong>Election ID:</strong> {election.id}</div>
-                    <div><strong>Status:</strong> <span className="capitalize">{election.status}</span></div>
-                    <div><strong>Schedule:</strong> {formatSchedule(election.startDate, election.endDate)}</div>
-                    <div><strong>Total Votes Cast:</strong> {totalVotes}</div>
+            <CardContent className="space-y-8 pt-4">
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Total DPT (Eligible Voters)</CardTitle>
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{DPT}</div>
+                      <p className="text-xs text-muted-foreground">Total eligible voters for this election</p>
+                    </CardContent>
+                  </Card>
+                   <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Voter Participation</CardTitle>
+                      <UserCheck className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{totalVotesCast}</div>
+                      <p className="text-xs text-muted-foreground">{participationPercentage}% participation rate</p>
+                    </CardContent>
+                  </Card>
                 </div>
-
-                <Separator />
                 
                 <div>
-                    <h3 className="text-lg font-semibold mb-2">Vote Summary</h3>
+                    <h3 className="text-lg font-semibold mb-2 text-center">Final Vote Summary</h3>
                     <div className="rounded-md border">
                         <Table>
                             <TableHeader>
                                 <TableRow>
+                                    <TableHead className="w-[100px]">No.</TableHead>
                                     <TableHead>Candidate</TableHead>
                                     <TableHead className="text-right">Votes</TableHead>
                                     <TableHead className="text-right">Percentage</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {candidates.map(candidate => (
+                                {candidates.length > 0 ? candidates.map((candidate, index) => (
                                     <TableRow key={candidate.id}>
+                                        <TableCell>{index + 1}</TableCell>
                                         <TableCell className="font-medium">{candidate.name}</TableCell>
                                         <TableCell className="text-right">{election.results?.[candidate.id] || 0}</TableCell>
                                         <TableCell className="text-right">
-                                            {totalVotes > 0 ? (((election.results?.[candidate.id] || 0) / totalVotes) * 100).toFixed(2) : '0.00'}%
+                                            {totalVotesCast > 0 ? (((election.results?.[candidate.id] || 0) / totalVotesCast) * 100).toFixed(2) : '0.00'}%
                                         </TableCell>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </div>
-                </div>
-
-                <Separator />
-
-                <div>
-                    <h3 className="text-lg font-semibold mb-2">Voter Participation</h3>
-                     <div className="rounded-md border">
-                        <Table>
-                             <TableHeader>
-                                <TableRow>
-                                    <TableHead>Voter ID</TableHead>
-                                    <TableHead>Voter Name</TableHead>
-                                    <TableHead>Category</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {participatingVoters.length > 0 ? participatingVoters.map(voter => (
-                                    <TableRow key={voter.id}>
-                                        <TableCell className="font-mono">{voter.id}</TableCell>
-                                        <TableCell>{voter.name}</TableCell>
-                                        <TableCell>{categoryMap.get(voter.category) || 'N/A'}</TableCell>
-                                    </TableRow>
                                 )) : (
-                                    <TableRow>
-                                        <TableCell colSpan={3} className="h-24 text-center">No voters have participated yet.</TableCell>
-                                    </TableRow>
+                                  <TableRow>
+                                    <TableCell colSpan={4} className="h-24 text-center">No candidates in this election.</TableCell>
+                                  </TableRow>
                                 )}
                             </TableBody>
                         </Table>
@@ -143,9 +142,4 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
       </div>
     </div>
   );
-}
-
-
-function Separator() {
-    return <div className="border-t border-dashed my-4" />;
 }
