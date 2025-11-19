@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, Download, Upload, Edit, Trash2, Loader2, KeyRound } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Download, Upload, Edit, Trash2, Loader2, KeyRound, Printer } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { VoterFormDialog } from './voter-form-dialog';
@@ -55,6 +55,20 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
       voter.name.toLowerCase().includes(filter.toLowerCase()) ||
       voter.id.toLowerCase().includes(filter.toLowerCase())
   );
+
+  const handlePrint = () => {
+    const voterIds = filteredVoters.map(v => v.id);
+    if (voterIds.length === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'No voters to print',
+        description: 'There are no voters in the current filtered list.',
+      });
+      return;
+    }
+    const url = `/admin/voters/print?voterIds=${voterIds.join(',')}`;
+    window.open(url, '_blank');
+  };
 
   const handleExportTemplate = () => {
     const csvContent = 'id_pemilih,nama,kategori,password\n';
@@ -134,7 +148,11 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
           onChange={(e) => setFilter(e.target.value)}
           className="max-w-sm"
         />
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+           <Button variant="outline" onClick={handlePrint}>
+              <Printer className="mr-2 h-4 w-4" />
+              Print Cards
+            </Button>
            <Button variant="outline" onClick={handleExportTemplate}>
               <Download className="mr-2 h-4 w-4" />
               Export Template
