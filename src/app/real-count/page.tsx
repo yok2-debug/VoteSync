@@ -7,11 +7,11 @@ import Loading from '../loading';
 export default function RealCountPage() {
   const { elections, voters, categories, isLoading } = useDatabase();
 
+  const activeElections = elections.filter(e => e.status === 'active');
+
   if (isLoading) {
     return <Loading />;
   }
-
-  const activeElections = elections.filter(e => e.status === 'active');
 
   return (
     <>
