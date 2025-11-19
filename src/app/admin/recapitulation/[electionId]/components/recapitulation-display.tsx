@@ -113,7 +113,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
                 background: #fff !important;
             }
             .print-table {
-                border: 1px solid #000 !important;
+                border: none !important;
                 color: #000 !important;
                 border-collapse: collapse !important;
             }
