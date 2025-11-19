@@ -22,8 +22,7 @@ export function middleware(request: NextRequest) {
   const isLoginPage = pathname === '/';
 
   // If a voter has a session and is on the login page, redirect to their dashboard.
-  // Admins are allowed to see the login page to also log in as a voter.
-  if (session && !session.isAdmin && isLoginPage) {
+  if (session && session.voterId && !session.isAdmin && isLoginPage) {
     const url = new URL('/vote', request.url);
     return NextResponse.redirect(url);
   }
@@ -33,15 +32,15 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 
-  // If a voter tries to access an admin route, or vice-versa
+  // Enforce strict role-based routing
   if (session) {
+    // If a non-admin tries to access an admin route, redirect to voter dashboard
     if (pathname.startsWith('/admin') && !session.isAdmin) {
       return NextResponse.redirect(new URL('/vote', request.url));
     }
+    // If an admin tries to access a voter route, redirect to admin dashboard
     if (pathname.startsWith('/vote') && session.isAdmin) {
-      // This allows an admin to visit the voter pages, which might be intended.
-      // If not, redirect them to the admin dashboard.
-      // return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+      return NextResponse.redirect(new URL('/admin/dashboard', request.url));
     }
   }
   
