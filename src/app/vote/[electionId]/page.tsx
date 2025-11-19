@@ -9,7 +9,7 @@ import Link from 'next/link';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { useDatabase } from '@/context/database-context';
 import { getVoterSession } from '@/lib/session';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { redirect, useParams } from 'next/navigation';
 import Loading from '@/app/loading';
 import type { VoterSessionPayload } from '@/lib/types';
@@ -25,7 +25,7 @@ import {
 
 export default function VotePage() {
   const { electionId } = useParams() as { electionId: string };
-  const { elections, voters, categories, isLoading } = useDatabase();
+  const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
 
@@ -37,36 +37,27 @@ export default function VotePage() {
     }
     fetchSession();
   }, []);
+
+  const election = useMemo(() => elections.find(e => e.id === electionId), [elections, electionId]);
+  const voter = useMemo(() => voters.find(v => v.id === session?.voterId), [voters, session]);
+  const category = useMemo(() => categories.find(c => c.id === voter?.category), [categories, voter]);
   
-  if (isLoading || isSessionLoading) {
+  if (isDbLoading || isSessionLoading) {
     return <Loading />;
   }
 
   if (!session?.voterId) {
-    redirect('/');
+    return redirect('/');
   }
-  
-  const election = elections.find(e => e.id === electionId);
-  const voter = voters.find(v => v.id === session.voterId);
 
   const now = new Date();
   const electionStarted = election?.startDate ? new Date(election.startDate) <= now : false;
   const electionEnded = election?.endDate ? new Date(election.endDate) < now : false;
+  const isVoterAllowed = category?.allowedElections?.includes(electionId);
+  const hasVoted = voter?.hasVoted?.[electionId];
 
-  if (!election || election.status !== 'active' || !voter || !electionStarted || electionEnded) {
-    redirect('/vote');
-  }
-
-  const category = categories.find(c => c.id === voter.category);
-
-  // Check if voter category is allowed
-  if (!category?.allowedElections?.includes(election.id)) {
-    redirect('/vote');
-  }
-  
-  // Check if voter has already voted
-  if (voter.hasVoted?.[election.id]) {
-    redirect('/vote');
+  if (!election || election.status !== 'active' || !voter || !electionStarted || electionEnded || !isVoterAllowed || hasVoted) {
+    return redirect('/vote');
   }
 
   const candidates = election.candidates ? Object.values(election.candidates) : [];
