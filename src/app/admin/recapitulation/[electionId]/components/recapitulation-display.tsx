@@ -73,19 +73,29 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
             }
              .print-signature-table {
                 width: 100%;
-                margin-top: 50px;
+                margin-top: 40px;
                 border-collapse: collapse;
+                page-break-inside: avoid;
             }
+            .print-signature-table th,
             .print-signature-table td {
-                padding: 10px;
-                border: 1px solid #ccc;
-                vertical-align: top;
+                padding: 12px 8px;
+                border: 1px solid #ddd;
+                text-align: left;
+                vertical-align: middle;
             }
-            .print-signature-table .name-cell {
-                width: 40%;
+            .print-signature-table .name-col { width: 30%; }
+            .print-signature-table .role-col { width: 25%; }
+            .print-signature-table .signature-col { width: 45%; }
+            .print-signature-table .signature-box {
+                height: 50px;
+                position: relative;
             }
-            .print-signature-table .signature-cell {
-                width: 60%;
+            .print-signature-table .signature-dots {
+                border-bottom: 1px dotted #888;
+                width: 100%;
+                position: absolute;
+                bottom: 0;
             }
           }
         `}
@@ -180,19 +190,20 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
                      <table className="print-signature-table">
                         <thead>
                             <tr>
-                                <th className="text-left p-2 border">Nama & Jabatan</th>
-                                <th className="text-left p-2 border">Tanda Tangan</th>
+                                <th className="name-col">Nama</th>
+                                <th className="role-col">Jabatan</th>
+                                <th className="signature-col">Tanda Tangan</th>
                             </tr>
                         </thead>
                          <tbody>
                             {election.committee.map((member, index) => (
                                 <tr key={`committee-member-${index}`}>
-                                    <td className="name-cell">
-                                        <div className="font-bold">{member.name}</div>
-                                        <div className="text-sm text-muted-foreground">{member.role}</div>
-                                    </td>
-                                    <td className="signature-cell">
-                                        <div className="h-16"></div>
+                                    <td>{member.name}</td>
+                                    <td>{member.role}</td>
+                                    <td>
+                                      <div className="signature-box">
+                                        <div className="signature-dots"></div>
+                                      </div>
                                     </td>
                                 </tr>
                             ))}
