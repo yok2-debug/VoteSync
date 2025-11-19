@@ -111,21 +111,27 @@ export default function VotePage() {
                         Lihat Visi & Misi
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="sm:max-w-md">
+                    <DialogContent className="sm:max-w-2xl">
                       <DialogHeader>
                         <DialogTitle>{candidate.name}</DialogTitle>
                         <DialogDescription>
                           Visi dan Misi Kandidat
                         </DialogDescription>
                       </DialogHeader>
-                      <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-4">
+                      <div className="space-y-4 max-h-[60vh] overflow-y-auto p-1">
                         <div>
-                          <h3 className="font-semibold text-lg">Visi</h3>
-                          <p className="text-sm text-muted-foreground">{candidate.vision || 'Tidak ada visi yang diberikan.'}</p>
+                          <h3 className="font-semibold text-lg mb-2">Visi</h3>
+                           <div
+                              className="prose prose-sm dark:prose-invert max-w-none"
+                              dangerouslySetInnerHTML={{ __html: candidate.vision || 'Tidak ada visi yang diberikan.' }}
+                            />
                         </div>
                         <div>
-                          <h3 className="font-semibold text-lg">Misi</h3>
-                          <p className="text-sm text-muted-foreground">{candidate.mission || 'Tidak ada misi yang diberikan.'}</p>
+                          <h3 className="font-semibold text-lg mt-4 mb-2">Misi</h3>
+                           <div
+                              className="prose prose-sm dark:prose-invert max-w-none"
+                              dangerouslySetInnerHTML={{ __html: candidate.mission || 'Tidak ada misi yang diberikan.' }}
+                            />
                         </div>
                       </div>
                     </DialogContent>

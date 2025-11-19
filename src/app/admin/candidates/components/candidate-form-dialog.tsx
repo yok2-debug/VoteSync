@@ -18,8 +18,8 @@ import type { Candidate, Election } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { saveCandidate } from '@/lib/actions';
 import { Loader2 } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { WysiwygEditor } from '@/components/ui/wysiwyg-editor';
 
 const candidateSchema = z.object({
   id: z.string().optional(),
@@ -111,7 +111,7 @@ export function CandidateFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Candidate' : 'Add New Candidate'}</DialogTitle>
           <DialogDescription>
@@ -152,11 +152,31 @@ export function CandidateFormDialog({
             </div>
             <div className="space-y-2">
                 <Label htmlFor="vision">Vision</Label>
-                <Textarea id="vision" {...register('vision')} />
+                <Controller
+                  name="vision"
+                  control={control}
+                  render={({ field }) => (
+                    <WysiwygEditor
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      placeholder="Enter the candidate's vision..."
+                    />
+                  )}
+                />
             </div>
              <div className="space-y-2">
                 <Label htmlFor="mission">Mission</Label>
-                <Textarea id="mission" {...register('mission')} />
+                <Controller
+                  name="mission"
+                  control={control}
+                  render={({ field }) => (
+                     <WysiwygEditor
+                      value={field.value || ''}
+                      onChange={field.onChange}
+                      placeholder="Enter the candidate's mission..."
+                    />
+                  )}
+                />
             </div>
             <div className="space-y-2">
                 <Label htmlFor="photo">Photo URL (Optional)</Label>
