@@ -15,12 +15,13 @@ export function VoterLogoutButton() {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      await logout();
+      await logout('voter');
       toast({
         title: 'Logged Out',
         description: 'You have been successfully logged out.',
       });
       router.push('/');
+      router.refresh();
     } catch (error) {
       toast({
         variant: 'destructive',

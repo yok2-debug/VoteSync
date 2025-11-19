@@ -1,5 +1,5 @@
 import { getElectionById, getVoterById } from '@/lib/data';
-import { getSession } from '@/lib/session';
+import { getVoterSession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
@@ -14,7 +14,7 @@ type VotePageProps = {
 };
 
 export default async function VotePage({ params }: VotePageProps) {
-  const session = await getSession();
+  const session = await getVoterSession();
   if (!session?.voterId) {
     redirect('/');
   }

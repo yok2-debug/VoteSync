@@ -1,13 +1,16 @@
 import { cookies } from 'next/headers';
-import type { SessionPayload } from './types';
+import type { AdminSessionPayload, VoterSessionPayload } from './types';
 
-const SESSION_COOKIE_NAME = 'votesync_session';
+const ADMIN_SESSION_COOKIE_NAME = 'votesync_admin_session';
+const VOTER_SESSION_COOKIE_NAME = 'votesync_voter_session';
+const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-export async function createSession(payload: SessionPayload) {
-  const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+async function createSession(payload: AdminSessionPayload | VoterSessionPayload, role: 'admin' | 'voter') {
+  const expires = new Date(Date.now() + SESSION_DURATION);
   const session = JSON.stringify({ ...payload, expires: expires.getTime() });
+  const cookieName = role === 'admin' ? ADMIN_SESSION_COOKIE_NAME : VOTER_SESSION_COOKIE_NAME;
 
-  cookies().set(SESSION_COOKIE_NAME, session, {
+  cookies().set(cookieName, session, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     expires,
@@ -16,25 +19,51 @@ export async function createSession(payload: SessionPayload) {
   });
 }
 
-export async function getSession(): Promise<SessionPayload | null> {
-  const sessionCookie = cookies().get(SESSION_COOKIE_NAME)?.value;
-
-  if (!sessionCookie) {
-    return null;
-  }
-
-  try {
-    const parsed = JSON.parse(sessionCookie);
-    if (parsed.expires && parsed.expires < Date.now()) {
-      await deleteSession();
-      return null;
-    }
-    return parsed;
-  } catch (error) {
-    return null;
-  }
+export async function createAdminSession(payload: Omit<AdminSessionPayload, 'expires'>) {
+    await createSession({ ...payload, isAdmin: true }, 'admin');
 }
 
-export async function deleteSession() {
-  cookies().delete(SESSION_COOKIE_NAME);
+export async function createVoterSession(payload: Omit<VoterSessionPayload, 'expires'>) {
+    await createSession(payload, 'voter');
+}
+
+
+async function getSession<T>(cookieName: string): Promise<T | null> {
+    const sessionCookie = cookies().get(cookieName)?.value;
+
+    if (!sessionCookie) {
+        return null;
+    }
+
+    try {
+        const parsed = JSON.parse(sessionCookie);
+        if (parsed.expires && parsed.expires < Date.now()) {
+            await deleteSession(cookieName);
+            return null;
+        }
+        return parsed;
+    } catch (error) {
+        return null;
+    }
+}
+
+export async function getAdminSession(): Promise<AdminSessionPayload | null> {
+    return getSession<AdminSessionPayload>(ADMIN_SESSION_COOKIE_NAME);
+}
+
+export async function getVoterSession(): Promise<VoterSessionPayload | null> {
+    return getSession<VoterSessionPayload>(VOTER_SESSION_COOKIE_NAME);
+}
+
+
+async function deleteSession(cookieName: string) {
+  cookies().delete(cookieName);
+}
+
+export async function deleteAdminSession() {
+    await deleteSession(ADMIN_SESSION_COOKIE_NAME);
+}
+
+export async function deleteVoterSession() {
+    await deleteSession(VOTER_SESSION_COOKIE_NAME);
 }

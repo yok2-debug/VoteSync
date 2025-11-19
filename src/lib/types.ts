@@ -49,8 +49,12 @@ export type AppSettings = {
   periode: string;
 };
 
-export interface SessionPayload {
-  voterId?: string;
-  isAdmin?: boolean;
+export interface AdminSessionPayload {
+  isAdmin: true;
   expires?: number;
+}
+
+export interface VoterSessionPayload {
+    voterId: string;
+    expires?: number;
 }

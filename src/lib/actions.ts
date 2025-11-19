@@ -1,7 +1,7 @@
 'use server';
 
 import { getAdminCredentials, getVoterById } from '@/lib/data';
-import { createSession, deleteSession } from '@/lib/session';
+import { createAdminSession, createVoterSession, deleteAdminSession, deleteVoterSession } from '@/lib/session';
 import { revalidatePath } from 'next/cache';
 import * as z from 'zod';
 import { db } from '@/lib/firebase';
@@ -42,7 +42,7 @@ export async function login(
       adminCreds.username === parsedValues.data.username &&
       adminCreds.password === parsedValues.data.password
     ) {
-      await createSession({ isAdmin: true });
+      await createAdminSession({ isAdmin: true });
       return { success: true, redirectPath: '/admin/dashboard' };
     } else {
       return { success: false, error: 'Invalid admin credentials.' };
@@ -57,7 +57,7 @@ export async function login(
 
     const voter = await getVoterById(parsedValues.data.voterId);
     if (voter && voter.password === parsedValues.data.password) {
-      await createSession({ voterId: voter.id });
+      await createVoterSession({ voterId: voter.id });
       return { success: true, redirectPath: '/vote' };
     } else {
       return { success: false, error: 'Invalid voter ID or password.' };
@@ -67,8 +67,12 @@ export async function login(
   return { success: false, error: 'Invalid role.' };
 }
 
-export async function logout() {
-  await deleteSession();
+export async function logout(role: 'admin' | 'voter') {
+  if (role === 'admin') {
+    await deleteAdminSession();
+  } else {
+    await deleteVoterSession();
+  }
   revalidatePath('/');
 }
 

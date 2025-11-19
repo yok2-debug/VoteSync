@@ -1,8 +1,6 @@
-import { getElections } from '@/lib/data';
-import { getSession } from '@/lib/session';
+import { getElections, getVoterById } from '@/lib/data';
+import { getVoterSession } from '@/lib/session';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { get, ref } from 'firebase/database';
-import { db } from '@/lib/firebase';
 import type { Voter } from '@/lib/types';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -11,17 +9,15 @@ import { redirect } from 'next/navigation';
 import { VoterLogoutButton } from './components/voter-logout-button';
 
 export default async function VoterDashboardPage() {
-  const session = await getSession();
+  const session = await getVoterSession();
   if (!session?.voterId) {
     redirect('/');
   }
 
-  const [elections, voterSnapshot] = await Promise.all([
+  const [elections, voter] = await Promise.all([
     getElections(),
-    get(ref(db, `voters/${session.voterId}`)),
+    getVoterById(session.voterId),
   ]);
-
-  const voter: Voter | null = voterSnapshot.exists() ? voterSnapshot.val() : null;
 
   if (!voter) {
     // This might happen if the voter is deleted while logged in.

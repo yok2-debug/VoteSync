@@ -47,12 +47,13 @@ export function AdminSidebar() {
 
   const handleLogout = async () => {
     try {
-      await logout();
+      await logout('admin');
       toast({
         title: 'Logged Out',
         description: 'You have been successfully logged out.',
       });
-      router.push('/');
+      router.push('/admin-login');
+      router.refresh();
     } catch (error) {
       toast({
         variant: 'destructive',

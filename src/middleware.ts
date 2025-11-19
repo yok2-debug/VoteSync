@@ -1,54 +1,53 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-const SESSION_COOKIE_NAME = 'votesync_session';
+const ADMIN_SESSION_COOKIE_NAME = 'votesync_admin_session';
+const VOTER_SESSION_COOKIE_NAME = 'votesync_voter_session';
+
+function getSessionFromCookie(request: NextRequest, cookieName: string) {
+  const sessionCookie = request.cookies.get(cookieName)?.value;
+  if (!sessionCookie) return null;
+  try {
+    const session = JSON.parse(sessionCookie);
+    if (session?.expires && session.expires < Date.now()) {
+      return null;
+    }
+    return session;
+  } catch {
+    return null;
+  }
+}
 
 export function middleware(request: NextRequest) {
-  const sessionCookie = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const adminSession = getSessionFromCookie(request, ADMIN_SESSION_COOKIE_NAME);
+  const voterSession = getSessionFromCookie(request, VOTER_SESSION_COOKIE_NAME);
   const { pathname } = request.nextUrl;
 
-  let session: { isAdmin?: boolean; voterId?: string; expires?: number } | null = null;
-  if (sessionCookie) {
-    try {
-      session = JSON.parse(sessionCookie);
-      if (session?.expires && session.expires < Date.now()) {
-        session = null;
-      }
-    } catch {
-      session = null;
-    }
-  }
-  
   const isLoginPage = pathname === '/';
   const isAdminLoginPage = pathname === '/admin-login';
 
-  // If a voter has a session and is on the login page, redirect to their dashboard.
-  if (session && session.voterId && !session.isAdmin && isLoginPage) {
-    const url = new URL('/vote', request.url);
-    return NextResponse.redirect(url);
+  // If a voter has a session and is on the main login page, redirect to their dashboard.
+  if (voterSession && isLoginPage) {
+    return NextResponse.redirect(new URL('/vote', request.url));
   }
   
   // If an admin has a session and is on the admin-login page, redirect to their dashboard.
-  if (session && session.isAdmin && isAdminLoginPage) {
-    const url = new URL('/admin/dashboard', request.url);
-    return NextResponse.redirect(url);
+  if (adminSession && isAdminLoginPage) {
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url));
   }
 
-  // If user has no session and is trying to access a protected route, redirect to login
-  if (!session && (pathname.startsWith('/admin/') || pathname.startsWith('/vote'))) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
+  // Protected routes
+  const isAccessingAdminArea = pathname.startsWith('/admin');
+  const isAccessingVoteArea = pathname.startsWith('/vote');
 
-  // Enforce strict role-based routing
-  if (session) {
-    // If a non-admin tries to access an admin route, redirect to voter dashboard
-    if (pathname.startsWith('/admin/') && !session.isAdmin) {
-      return NextResponse.redirect(new URL('/vote', request.url));
-    }
-    // If an admin tries to access a voter route, redirect to admin dashboard
-    if (pathname.startsWith('/vote') && session.isAdmin) {
-      return NextResponse.redirect(new URL('/admin/dashboard', request.url));
-    }
+  // If user tries to access admin area without admin session, redirect to admin login
+  if (isAccessingAdminArea && !adminSession) {
+    return NextResponse.redirect(new URL('/admin-login', request.url));
+  }
+  
+  // If user tries to access vote area without voter session, redirect to main login
+  if (isAccessingVoteArea && !voterSession) {
+     return NextResponse.redirect(new URL('/', request.url));
   }
   
   return NextResponse.next();
