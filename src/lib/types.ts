@@ -29,6 +29,7 @@ export interface Voter {
   category: string; // categoryId
   password?: string;
   hasVoted?: Record<string, boolean>; // { [electionId]: true }
+  isEditing?: boolean; // client-side only
 }
 
 export interface Category {

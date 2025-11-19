@@ -149,7 +149,7 @@ export async function deleteCategory(categoryId: string): Promise<void> {
 
 
 // Election Actions
-export async function saveElection(formData: FormData) {
+export async function saveElection(formData: FormData): Promise<{ savedElectionId: string }> {
   const electionId = formData.get('id') as string;
   
   const rawData = {
@@ -197,7 +197,9 @@ export async function saveElection(formData: FormData) {
 
   revalidatePath('/admin/elections');
   revalidatePath(`/admin/elections/${savedElectionId}`);
+  return { savedElectionId };
 }
+
 
 export async function deleteElection(electionId: string): Promise<void> {
     try {
@@ -207,4 +209,72 @@ export async function deleteElection(electionId: string): Promise<void> {
         console.error('Error deleting election:', error);
         throw new Error('Could not delete election. Please try again.');
     }
+}
+
+
+// Voter Actions
+export async function saveVoter(voter: Omit<Voter, 'hasVoted'>): Promise<Voter> {
+  const { id, ...voterData } = voter;
+
+  try {
+    // Check if voter ID (which is the key) already exists for a *different* voter if we are renaming the ID.
+    // This logic is complex if we allow ID changes. For now, we assume the ID is the key and doesn't change.
+    // If it's a new voter, the `id` will be what the user entered. We must check for duplicates.
+    if (!voter.isEditing) {
+        const existingVoter = await getVoterById(id);
+        if (existingVoter) {
+            throw new Error(`Voter with ID "${id}" already exists.`);
+        }
+    }
+    
+    // We don't save the `isEditing` flag to the database.
+    const { isEditing, ...dataToSave } = voterData;
+
+    const voterRef = ref(db, `voters/${id}`);
+    
+    if (voter.isEditing) {
+      // For editing, we merge data to not overwrite `hasVoted` status.
+      const snapshot = await get(voterRef);
+      const existingData = snapshot.val() || {};
+      await set(voterRef, { ...existingData, ...dataToSave });
+    } else {
+      // For new voters, we set the data directly.
+      await set(voterRef, dataToSave);
+    }
+
+    revalidatePath('/admin/voters');
+    
+    // Return the full voter object as it is in the database.
+    const newSnapshot = await get(voterRef);
+    return { id, ...newSnapshot.val() };
+
+  } catch (error) {
+    console.error('Error saving voter:', error);
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Could not save voter. Please try again.');
+  }
+}
+
+export async function deleteVoter(voterId: string): Promise<void> {
+  try {
+    await remove(ref(db, `voters/${voterId}`));
+    revalidatePath('/admin/voters');
+  } catch (error) {
+    console.error('Error deleting voter:', error);
+    throw new Error('Could not delete voter. Please try again.');
+  }
+}
+
+export async function resetVoterPassword(voterId: string, newPassword: string):Promise<void> {
+  try {
+    await update(ref(db, `voters/${voterId}`), {
+      password: newPassword
+    });
+    revalidatePath('/admin/voters');
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    throw new Error('Could not reset password. Please try again.');
+  }
 }

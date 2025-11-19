@@ -16,9 +16,22 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, Download, Upload } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Download, Upload, Edit, Trash2, Loader2, KeyRound } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { VoterFormDialog } from './voter-form-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { deleteVoter } from '@/lib/actions';
+import { ResetPasswordDialog } from './reset-password-dialog';
 
 type VoterTableProps = {
   initialVoters: Voter[];
@@ -28,6 +41,11 @@ type VoterTableProps = {
 export function VoterTable({ initialVoters, categories }: VoterTableProps) {
   const [voters, setVoters] = useState<Voter[]>(initialVoters);
   const [filter, setFilter] = useState('');
+  const [showFormDialog, setShowFormDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
+  const [selectedVoter, setSelectedVoter] = useState<Voter | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
 
   const categoryMap = new Map(categories.map((c) => [c.id, c.name]));
@@ -39,7 +57,7 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
   );
 
   const handleExportTemplate = () => {
-    const csvContent = 'id_pemilih,nama,kategori\n';
+    const csvContent = 'id_pemilih,nama,kategori,password\n';
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     if (link.href) {
@@ -54,8 +72,56 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
   };
   
   const handleImport = () => {
-    // This is a placeholder for the actual import functionality
     toast({ title: "Import clicked", description: "This feature is under development." });
+  };
+
+  const handleAdd = () => {
+    setSelectedVoter(null);
+    setShowFormDialog(true);
+  };
+
+  const handleEdit = (voter: Voter) => {
+    setSelectedVoter(voter);
+    setShowFormDialog(true);
+  };
+
+  const handleDelete = (voter: Voter) => {
+    setSelectedVoter(voter);
+    setShowDeleteDialog(true);
+  };
+
+  const handleResetPassword = (voter: Voter) => {
+    setSelectedVoter(voter);
+    setShowResetPasswordDialog(true);
+  };
+
+
+  const confirmDelete = async () => {
+    if (!selectedVoter) return;
+    setIsDeleting(true);
+    try {
+      await deleteVoter(selectedVoter.id);
+      setVoters(voters.filter((v) => v.id !== selectedVoter.id));
+      toast({ title: 'Voter deleted successfully.' });
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'Error deleting voter',
+        description: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+      setSelectedVoter(null);
+    }
+  };
+  
+  const onFormSave = (savedVoter: Voter & { isNew?: boolean }) => {
+    if (savedVoter.isNew) {
+      setVoters([...voters, savedVoter]);
+    } else {
+      setVoters(voters.map((v) => v.id === savedVoter.id ? savedVoter : v));
+    }
   };
 
 
@@ -77,7 +143,7 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
               <Upload className="mr-2 h-4 w-4" />
               Import CSV
             </Button>
-            <Button onClick={() => alert('Add voter functionality not implemented yet.')}>
+            <Button onClick={handleAdd}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Add Voter
             </Button>
@@ -91,7 +157,7 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
               <TableHead>Name</TableHead>
               <TableHead>Category</TableHead>
               <TableHead>Has Voted</TableHead>
-              <TableHead>Actions</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -102,7 +168,7 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
                   <TableCell className="font-medium">{voter.name}</TableCell>
                   <TableCell>{categoryMap.get(voter.category) || 'N/A'}</TableCell>
                   <TableCell>{voter.hasVoted && Object.keys(voter.hasVoted).length > 0 ? 'Yes' : 'No'}</TableCell>
-                  <TableCell>
+                  <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
@@ -111,9 +177,16 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => alert('Edit functionality not implemented yet.')}>Edit</DropdownMenuItem>
-                         <DropdownMenuItem onClick={() => alert('Reset password functionality not implemented yet.')}>Reset Password</DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600" onClick={() => alert('Delete functionality not implemented yet.')}>
+                        <DropdownMenuItem onClick={() => handleEdit(voter)}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit
+                        </DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => handleResetPassword(voter)}>
+                          <KeyRound className="mr-2 h-4 w-4" />
+                          Reset Password
+                         </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => handleDelete(voter)}>
+                          <Trash2 className="mr-2 h-4 w-4" />
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -131,6 +204,41 @@ export function VoterTable({ initialVoters, categories }: VoterTableProps) {
           </TableBody>
         </Table>
       </div>
+
+      <VoterFormDialog
+        open={showFormDialog}
+        onOpenChange={setShowFormDialog}
+        voter={selectedVoter}
+        categories={categories}
+        onSave={onFormSave}
+      />
+
+       {selectedVoter && (
+        <ResetPasswordDialog
+          open={showResetPasswordDialog}
+          onOpenChange={setShowResetPasswordDialog}
+          voter={selectedVoter}
+        />
+      )}
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the voter
+              "{selectedVoter?.name}" ({selectedVoter?.id}).
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
+              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
