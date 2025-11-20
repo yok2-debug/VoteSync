@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Check, Vote as VoteIcon, Lock, Clock } from 'lucide-react';
+import { Check, Vote as VoteIcon, Lock, Clock, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { VoterLogoutButton } from './components/voter-logout-button';
 import { useDatabase } from '@/context/database-context';
@@ -63,10 +63,39 @@ export default function VoterDashboardPage() {
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="text-center sm:text-left">
               <h1 className="text-3xl font-bold tracking-tight">Voter Dashboard</h1>
-              <p className="text-muted-foreground">Welcome, {voter?.name || 'Voter'}! Please cast your vote.</p>
+              <p className="text-muted-foreground">Selamat datang! Silakan gunakan hak pilih Anda.</p>
             </div>
             <VoterLogoutButton />
         </div>
+
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <User className="h-6 w-6" />
+              <CardTitle>Informasi Pemilih</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-muted-foreground">Nama</span>
+                  <span className="font-semibold">{voter.name}</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-muted-foreground">ID Pemilih</span>
+                  <span className="font-semibold font-mono">{voter.id}</span>
+                </div>
+                 <div className="flex justify-between border-b pb-2">
+                  <span className="text-muted-foreground">NIK</span>
+                  <span className="font-semibold font-mono">{voter.nik || '-'}</span>
+                </div>
+                <div className="flex justify-between border-b pb-2">
+                  <span className="text-muted-foreground">Kategori</span>
+                  <span className="font-semibold">{category?.name || 'Tidak diketahui'}</span>
+                </div>
+             </div>
+          </CardContent>
+        </Card>
 
         {availableElections.length > 0 ? (
           <div className="space-y-4">
@@ -81,21 +110,21 @@ export default function VoterDashboardPage() {
                  content = (
                   <div className="flex items-center gap-2 text-green-600">
                     <Check className="h-5 w-5" />
-                    <span className="font-medium">You have already voted in this election.</span>
+                    <span className="font-medium">Anda sudah memberikan suara dalam pemilihan ini.</span>
                   </div>
                 );
               } else if (electionEnded) {
                 content = (
                   <div className="flex items-center gap-2 text-red-600">
                     <Lock className="h-5 w-5" />
-                    <span className="font-medium">This election has ended.</span>
+                    <span className="font-medium">Pemilihan ini telah berakhir.</span>
                   </div>
                 );
               } else if (!electionStarted) {
                   content = (
                     <div className="flex items-center gap-2 text-blue-600">
                       <Clock className="h-5 w-5" />
-                      <span className="font-medium">This election has not started yet.</span>
+                      <span className="font-medium">Pemilihan ini belum dimulai.</span>
                     </div>
                   );
               } else {
@@ -103,7 +132,7 @@ export default function VoterDashboardPage() {
                   <Link href={`/vote/${election.id}`}>
                     <Button className="w-full">
                       <VoteIcon className="mr-2 h-4 w-4" />
-                      Go to Voting Page
+                      Masuk ke Halaman Voting
                     </Button>
                   </Link>
                 );
@@ -125,7 +154,7 @@ export default function VoterDashboardPage() {
         ) : (
           <Card>
             <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground">There are no active elections available for your category at the moment.</p>
+              <p className="text-muted-foreground">Tidak ada pemilihan yang tersedia untuk kategori Anda saat ini.</p>
             </CardContent>
           </Card>
         )}
