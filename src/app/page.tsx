@@ -20,6 +20,7 @@ import {
   DialogClose,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -165,6 +166,13 @@ export default function LoginPage() {
                                   </Card>
                                 ))}
                               </div>
+                               <DialogFooter className="sm:justify-end pt-4">
+                                <DialogClose asChild>
+                                  <Button type="button" variant="secondary">
+                                    Close
+                                  </Button>
+                                </DialogClose>
+                              </DialogFooter>
                             </DialogContent>
                           </Dialog>
                         )}
