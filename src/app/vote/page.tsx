@@ -82,7 +82,7 @@ export default function VoterDashboardPage() {
                   <span className="font-semibold">{voter.name}</span>
                 </div>
                 <div className="flex justify-between border-b pb-2">
-                  <span className="text-muted-foreground">Tempat, Tanggal Lahir</span>
+                  <span className="text-muted-foreground">Tanggal Lahir</span>
                   <span className="font-semibold">{voter.birthPlace || '-'}{voter.birthPlace && voter.birthDate ? ', ' : ''}{voter.birthDate || '-'}</span>
                 </div>
                  <div className="flex justify-between border-b pb-2">
