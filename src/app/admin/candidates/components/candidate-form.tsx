@@ -26,6 +26,7 @@ const candidateSchema = z.object({
   id: z.string().optional(),
   electionId: z.string().min(1, { message: 'Election must be selected.' }),
   name: z.string().min(3, { message: 'Candidate name must be at least 3 characters.' }),
+  viceCandidateName: z.string().optional(),
   vision: z.string().optional(),
   mission: z.string().optional(),
   photo: z.string().optional(),
@@ -63,12 +64,13 @@ export function CandidateForm({
           id: initialData.candidate.id,
           electionId: initialData.electionId || '',
           name: initialData.candidate.name || '',
+          viceCandidateName: initialData.candidate.viceCandidateName || '',
           vision: initialData.candidate.vision || '',
           mission: initialData.candidate.mission || '',
           photo: initialData.candidate.photo || '',
       });
     } else {
-      reset({ id: `new-${Date.now()}`, electionId: '', name: '', vision: '', mission: '', photo: '' });
+      reset({ id: `new-${Date.now()}`, electionId: '', name: '', viceCandidateName: '', vision: '', mission: '', photo: '' });
     }
   }, [initialData, reset]);
 
@@ -78,6 +80,7 @@ export function CandidateForm({
       const candidateToSave: Candidate = {
         id: data.id || `new-${Date.now()}`,
         name: data.name,
+        viceCandidateName: data.viceCandidateName,
         vision: data.vision,
         mission: data.mission,
         photo: data.photo,
@@ -144,6 +147,10 @@ export function CandidateForm({
               {errors.name && (
                 <p className="text-sm text-destructive mt-1">{errors.name.message}</p>
               )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="viceCandidateName">Vice Candidate Name (Optional)</Label>
+              <Input id="viceCandidateName" {...register('viceCandidateName')} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="vision">Vision</Label>

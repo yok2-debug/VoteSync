@@ -16,6 +16,7 @@ const PredictElectionOutcomeInputSchema = z.object({
   votes: z.record(z.string(), z.string()).describe('A map of voter IDs to candidate IDs.'),
   candidates: z.record(z.string(), z.object({
     name: z.string(),
+    viceCandidateName: z.string().optional(),
     photo: z.string().optional(),
     vision: z.string().optional(),
     mission: z.string().optional()
@@ -41,7 +42,7 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert in statistical analysis and election prediction. Given the current vote counts for an election, you will predict the final outcome, including a margin of error.
 
 Election ID: {{{electionId}}}
-Current Vote Data: {{{JSON.stringify(votes)}}
+Current Vote Data: {{{JSON.stringify(votes)}}}
 Candidate Details: {{{JSON.stringify(candidates)}}}
 
 Consider the following:

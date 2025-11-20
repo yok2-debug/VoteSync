@@ -1,6 +1,6 @@
 'use client';
 import { useMemo } from 'react';
-import type { Election, Voter, Category } from '@/lib/types';
+import type { Election, Voter, Category, Candidate } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ElectionPieChart } from './election-pie-chart';
@@ -10,6 +10,12 @@ type RealCountDisplayProps = {
   allVoters: Voter[];
   allCategories: Category[];
 };
+
+const getCandidateDisplayName = (candidate: Candidate) => {
+    return candidate.viceCandidateName 
+        ? `${candidate.name} & ${candidate.viceCandidateName}` 
+        : candidate.name;
+}
 
 export function RealCountDisplay({ election, allVoters, allCategories }: RealCountDisplayProps) {
   
@@ -30,7 +36,7 @@ export function RealCountDisplay({ election, allVoters, allCategories }: RealCou
 
   const chartData = useMemo(() => {
     return candidates.map((candidate, index) => ({
-      name: candidate.name,
+      name: getCandidateDisplayName(candidate),
       value: liveResults[candidate.id] || 0,
       fill: `hsl(var(--chart-${(index % 5) + 1}))`
     }));
@@ -63,7 +69,7 @@ export function RealCountDisplay({ election, allVoters, allCategories }: RealCou
                 <ul className="space-y-2 text-sm">
                 {candidates.sort((a,b) => (liveResults[b.id] || 0) - (liveResults[a.id] || 0)).map(candidate => (
                     <li key={candidate.id} className="flex justify-between items-center">
-                    <span>{candidate.name}</span>
+                    <span>{getCandidateDisplayName(candidate)}</span>
                     <span className="font-bold">
                         {liveResults[candidate.id] || 0} ({liveTotalVotes > 0 ? (((liveResults[candidate.id] || 0) / liveTotalVotes) * 100).toFixed(1) : 0}%)
                     </span>

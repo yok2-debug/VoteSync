@@ -95,7 +95,7 @@ function VotePageContent() {
         <div className="grid justify-center gap-6 md:grid-cols-2 lg:grid-cols-3">
           {candidates.map(candidate => (
               <Card key={candidate.id} className="flex flex-col">
-              <CardHeader className="items-center">
+              <CardHeader className="items-center text-center">
                   <Image
                       src={candidate.photo || defaultPhoto?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
                       alt={`Photo of ${candidate.name}`}
@@ -105,6 +105,9 @@ function VotePageContent() {
                       data-ai-hint={defaultPhoto?.imageHint || 'person portrait'}
                   />
                   <CardTitle className="pt-4">{candidate.name}</CardTitle>
+                  {candidate.viceCandidateName && (
+                    <p className="text-sm text-muted-foreground">{candidate.viceCandidateName}</p>
+                  )}
               </CardHeader>
               <CardContent className="flex-grow flex flex-col justify-center items-center">
                   <Dialog>
@@ -116,7 +119,10 @@ function VotePageContent() {
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-2xl">
                       <DialogHeader>
-                          <DialogTitle>{candidate.name}</DialogTitle>
+                          <DialogTitle>
+                            {candidate.name}
+                            {candidate.viceCandidateName && ` & ${candidate.viceCandidateName}`}
+                          </DialogTitle>
                           <DialogDescription>
                           Visi dan Misi Kandidat
                           </DialogDescription>

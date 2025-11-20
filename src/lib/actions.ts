@@ -436,7 +436,7 @@ export async function saveVote(electionId: string, candidateId: string, voterId:
 }
 
 // Candidate Actions
-export async function saveCandidate(candidate: Candidate, electionId: string): Promise<void> {
+export async function saveCandidate(candidate: Omit<Candidate, 'id'> & { id?: string }, electionId: string): Promise<void> {
   try {
     let candidateId = candidate.id;
     const electionCandidatesRef = ref(db, `elections/${electionId}/candidates`);
@@ -445,8 +445,10 @@ export async function saveCandidate(candidate: Candidate, electionId: string): P
       candidateId = push(electionCandidatesRef).key!;
     }
     
+    const candidateToSave = { ...candidate, id: candidateId };
+    
     const candidateRef = ref(db, `elections/${electionId}/candidates/${candidateId}`);
-    await set(candidateRef, { ...candidate, id: candidateId });
+    await set(candidateRef, candidateToSave);
     
     revalidatePath('/admin/candidates');
     revalidatePath(`/admin/elections/${electionId}`);

@@ -15,6 +15,7 @@ export interface Election {
 export interface Candidate {
   id: string;
   name: string;
+  viceCandidateName?: string;
   photo?: string;
   vision?: string;
   mission?: string;

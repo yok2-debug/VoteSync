@@ -60,7 +60,8 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
 
   const filteredCandidates = useMemo(() => 
     allCandidates.filter(candidate => 
-      (candidate.name.toLowerCase().includes(filter.toLowerCase())) &&
+      (candidate.name.toLowerCase().includes(filter.toLowerCase()) ||
+       (candidate.viceCandidateName && candidate.viceCandidateName.toLowerCase().includes(filter.toLowerCase()))) &&
       (electionFilter === 'all' || candidate.electionId === electionFilter)
     ), [allCandidates, filter, electionFilter]);
 
@@ -152,7 +153,10 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
                         data-ai-hint={defaultPhoto?.imageHint || 'person portrait'}
                       />
                   </TableCell>
-                  <TableCell className="font-medium">{candidate.name}</TableCell>
+                  <TableCell className="font-medium">
+                    {candidate.name}
+                    {candidate.viceCandidateName && <span className="block text-xs text-muted-foreground">{candidate.viceCandidateName}</span>}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{candidate.electionName}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
