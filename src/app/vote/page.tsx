@@ -82,16 +82,16 @@ export default function VoterDashboardPage() {
                   <span className="font-semibold">{voter.name}</span>
                 </div>
                 <div className="flex justify-between border-b pb-2">
-                  <span className="text-muted-foreground">ID Pemilih</span>
-                  <span className="font-semibold font-mono">{voter.id}</span>
+                  <span className="text-muted-foreground">Tempat, Tanggal Lahir</span>
+                  <span className="font-semibold">{voter.birthPlace || '-'}{voter.birthPlace && voter.birthDate ? ', ' : ''}{voter.birthDate || '-'}</span>
                 </div>
                  <div className="flex justify-between border-b pb-2">
-                  <span className="text-muted-foreground">NIK</span>
-                  <span className="font-semibold font-mono">{voter.nik || '-'}</span>
+                  <span className="text-muted-foreground">Jenis Kelamin</span>
+                  <span className="font-semibold">{voter.gender || '-'}</span>
                 </div>
                 <div className="flex justify-between border-b pb-2">
-                  <span className="text-muted-foreground">Kategori</span>
-                  <span className="font-semibold">{category?.name || 'Tidak diketahui'}</span>
+                  <span className="text-muted-foreground">Alamat</span>
+                  <span className="font-semibold">{voter.address || '-'}</span>
                 </div>
              </div>
           </CardContent>
