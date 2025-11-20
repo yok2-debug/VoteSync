@@ -68,11 +68,11 @@ export function RealCountDisplay({ election, allVoters, allCategories }: RealCou
                 <h4 className="font-semibold text-center md:text-left">Perolehan Suara</h4>
                 <ul className="space-y-2 text-sm">
                 {candidates.sort((a,b) => (liveResults[b.id] || 0) - (liveResults[a.id] || 0)).map(candidate => (
-                    <li key={candidate.id} className="flex justify-between items-center">
-                    <span>{getCandidateDisplayName(candidate)}</span>
-                    <span className="font-bold">
+                    <li key={candidate.id} className="flex items-start justify-between gap-4">
+                      <span className="flex-1 break-words">{getCandidateDisplayName(candidate)}</span>
+                      <span className="font-bold text-nowrap">
                         {liveResults[candidate.id] || 0} ({liveTotalVotes > 0 ? (((liveResults[candidate.id] || 0) / liveTotalVotes) * 100).toFixed(1) : 0}%)
-                    </span>
+                      </span>
                     </li>
                 ))}
                 </ul>
