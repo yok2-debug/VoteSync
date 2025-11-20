@@ -36,11 +36,17 @@ export function RealCountDisplay({ election, allVoters, allCategories }: RealCou
 
   const chartData = useMemo(() => {
     return candidates.map((candidate, index) => ({
+      id: candidate.id,
       name: getCandidateDisplayName(candidate),
       value: liveResults[candidate.id] || 0,
       fill: `hsl(var(--chart-${(index % 5) + 1}))`
     }));
   }, [candidates, liveResults]);
+  
+  const candidateColorMap = useMemo(() => {
+    return new Map(chartData.map(d => [d.id, d.fill]));
+  }, [chartData]);
+
 
   return (
     <Card className="flex flex-col">
@@ -69,7 +75,12 @@ export function RealCountDisplay({ election, allVoters, allCategories }: RealCou
                 <ul className="space-y-2 text-sm">
                 {candidates.sort((a,b) => (liveResults[b.id] || 0) - (liveResults[a.id] || 0)).map(candidate => (
                     <li key={candidate.id} className="flex items-start justify-between gap-4">
-                      <span className="flex-1 break-words">{getCandidateDisplayName(candidate)}</span>
+                      <span 
+                        className="flex-1 break-words font-medium"
+                        style={{ color: candidateColorMap.get(candidate.id) }}
+                      >
+                        {getCandidateDisplayName(candidate)}
+                      </span>
                       <span className="font-bold text-nowrap">
                         {liveResults[candidate.id] || 0} ({liveTotalVotes > 0 ? (((liveResults[candidate.id] || 0) / liveTotalVotes) * 100).toFixed(1) : 0}%)
                       </span>
