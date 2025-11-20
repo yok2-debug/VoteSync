@@ -94,10 +94,10 @@ function VotePageContent() {
         <div className="grid justify-center gap-6 md:grid-cols-2 lg:grid-cols-3">
           {candidates.map(candidate => (
               <Card key={candidate.id} className="flex flex-col">
-              <CardHeader className="items-center text-center p-2 space-y-0 pb-0">
+              <CardHeader className="items-center text-center p-4 pt-4 pb-0 space-y-0">
                  <Dialog>
                     <DialogTrigger asChild>
-                       <img
+                        <img
                           src={candidate.photo || 'https://picsum.photos/seed/default/400/400'}
                           alt={`Photo of ${candidate.name}`}
                           width={144}
@@ -113,7 +113,7 @@ function VotePageContent() {
                         />
                     </DialogContent>
                  </Dialog>
-                  <CardTitle className="pt-0 text-xl">
+                  <CardTitle className="pt-2 text-xl">
                     {candidate.name}
                     {candidate.viceCandidateName && (
                         <div className="flex flex-col items-center -mt-2 -mb-2">
@@ -123,7 +123,7 @@ function VotePageContent() {
                     )}
                   </CardTitle>
               </CardHeader>
-              <CardContent className="flex-grow flex flex-col justify-center items-center px-4 py-0">
+              <CardContent className="flex-grow flex flex-col justify-center items-center p-0 pt-2">
                   <Dialog>
                       <DialogTrigger asChild>
                       <Button variant="secondary">
@@ -152,7 +152,7 @@ function VotePageContent() {
                       </DialogContent>
                   </Dialog>
               </CardContent>
-              <div className="p-4 pt-0">
+              <div className="p-4 pt-2">
                   <CandidateVoteForm electionId={election.id} candidate={candidate} voterId={session.voterId!} />
               </div>
               </Card>
