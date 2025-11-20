@@ -91,7 +91,7 @@ export default function VoterDashboardPage() {
                 </div>
                 <div className="flex justify-between border-b pb-2">
                   <span className="text-muted-foreground">Alamat</span>
-                  <span className="font-semibold">{voter.address || '-'}</span>
+                  <span className="font-semibold text-right">{voter.address || '-'}</span>
                 </div>
              </div>
           </CardContent>
