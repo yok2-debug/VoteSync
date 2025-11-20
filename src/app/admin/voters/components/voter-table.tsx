@@ -155,7 +155,6 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
       }, 500);
 
     } catch (e) {
-      console.error("Print failed:", e);
       toast({ variant: 'destructive', title: 'Print failed', description: e instanceof Error ? e.message : 'Could not generate print content.'});
       setIsPrinting(false);
     }
