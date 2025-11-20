@@ -61,7 +61,7 @@ function VotePageContent() {
   
   const now = new Date();
   const electionStarted = election?.startDate ? new Date(election.startDate) <= now : false;
-  const electionEnded = election?.endDate ? new Date(election.endDate) < now : false;
+  const electionEnded = election?.endDate ? new Date(endDate) < now : false;
   const isVoterAllowed = category?.allowedElections?.includes(electionId);
   const hasVoted = voter?.hasVoted?.[electionId];
 
@@ -100,6 +100,8 @@ function VotePageContent() {
                       <img
                         src={candidate.photo || 'https://picsum.photos/seed/default/400/400'}
                         alt={`Photo of ${candidate.name}`}
+                        width={144}
+                        height={144}
                         className="rounded-full border-4 border-primary object-cover cursor-pointer hover:opacity-90 transition-opacity h-36 w-36"
                       />
                     </DialogTrigger>
@@ -111,7 +113,7 @@ function VotePageContent() {
                         />
                     </DialogContent>
                  </Dialog>
-                  <CardTitle className="pt-2 text-xl">
+                  <CardTitle className="pt-2 text-xl flex flex-col items-center">
                     {candidate.name}
                     {candidate.viceCandidateName && (
                       <div className="flex flex-col items-center">
