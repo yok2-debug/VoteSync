@@ -439,6 +439,23 @@ export async function saveVote(electionId: string, candidateId: string, voterId:
 export async function saveCandidate(candidate: Omit<Candidate, 'id'> & { id?: string }, electionId: string): Promise<void> {
   try {
     let candidateId = candidate.id;
+    const electionRef = ref(db, `elections/${electionId}`);
+    
+    // Validate order number uniqueness within the election
+    const electionSnapshot = await get(electionRef);
+    if (electionSnapshot.exists()) {
+      const electionData: Election = electionSnapshot.val();
+      const candidates = electionData.candidates || {};
+      const isOrderNumberTaken = Object.values(candidates).some(
+        c => c.orderNumber === candidate.orderNumber && c.id !== candidateId
+      );
+      if (isOrderNumberTaken) {
+        throw new Error(`Nomor urut ${candidate.orderNumber} sudah digunakan oleh kandidat lain pada pemilihan ini.`);
+      }
+    } else {
+        throw new Error("Pemilihan tidak ditemukan.");
+    }
+
     const electionCandidatesRef = ref(db, `elections/${electionId}/candidates`);
 
     if (!candidateId || candidate.id.startsWith('new-')) {

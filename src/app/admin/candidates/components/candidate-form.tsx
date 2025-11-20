@@ -25,7 +25,7 @@ import { MarkdownEditor } from '@/components/ui/markdown-editor';
 const candidateSchema = z.object({
   id: z.string().optional(),
   electionId: z.string().min(1, { message: 'Election must be selected.' }),
-  orderNumber: z.coerce.number().min(1, 'Order number must be at least 1.').optional(),
+  orderNumber: z.coerce.number().min(1, 'Nomor urut harus minimal 1.'),
   name: z.string().min(3, { message: 'Candidate name must be at least 3 characters.' }),
   viceCandidateName: z.string().optional(),
   vision: z.string().optional(),
