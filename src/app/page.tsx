@@ -12,6 +12,7 @@ import { useDatabase } from '@/context/database-context';
 import { Badge } from '@/components/ui/badge';
 import Loading from './loading';
 import { useMemo } from 'react';
+import type { Election } from '@/lib/types';
 
 export default function LoginPage() {
   const { elections, isLoading } = useDatabase();
@@ -56,7 +57,7 @@ export default function LoginPage() {
                 </div>
               ) : activeElections.length > 0 ? (
                 <div className="space-y-6">
-                  {activeElections.map((election) => (
+                  {activeElections.map((election: Election) => (
                     <Card key={election.id} className="flex flex-col">
                       <CardHeader>
                         <div className="flex justify-between items-start">
