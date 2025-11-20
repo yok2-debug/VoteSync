@@ -6,6 +6,8 @@
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
-    "@types/papaparse": "^5.3.14"
+    "@types/papaparse": "^5.3.14",
+    "@types/dnd-kit__core": "^6.0.0",
+    "@types/dnd-kit__sortable": "^7.0.0"
   }
 }

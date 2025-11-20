@@ -508,3 +508,19 @@ export async function deleteCandidate(candidateId: string, electionId: string): 
         throw new Error('Could not delete candidate.');
     }
 }
+
+export async function reorderCandidates(electionId: string, candidates: Candidate[]): Promise<void> {
+  try {
+    const updates: { [key: string]: any } = {};
+    candidates.forEach((candidate, index) => {
+      updates[`/elections/${electionId}/candidates/${candidate.id}/orderNumber`] = index + 1;
+    });
+
+    await update(ref(db), updates);
+    revalidatePath('/admin/candidates');
+    revalidatePath(`/admin/elections/${electionId}`);
+  } catch (error) {
+    console.error('Error reordering candidates:', error);
+    throw new Error('Could not reorder candidates.');
+  }
+}

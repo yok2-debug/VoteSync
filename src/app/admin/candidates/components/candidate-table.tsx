@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Edit, Trash2, Loader2, ArrowUpDown } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   AlertDialog,
@@ -34,6 +34,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useRouter } from 'next/navigation';
 import React from 'react';
+import { ReorderCandidatesDialog } from './reorder-candidates-dialog';
 
 type CandidateTableProps = {
   allElections: Election[];
@@ -48,6 +49,7 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
   const [filter, setFilter] = useState('');
   const [electionFilter, setElectionFilter] = useState('all');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showReorderDialog, setShowReorderDialog] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<{ candidate: Candidate, electionId: string } | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
@@ -146,10 +148,16 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
                 </SelectContent>
             </Select>
         </div>
-        <Button onClick={handleAdd}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Add Candidate
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setShowReorderDialog(true)}>
+              <ArrowUpDown className="mr-2 h-4 w-4" />
+              Ubah Urutan
+          </Button>
+          <Button onClick={handleAdd}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Candidate
+          </Button>
+        </div>
       </div>
       <div className="rounded-md border">
         <Table>
@@ -225,6 +233,12 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
           </TableBody>
         </Table>
       </div>
+
+      <ReorderCandidatesDialog
+        open={showReorderDialog}
+        onOpenChange={setShowReorderDialog}
+        allElections={allElections}
+      />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
