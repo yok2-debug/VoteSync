@@ -156,10 +156,10 @@ export default function LoginPage() {
             </div>
 
             {/* Right Column: Login Form */}
-            <div className="mx-auto flex w-full flex-col space-y-6 max-w-sm">
-                <Card>
+            <div className="space-y-6">
+              <h2 className="text-2xl font-semibold tracking-tight text-center md:text-left">Login Pemilih</h2>
+              <Card>
                 <CardHeader className="text-center">
-                    <CardTitle>Login Pemilih</CardTitle>
                     <CardDescription>
                     Silakan masuk menggunakan ID Pemilih dan Kata Sandi Anda untuk memberikan suara.
                     </CardDescription>
@@ -167,7 +167,7 @@ export default function LoginPage() {
                 <CardContent>
                     <LoginForm />
                 </CardContent>
-                </Card>
+              </Card>
             </div>
           </div>
         </div>
