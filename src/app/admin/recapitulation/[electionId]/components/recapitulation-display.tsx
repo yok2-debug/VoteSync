@@ -37,15 +37,12 @@ const numberToWords = (num: number) => {
 };
 
 const formatDateToWords = (date: Date) => {
-  const dayName = format(date, 'EEEE', { locale: localeID });
-  const dayNumber = format(date, 'd', { locale: localeID });
-  const monthName = format(date, 'MMMM', { locale: localeID });
-  const year = format(date, 'yyyy', { locale: localeID });
+    const dayName = format(date, 'EEEE', { locale: localeID });
+    const dayWords = capitalize(numberToWords(date.getDate()).trim());
+    const monthName = capitalize(format(date, 'MMMM', { locale: localeID }));
+    const yearWords = capitalize(numberToWords(date.getFullYear()).replace(/\s+/g, ' ').trim());
 
-  const dayWords = capitalize(numberToWords(parseInt(dayNumber, 10)).trim());
-  const yearWords = capitalize(numberToWords(parseInt(year, 10)).replace(/\s+/g, ' ').trim());
-
-  return `Pada hari ini <b>${dayName}</b> tanggal <b>${dayWords}</b> bulan <b>${capitalize(monthName)}</b> tahun <b>${yearWords}</b>`;
+    return `Pada hari ini <b>${dayName}</b> tanggal <b>${dayWords}</b> bulan <b>${monthName}</b> tahun <b>${yearWords}</b>`;
 };
 
 
@@ -189,10 +186,10 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
       </div>
       <div id="print-section">
         <Card className="shadow-none border-0 print-card">
-            <CardHeader className="text-center space-y-2 pb-4 print-card-header">
-                <h2 className="text-2xl font-bold tracking-tight">BERITA ACARA</h2>
-                <h3 className="text-xl font-semibold uppercase">HASIL PENGHITUNGAN SUARA PEMILIHAN</h3>
-                <h1 className="text-xl font-semibold uppercase">{election.name}</h1>
+            <CardHeader className="text-center pb-4 print-card-header">
+                <h2 className="text-2xl font-bold tracking-tight leading-tight mb-0">BERITA ACARA</h2>
+                <h3 className="text-xl font-semibold uppercase leading-tight mb-0">HASIL PENGHITUNGAN SUARA PEMILIHAN</h3>
+                <h1 className="text-xl font-semibold uppercase leading-tight mb-0">{election.name}</h1>
             </CardHeader>
             <CardContent className="space-y-8 pt-6 print-card-content">
                 
