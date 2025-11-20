@@ -82,6 +82,10 @@ export default function VoterDashboardPage() {
                     <div className="text-muted-foreground">Nama</div>
                     <div className="font-semibold">: {voter.name}</div>
                   </div>
+                   <div className="grid grid-cols-[120px_1fr]">
+                    <div className="text-muted-foreground">NIK</div>
+                    <div className="font-semibold">: {voter.nik || '-'}</div>
+                  </div>
                   <div className="grid grid-cols-[120px_1fr]">
                     <div className="text-muted-foreground">Tanggal Lahir</div>
                     <div className="font-semibold">: {voter.birthPlace || '-'}{voter.birthPlace && voter.birthDate ? ', ' : ''}{voter.birthDate || '-'}</div>
