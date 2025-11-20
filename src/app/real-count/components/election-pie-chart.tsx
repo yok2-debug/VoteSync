@@ -29,7 +29,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
 
 const renderLegend = (value: string, entry: any) => {
   return (
-    <span style={{ fontSize: '11px', lineHeight: '1.2' }}>
+    <span style={{ fontSize: '12px', lineHeight: '1.2' }}>
       {value}
     </span>
   );
