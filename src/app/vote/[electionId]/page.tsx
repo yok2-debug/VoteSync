@@ -99,19 +99,19 @@ function VotePageContent() {
                       alt={`Photo of ${candidate.name}`}
                       width={160}
                       height={160}
-                      className="rounded-full border-4 border-primary object-cover mb-1"
+                      className="rounded-full border-4 border-primary object-cover h-40 w-40"
                   />
-                  <CardTitle className="pt-0 text-lg">
+                  <CardTitle className="pt-2 text-xl">
                     {candidate.name}
                     {candidate.viceCandidateName && (
-                        <div className="flex flex-col items-center -mt-1">
+                        <div className="flex flex-col items-center -mt-2 -mb-2">
                             <span className="text-base font-normal">&</span>
-                            <span className="text-lg -mt-1">{candidate.viceCandidateName}</span>
+                            <span className="text-xl -mt-1">{candidate.viceCandidateName}</span>
                         </div>
                     )}
                   </CardTitle>
               </CardHeader>
-              <CardContent className="flex-grow flex flex-col justify-center items-center px-4 py-1">
+              <CardContent className="flex-grow flex flex-col justify-center items-center px-4 py-2">
                   <Dialog>
                       <DialogTrigger asChild>
                       <Button variant="secondary">
@@ -140,7 +140,7 @@ function VotePageContent() {
                       </DialogContent>
                   </Dialog>
               </CardContent>
-              <div className="p-4 pt-1">
+              <div className="p-4 pt-2">
                   <CandidateVoteForm electionId={election.id} candidate={candidate} voterId={session.voterId!} />
               </div>
               </Card>
