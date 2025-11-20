@@ -60,7 +60,7 @@ export function CandidateVoteForm({ electionId, candidate, voterId }: CandidateV
       <AlertDialogTrigger asChild>
         <Button className="w-full" disabled={isSubmitting}>
           <Vote className="mr-2 h-4 w-4" />
-          Vote for {candidate.name}
+          Vote
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
