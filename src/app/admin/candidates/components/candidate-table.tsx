@@ -38,6 +38,11 @@ type CandidateTableProps = {
   allElections: Election[];
 };
 
+type GroupedCandidates = {
+  [electionName: string]: (Candidate & { electionName: string; electionId: string })[];
+};
+
+
 export function CandidateTable({ allElections }: CandidateTableProps) {
   const [filter, setFilter] = useState('');
   const [electionFilter, setElectionFilter] = useState('all');
@@ -63,6 +68,23 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
        (candidate.viceCandidateName && candidate.viceCandidateName.toLowerCase().includes(filter.toLowerCase()))) &&
       (electionFilter === 'all' || candidate.electionId === electionFilter)
     ), [allCandidates, filter, electionFilter]);
+
+  const groupedCandidates = useMemo(() => {
+    if (electionFilter !== 'all') {
+      // If a specific election is selected, don't group, just return the filtered list under a single key.
+      const election = allElections.find(e => e.id === electionFilter);
+      return { [election?.name || 'Selected Election']: filteredCandidates };
+    }
+    // If "All Elections" is selected, group by election name.
+    return filteredCandidates.reduce((acc, candidate) => {
+      const { electionName } = candidate;
+      if (!acc[electionName]) {
+        acc[electionName] = [];
+      }
+      acc[electionName].push(candidate);
+      return acc;
+    }, {} as GroupedCandidates);
+  }, [filteredCandidates, electionFilter, allElections]);
 
   const handleAdd = () => {
     router.push('/admin/candidates/new');
@@ -135,51 +157,62 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
               <TableHead className="w-[50px]">No.</TableHead>
               <TableHead className="w-[80px]">Photo</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Election</TableHead>
+              {electionFilter === 'all' && <TableHead>Election</TableHead>}
               <TableHead className="w-[100px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredCandidates.length > 0 ? (
-              filteredCandidates.map((candidate) => (
-                <TableRow key={candidate.id}>
-                    <TableCell className="font-bold">{candidate.orderNumber}</TableCell>
-                   <TableCell>
-                      <img
-                        src={candidate.photo || defaultPhoto?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
-                        alt={`Photo of ${candidate.name}`}
-                        width={40}
-                        height={40}
-                        className="rounded-full object-cover"
-                        data-ai-hint={defaultPhoto?.imageHint || 'person portrait'}
-                      />
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {candidate.name}
-                    {candidate.viceCandidateName && <span className="block text-xs text-muted-foreground">{candidate.viceCandidateName}</span>}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{candidate.electionName}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(candidate, candidate.electionId)}>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(candidate, candidate.electionId)}>
-                           <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-                          <span className="text-destructive">Delete</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+               Object.keys(groupedCandidates).map(electionName => (
+                <React.Fragment key={electionName}>
+                  {electionFilter === 'all' && (
+                     <TableRow className="bg-muted/50 hover:bg-muted/50">
+                        <TableCell colSpan={5} className="font-bold text-muted-foreground">
+                          {electionName}
+                        </TableCell>
+                      </TableRow>
+                  )}
+                  {groupedCandidates[electionName].map((candidate) => (
+                    <TableRow key={candidate.id}>
+                      <TableCell className="font-bold">{candidate.orderNumber}</TableCell>
+                      <TableCell>
+                          <img
+                            src={candidate.photo || defaultPhoto?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
+                            alt={`Photo of ${candidate.name}`}
+                            width={40}
+                            height={40}
+                            className="rounded-full object-cover"
+                            data-ai-hint={defaultPhoto?.imageHint || 'person portrait'}
+                          />
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {candidate.name}
+                        {candidate.viceCandidateName && <span className="block text-xs text-muted-foreground">{candidate.viceCandidateName}</span>}
+                      </TableCell>
+                      {electionFilter === 'all' && <TableCell className="text-muted-foreground">{candidate.electionName}</TableCell>}
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <span className="sr-only">Open menu</span>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEdit(candidate, candidate.electionId)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDelete(candidate, candidate.electionId)}>
+                               <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                              <span className="text-destructive">Delete</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </React.Fragment>
               ))
             ) : (
               <TableRow>
