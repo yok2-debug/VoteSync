@@ -13,6 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import Loading from './loading';
 import { useMemo } from 'react';
 import type { Election } from '@/lib/types';
+import { format } from 'date-fns';
+import { Calendar } from 'lucide-react';
 
 export default function LoginPage() {
   const { elections, isLoading } = useDatabase();
@@ -36,6 +38,20 @@ export default function LoginPage() {
     }
     return <Badge variant="secondary">Akan Datang</Badge>;
   };
+  
+  const formatSchedule = (start?: string, end?: string) => {
+    if (!start || !end) return 'Jadwal belum ditentukan';
+    try {
+        const startDate = new Date(start);
+        const endDate = new Date(end);
+        // e.g., 17 Agu 2024, 09:00 - 17:00
+        const startFormat = format(startDate, 'd MMM yyyy, HH:mm');
+        const endFormat = format(endDate, 'HH:mm');
+        return `${startFormat} - ${endFormat}`;
+    } catch (e) {
+        return 'Jadwal tidak valid';
+    }
+  }
 
   return (
     <>
@@ -65,6 +81,10 @@ export default function LoginPage() {
                            {getStatus(election)}
                         </div>
                         <CardDescription>{election.description}</CardDescription>
+                         <div className="flex items-center pt-2 text-sm text-muted-foreground gap-2">
+                           <Calendar className="h-4 w-4" />
+                           <span>{formatSchedule(election.startDate, election.endDate)}</span>
+                        </div>
                       </CardHeader>
                        <CardContent className="flex-grow flex items-end">
                         <p className="text-sm text-muted-foreground">
