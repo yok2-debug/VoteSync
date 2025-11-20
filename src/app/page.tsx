@@ -100,7 +100,7 @@ export default function LoginPage() {
             </div>
 
             {/* Right Column: Login Form */}
-            <div className="mx-auto flex w-full flex-col justify-center space-y-6 max-w-sm">
+            <div className="mx-auto flex w-full flex-col space-y-6 max-w-sm">
                 <Card>
                 <CardHeader className="text-center">
                     <CardTitle>Login Pemilih</CardTitle>
