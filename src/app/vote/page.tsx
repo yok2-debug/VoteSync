@@ -71,8 +71,8 @@ export default function VoterDashboardPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3">
-              <User className="h-6 w-6" />
-              <CardTitle>Informasi Pemilih</CardTitle>
+              <User className="h-5 w-5" />
+              <CardTitle className="text-xl">Informasi Pemilih</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
