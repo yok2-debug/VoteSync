@@ -27,6 +27,14 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
   );
 };
 
+const renderLegend = (value: string, entry: any) => {
+  return (
+    <span style={{ fontSize: '11px', lineHeight: '1.2' }}>
+      {value}
+    </span>
+  );
+};
+
 
 export function ElectionPieChart({ data }: ElectionPieChartProps) {
   const hasVotes = data.some(d => d.value > 0);
@@ -64,7 +72,12 @@ export function ElectionPieChart({ data }: ElectionPieChartProps) {
             <Cell key={`cell-${index}`} fill={entry.fill} />
           ))}
         </Pie>
-        <Legend iconSize={10} verticalAlign="bottom" align="left" />
+        <Legend 
+          iconSize={10} 
+          verticalAlign="bottom" 
+          align="left"
+          formatter={renderLegend} 
+        />
       </PieChart>
     </ResponsiveContainer>
   );
