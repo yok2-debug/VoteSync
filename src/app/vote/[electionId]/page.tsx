@@ -89,72 +89,74 @@ function VotePageContent() {
           <h1 className="text-3xl font-bold tracking-tight">{election.name}</h1>
           <p className="text-muted-foreground">Pilih kandidat pilihan Anda di bawah ini.</p>
         </div>
-        <div className="grid justify-items-center gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {candidates.map(candidate => (
-              <Card key={candidate.id} className="flex flex-col w-full max-w-sm">
-              <CardHeader className="flex flex-col items-center p-0 pt-6">
-                 <Dialog>
-                    <DialogTrigger asChild>
-                      <img
-                        src={candidate.photo || 'https://picsum.photos/seed/default/400/400'}
-                        alt={`Photo of ${candidate.name}`}
-                        width={144}
-                        height={144}
-                        className="rounded-full border-4 border-primary object-cover cursor-pointer hover:opacity-90 transition-opacity h-36 w-36"
-                      />
-                    </DialogTrigger>
-                    <DialogContent className="max-w-xl p-2">
-                        <img
-                            src={candidate.photo || 'https://picsum.photos/seed/default/400/400'}
-                            alt={`Photo of ${candidate.name}`}
-                            className="w-full h-auto rounded-md"
-                        />
-                    </DialogContent>
-                 </Dialog>
-                  <CardTitle className="pt-2 text-xl flex flex-col items-center">
-                    {candidate.name}
-                    {candidate.viceCandidateName && (
-                      <div className="flex flex-col items-center">
-                          <span className="text-base font-normal leading-none">&</span>
-                          <span>{candidate.viceCandidateName}</span>
-                      </div>
-                    )}
-                  </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-grow flex flex-col justify-center items-center p-0 pt-4">
-                  <Dialog>
+        <div className="flex justify-center">
+          <div className="grid justify-items-center gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {candidates.map(candidate => (
+                <Card key={candidate.id} className="flex flex-col w-full max-w-sm">
+                <CardHeader className="flex flex-col items-center p-0 pt-6">
+                   <Dialog>
                       <DialogTrigger asChild>
-                      <Button variant="secondary">
-                          <FileText className="mr-2 h-4 w-4" />
-                          Lihat Visi & Misi
-                      </Button>
+                        <img
+                          src={candidate.photo || 'https://picsum.photos/seed/default/400/400'}
+                          alt={`Photo of ${candidate.name}`}
+                          width={144}
+                          height={144}
+                          className="rounded-full border-4 border-primary object-cover cursor-pointer hover:opacity-90 transition-opacity h-36 w-36"
+                        />
                       </DialogTrigger>
-                      <DialogContent className="sm:max-w-2xl">
-                      <DialogHeader>
-                          <DialogTitle>
-                            {candidate.name}
-                            {candidate.viceCandidateName && ` & ${candidate.viceCandidateName}`}
-                          </DialogTitle>
-                          <DialogDescription>
-                          Visi dan Misi Kandidat
-                          </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4 max-h-[60vh] overflow-y-auto p-1">
-                          <article className="prose dark:prose-invert max-w-none">
-                          <h3 className="font-semibold text-lg mb-2">Visi</h3>
-                          <ReactMarkdown>{candidate.vision || 'Tidak ada visi yang diberikan.'}</ReactMarkdown>
-                          <h3 className="font-semibold text-lg mt-4 mb-2">Misi</h3>
-                          <ReactMarkdown>{candidate.mission || 'Tidak ada misi yang diberikan.'}</ReactMarkdown>
-                          </article>
-                      </div>
+                      <DialogContent className="max-w-xl p-2">
+                          <img
+                              src={candidate.photo || 'https://picsum.photos/seed/default/400/400'}
+                              alt={`Photo of ${candidate.name}`}
+                              className="w-full h-auto rounded-md"
+                          />
                       </DialogContent>
-                  </Dialog>
-              </CardContent>
-              <div className="p-6 pt-2">
-                  <CandidateVoteForm electionId={election.id} candidate={candidate} voterId={session.voterId!} />
-              </div>
-              </Card>
-          ))}
+                   </Dialog>
+                    <CardTitle className="pt-2 text-xl flex flex-col items-center">
+                      {candidate.name}
+                      {candidate.viceCandidateName && (
+                        <div className="flex flex-col items-center">
+                            <span className="text-base font-normal leading-none">&</span>
+                            <span>{candidate.viceCandidateName}</span>
+                        </div>
+                      )}
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow flex flex-col justify-center items-center p-0 pt-4">
+                    <Dialog>
+                        <DialogTrigger asChild>
+                        <Button variant="secondary">
+                            <FileText className="mr-2 h-4 w-4" />
+                            Lihat Visi & Misi
+                        </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-2xl">
+                        <DialogHeader>
+                            <DialogTitle>
+                              {candidate.name}
+                              {candidate.viceCandidateName && ` & ${candidate.viceCandidateName}`}
+                            </DialogTitle>
+                            <DialogDescription>
+                            Visi dan Misi Kandidat
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-4 max-h-[60vh] overflow-y-auto p-1">
+                            <article className="prose dark:prose-invert max-w-none">
+                            <h3 className="font-semibold text-lg mb-2">Visi</h3>
+                            <ReactMarkdown>{candidate.vision || 'Tidak ada visi yang diberikan.'}</ReactMarkdown>
+                            <h3 className="font-semibold text-lg mt-4 mb-2">Misi</h3>
+                            <ReactMarkdown>{candidate.mission || 'Tidak ada misi yang diberikan.'}</ReactMarkdown>
+                            </article>
+                        </div>
+                        </DialogContent>
+                    </Dialog>
+                </CardContent>
+                <div className="p-6 pt-2">
+                    <CandidateVoteForm electionId={election.id} candidate={candidate} voterId={session.voterId!} />
+                </div>
+                </Card>
+            ))}
+          </div>
         </div>
       </div>
     </main>
