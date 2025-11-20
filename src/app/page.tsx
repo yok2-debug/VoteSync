@@ -75,9 +75,9 @@ export default function LoginPage() {
             <p className="text-muted-foreground">Sistem E-Voting untuk pemilihan yang transparan dan aman.</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12 items-start">
             {/* Left Column: Active Elections */}
-            <div className="space-y-6">
+            <div className="space-y-6 md:col-span-2">
               <h2 className="text-2xl font-semibold tracking-tight text-center md:text-left">Pemilihan Aktif</h2>
                {isLoading ? (
                 <div className="flex justify-center items-center h-64">
@@ -156,7 +156,7 @@ export default function LoginPage() {
             </div>
 
             {/* Right Column: Login Form */}
-            <div className="space-y-6">
+            <div className="space-y-6 md:col-span-1">
               <h2 className="text-2xl font-semibold tracking-tight text-center md:text-left">Login Pemilih</h2>
               <Card>
                 <CardHeader className="text-center">
