@@ -54,7 +54,7 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
         electionName: election.name,
         electionId: election.id,
       }))
-    );
+    ).sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999));
   }, [allElections]);
 
   const filteredCandidates = useMemo(() => 
@@ -132,6 +132,7 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-[50px]">No.</TableHead>
               <TableHead className="w-[80px]">Photo</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Election</TableHead>
@@ -142,6 +143,7 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
             {filteredCandidates.length > 0 ? (
               filteredCandidates.map((candidate) => (
                 <TableRow key={candidate.id}>
+                    <TableCell className="font-bold">{candidate.orderNumber}</TableCell>
                    <TableCell>
                       <img
                         src={candidate.photo || defaultPhoto?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
@@ -181,7 +183,7 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center">
+                <TableCell colSpan={5} className="h-24 text-center">
                   No candidates found for the selected criteria.
                 </TableCell>
               </TableRow>

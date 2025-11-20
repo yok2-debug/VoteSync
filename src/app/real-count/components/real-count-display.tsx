@@ -31,7 +31,11 @@ export function RealCountDisplay({ election, allVoters, allCategories }: RealCou
   }, [election.id, allVoters, allCategories]);
 
   
-  const candidates = useMemo(() => Object.values(election.candidates || {}), [election.candidates]);
+  const candidates = useMemo(() => 
+    Object.values(election.candidates || {})
+      .sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999)), 
+    [election.candidates]
+  );
   const votesMasukPercentage = DPT > 0 ? (liveTotalVotes / DPT) * 100 : 0;
 
   const chartData = useMemo(() => {

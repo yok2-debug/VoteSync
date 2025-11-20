@@ -25,6 +25,7 @@ import { MarkdownEditor } from '@/components/ui/markdown-editor';
 const candidateSchema = z.object({
   id: z.string().optional(),
   electionId: z.string().min(1, { message: 'Election must be selected.' }),
+  orderNumber: z.coerce.number().min(1, 'Order number must be at least 1.').optional(),
   name: z.string().min(3, { message: 'Candidate name must be at least 3 characters.' }),
   viceCandidateName: z.string().optional(),
   vision: z.string().optional(),
@@ -63,6 +64,7 @@ export function CandidateForm({
       reset({
           id: initialData.candidate.id,
           electionId: initialData.electionId || '',
+          orderNumber: initialData.candidate.orderNumber,
           name: initialData.candidate.name || '',
           viceCandidateName: initialData.candidate.viceCandidateName || '',
           vision: initialData.candidate.vision || '',
@@ -79,6 +81,7 @@ export function CandidateForm({
     try {
       const candidateToSave: Candidate = {
         id: data.id || `new-${Date.now()}`,
+        orderNumber: data.orderNumber,
         name: data.name,
         viceCandidateName: data.viceCandidateName,
         vision: data.vision,
@@ -141,12 +144,21 @@ export function CandidateForm({
                 <p className="text-sm text-destructive mt-1">{errors.electionId.message}</p>
               )}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="name">Candidate Name</Label>
-              <Input id="name" {...register('name')} />
-              {errors.name && (
-                <p className="text-sm text-destructive mt-1">{errors.name.message}</p>
-              )}
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                  <Label htmlFor="orderNumber">Nomor Urut</Label>
+                  <Input id="orderNumber" type="number" {...register('orderNumber')} />
+                  {errors.orderNumber && (
+                      <p className="text-sm text-destructive mt-1">{errors.orderNumber.message}</p>
+                  )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="name">Candidate Name</Label>
+                <Input id="name" {...register('name')} />
+                {errors.name && (
+                  <p className="text-sm text-destructive mt-1">{errors.name.message}</p>
+                )}
+              </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="viceCandidateName">Vice Candidate Name (Optional)</Label>

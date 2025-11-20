@@ -58,7 +58,11 @@ const formatDateToWords = (date: Date): FormattedDateParts => {
 
 
 export function RecapitulationDisplay({ election, allVoters, allCategories }: RecapitulationDisplayProps) {
-  const candidates = useMemo(() => Object.values(election.candidates || {}), [election.candidates]);
+  const candidates = useMemo(() => 
+      Object.values(election.candidates || {})
+        .sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999)), 
+      [election.candidates]
+  );
   const totalVotesCast = useMemo(() => Object.keys(election.votes || {}).length, [election.votes]);
 
   const DPT = useMemo(() => {
@@ -245,9 +249,9 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {candidates.length > 0 ? candidates.map((candidate, index) => (
+                                {candidates.length > 0 ? candidates.map((candidate) => (
                                     <TableRow key={candidate.id}>
-                                        <TableCell className="text-center">{index + 1}</TableCell>
+                                        <TableCell className="text-center">{candidate.orderNumber}</TableCell>
                                         <TableCell className="font-medium">{candidate.name}</TableCell>
                                         <TableCell className="text-right font-bold">{election.results?.[candidate.id] || 0}</TableCell>
                                     </TableRow>
