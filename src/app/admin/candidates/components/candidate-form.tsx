@@ -25,7 +25,7 @@ import { MarkdownEditor } from '@/components/ui/markdown-editor';
 const candidateSchema = z.object({
   id: z.string().optional(),
   electionId: z.string().min(1, { message: 'Election must be selected.' }),
-  orderNumber: z.coerce.number().min(1, 'Nomor urut harus minimal 1.'),
+  orderNumber: z.coerce.number().optional(),
   name: z.string().min(3, { message: 'Candidate name must be at least 3 characters.' }),
   viceCandidateName: z.string().optional(),
   vision: z.string().optional(),
@@ -79,9 +79,34 @@ export function CandidateForm({
   const onSubmit: SubmitHandler<CandidateFormData> = async (data) => {
     setIsSubmitting(true);
     try {
+      
+      let finalOrderNumber = data.orderNumber;
+
+      if (!isEditing && !finalOrderNumber) {
+        const selectedElection = allElections.find(e => e.id === data.electionId);
+        if (selectedElection && selectedElection.candidates) {
+          const existingCandidates = Object.values(selectedElection.candidates);
+          const maxOrderNumber = existingCandidates.reduce((max, c) => Math.max(max, c.orderNumber || 0), 0);
+          finalOrderNumber = maxOrderNumber + 1;
+        } else {
+          finalOrderNumber = 1; // Default to 1 if no candidates exist
+        }
+      }
+      
+      if (!finalOrderNumber) {
+        toast({
+            variant: 'destructive',
+            title: 'Nomor Urut Dibutuhkan',
+            description: 'Silakan masukkan nomor urut kandidat.',
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+
       const candidateToSave: Candidate = {
         id: data.id || `new-${Date.now()}`,
-        orderNumber: data.orderNumber,
+        orderNumber: finalOrderNumber,
         name: data.name,
         viceCandidateName: data.viceCandidateName,
         vision: data.vision,
@@ -146,7 +171,7 @@ export function CandidateForm({
             </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                  <Label htmlFor="orderNumber">Nomor Urut</Label>
+                  <Label htmlFor="orderNumber">Nomor Urut (kosongkan untuk otomatis)</Label>
                   <Input id="orderNumber" type="number" {...register('orderNumber')} />
                   {errors.orderNumber && (
                       <p className="text-sm text-destructive mt-1">{errors.orderNumber.message}</p>
