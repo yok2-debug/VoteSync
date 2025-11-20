@@ -1,4 +1,5 @@
 
+
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CandidateVoteForm } from './components/candidate-vote-form';
@@ -93,7 +94,7 @@ function VotePageContent() {
         <div className="grid justify-center gap-6 md:grid-cols-2 lg:grid-cols-3">
           {candidates.map(candidate => (
               <Card key={candidate.id} className="flex flex-col">
-              <CardHeader className="items-center text-center p-0 pt-6 space-y-0">
+              <CardHeader className="items-center text-center p-0">
                  <Dialog>
                     <DialogTrigger asChild>
                       <img
@@ -115,10 +116,10 @@ function VotePageContent() {
                   <CardTitle className="pt-2 text-xl">
                     {candidate.name}
                     {candidate.viceCandidateName && (
-                        <div className="flex flex-col items-center -my-2">
-                            <span className="text-base font-normal">&</span>
-                            <span>{candidate.viceCandidateName}</span>
-                        </div>
+                      <div className="flex flex-col items-center">
+                          <span className="text-base font-normal leading-none">&</span>
+                          <span>{candidate.viceCandidateName}</span>
+                      </div>
                     )}
                   </CardTitle>
               </CardHeader>
