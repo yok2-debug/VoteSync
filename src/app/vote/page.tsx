@@ -75,24 +75,19 @@ export default function VoterDashboardPage() {
               <CardTitle>Informasi Pemilih</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="space-y-3">
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                <div className="flex justify-between border-b pb-2">
-                  <span className="text-muted-foreground">Nama</span>
-                  <span className="font-semibold">{voter.name}</span>
-                </div>
-                <div className="flex justify-between border-b pb-2">
-                  <span className="text-muted-foreground">Tanggal Lahir</span>
-                  <span className="font-semibold">{voter.birthPlace || '-'}{voter.birthPlace && voter.birthDate ? ', ' : ''}{voter.birthDate || '-'}</span>
-                </div>
-                 <div className="flex justify-between border-b pb-2">
-                  <span className="text-muted-foreground">Jenis Kelamin</span>
-                  <span className="font-semibold">{voter.gender || '-'}</span>
-                </div>
-                <div className="flex justify-between border-b pb-2">
-                  <span className="text-muted-foreground">Alamat</span>
-                  <span className="font-semibold text-right">{voter.address || '-'}</span>
-                </div>
+          <CardContent>
+             <div className="grid grid-cols-[120px_1fr] sm:grid-cols-[150px_1fr] gap-y-3 text-sm">
+                <div className="text-muted-foreground">Nama</div>
+                <div className="font-semibold">: {voter.name}</div>
+                
+                <div className="text-muted-foreground">Tanggal Lahir</div>
+                <div className="font-semibold">: {voter.birthPlace || '-'}{voter.birthPlace && voter.birthDate ? ', ' : ''}{voter.birthDate || '-'}</div>
+
+                <div className="text-muted-foreground">Jenis Kelamin</div>
+                <div className="font-semibold">: {voter.gender || '-'}</div>
+
+                <div className="text-muted-foreground">Alamat</div>
+                <div className="font-semibold break-words">: {voter.address || '-'}</div>
              </div>
           </CardContent>
         </Card>
