@@ -39,23 +39,13 @@ const prompt = ai.definePrompt({
   name: 'predictElectionOutcomePrompt',
   input: {schema: PredictElectionOutcomeInputSchema},
   output: {schema: PredictElectionOutcomeOutputSchema},
-  prompt: `You are an expert in statistical analysis and election prediction. Given the current vote counts for an election, you will predict the final outcome, including a margin of error.
+  prompt: `You are an expert in statistical analysis and election prediction. Given the current vote counts for an election, you will predict the final outcome, including a margin of error and confidence level.
 
 Election ID: {{{electionId}}}
 Current Vote Data: {{{votes}}}
 Candidate Details: {{{candidates}}}
 
-Consider the following:
-- The number of votes cast so far.
-- The distribution of votes among candidates.
-- Any patterns or trends in the voting data.
-
-Based on this information, provide:
-1. A predicted outcome, showing the percentage of votes each candidate is likely to receive.
-2. A margin of error for your prediction, indicating the range within which the actual results are likely to fall.
-3. A confidence level for your prediction, indicating how certain you are about the predicted outcome.
-
-Ensure that the predictedOutcome object contains the candidate IDs and their corresponding predicted vote percentages. The marginOfError should be a single number indicating the overall uncertainty in the prediction, and confidenceLevel indicating how sure you are about the predicted outcome.`,
+Analyze the provided data to predict the final vote percentages for each candidate.`,
 });
 
 const predictElectionOutcomeFlow = ai.defineFlow(
@@ -65,11 +55,6 @@ const predictElectionOutcomeFlow = ai.defineFlow(
     outputSchema: PredictElectionOutcomeOutputSchema,
   },
   async input => {
-    // Basic input validation. More sophisticated validation could be added.
-    if (!input.electionId || !input.votes || !input.candidates) {
-      throw new Error('Missing required input parameters.');
-    }
-
     const {output} = await prompt(input);
     return output!;
   }
