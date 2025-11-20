@@ -99,17 +99,17 @@ function VotePageContent() {
                   <Image
                       src={candidate.photo || defaultPhoto?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
                       alt={`Photo of ${candidate.name}`}
-                      width={120}
-                      height={120}
+                      width={80}
+                      height={80}
                       className="rounded-full border-4 border-primary object-cover"
                       data-ai-hint={defaultPhoto?.imageHint || 'person portrait'}
                   />
-                  <CardTitle className="pt-4 text-xl">
+                  <CardTitle className="pt-4 text-lg">
                     {candidate.name}
                     {candidate.viceCandidateName && (
                         <div className="flex flex-col items-center">
                             <span className="text-base font-normal">&</span>
-                            <span className="text-xl">{candidate.viceCandidateName}</span>
+                            <span className="text-lg">{candidate.viceCandidateName}</span>
                         </div>
                     )}
                   </CardTitle>
