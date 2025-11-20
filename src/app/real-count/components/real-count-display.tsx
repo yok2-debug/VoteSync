@@ -70,7 +70,7 @@ export function RealCountDisplay({ election, allVoters, allCategories }: RealCou
             </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="w-full min-h-[256px]">
                 <ElectionPieChart data={chartData} />
             </div>
