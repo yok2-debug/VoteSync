@@ -14,6 +14,7 @@ import type { Voter, VoterSessionPayload, Election, Category } from '@/lib/types
 import ReactMarkdown from 'react-markdown';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -106,12 +107,14 @@ function VotePageContent() {
                           className="rounded-full border-4 border-primary object-cover cursor-pointer hover:opacity-90 transition-opacity h-36 w-36"
                         />
                       </DialogTrigger>
-                      <DialogContent className="max-w-xl p-2">
+                      <DialogContent className="max-w-xl p-2 border-0 bg-transparent shadow-none">
+                        <DialogClose asChild>
                           <img
                               src={candidate.photo || 'https://picsum.photos/seed/default/400/400'}
                               alt={`Photo of ${candidate.name}`}
-                              className="w-full h-auto rounded-md"
+                              className="w-full h-auto rounded-md cursor-pointer"
                           />
+                        </DialogClose>
                       </DialogContent>
                    </Dialog>
                     <CardTitle className="pt-2 text-base flex flex-col items-center text-center">
