@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import ReactMarkdown from 'react-markdown';
 
 export default function LoginPage() {
   const { elections, isLoading } = useDatabase();
@@ -112,36 +113,44 @@ export default function LoginPage() {
                                 Lihat Kandidat
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="sm:max-w-2xl">
+                            <DialogContent className="sm:max-w-3xl">
                               <DialogHeader>
                                 <DialogTitle>Kandidat untuk {election.name}</DialogTitle>
                                 <DialogDescription>
-                                  Berikut adalah daftar kandidat yang berpartisipasi.
+                                  Berikut adalah daftar kandidat yang berpartisipasi beserta visi dan misi mereka.
                                 </DialogDescription>
                               </DialogHeader>
-                              <div className="max-h-[60vh] overflow-y-auto p-1">
-                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                  {candidates.map((candidate: Candidate) => (
-                                    <div key={candidate.id} className="flex flex-col items-center text-center gap-2">
-                                       <div className="relative">
-                                          <span className="absolute -top-1 -left-1 bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold border-2 border-background">
+                              <div className="max-h-[70vh] overflow-y-auto p-1 space-y-4">
+                                {candidates.map((candidate: Candidate) => (
+                                  <Card key={candidate.id} className="flex flex-col sm:flex-row items-start gap-4 p-4">
+                                    <div className="flex-shrink-0 flex flex-col items-center gap-2 w-full sm:w-32">
+                                      <div className="relative">
+                                          <span className="absolute -top-2 -left-2 bg-primary text-primary-foreground rounded-full h-8 w-8 flex items-center justify-center text-sm font-bold border-2 border-background">
                                             {candidate.orderNumber}
                                           </span>
                                           <img
                                             src={candidate.photo || defaultAvatar?.imageUrl}
                                             alt={`Foto ${candidate.name}`}
-                                            width={80}
-                                            height={80}
-                                            className="rounded-full object-cover w-20 h-20 border"
+                                            width={100}
+                                            height={100}
+                                            className="rounded-full object-cover w-24 h-24 border"
                                           />
-                                       </div>
-                                      <div className="text-sm font-medium leading-tight">
-                                        <p>{candidate.name}</p>
-                                        {candidate.viceCandidateName && <p className="text-xs text-muted-foreground">{candidate.viceCandidateName}</p>}
+                                      </div>
+                                      <div className="text-center">
+                                          <p className="font-bold">{candidate.name}</p>
+                                          {candidate.viceCandidateName && <p className="text-sm text-muted-foreground">{candidate.viceCandidateName}</p>}
                                       </div>
                                     </div>
-                                  ))}
-                                </div>
+                                    <div className="flex-grow border-t sm:border-t-0 sm:border-l border-border pt-4 sm:pt-0 sm:pl-4">
+                                      <article className="prose prose-sm dark:prose-invert max-w-none">
+                                        <h4>Visi</h4>
+                                        <ReactMarkdown>{candidate.vision || 'Visi belum tersedia.'}</ReactMarkdown>
+                                        <h4 className="mt-4">Misi</h4>
+                                        <ReactMarkdown>{candidate.mission || 'Misi belum tersedia.'}</ReactMarkdown>
+                                      </article>
+                                    </div>
+                                  </Card>
+                                ))}
                               </div>
                             </DialogContent>
                           </Dialog>
