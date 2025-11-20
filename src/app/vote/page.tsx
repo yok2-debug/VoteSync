@@ -78,27 +78,32 @@ export default function VoterDashboardPage() {
           <CardContent>
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                 <div className="space-y-3">
-                  <div className="grid grid-cols-[120px_1fr]">
+                  <div className="grid grid-cols-[120px_auto_1fr] items-start">
                     <div className="text-muted-foreground">Nama</div>
-                    <div className="font-semibold">: {voter.name}</div>
+                    <div className="font-semibold mx-2">:</div>
+                    <div className="font-semibold break-words">{voter.name}</div>
                   </div>
-                   <div className="grid grid-cols-[120px_1fr]">
+                   <div className="grid grid-cols-[120px_auto_1fr] items-start">
                     <div className="text-muted-foreground">NIK</div>
-                    <div className="font-semibold">: {voter.nik || '-'}</div>
+                    <div className="font-semibold mx-2">:</div>
+                    <div className="font-semibold break-words">{voter.nik || '-'}</div>
                   </div>
-                  <div className="grid grid-cols-[120px_1fr]">
+                  <div className="grid grid-cols-[120px_auto_1fr] items-start">
                     <div className="text-muted-foreground">Tanggal Lahir</div>
-                    <div className="font-semibold">: {voter.birthPlace || '-'}{voter.birthPlace && voter.birthDate ? ', ' : ''}{voter.birthDate || '-'}</div>
+                    <div className="font-semibold mx-2">:</div>
+                    <div className="font-semibold break-words">{voter.birthPlace || '-'}{voter.birthPlace && voter.birthDate ? ', ' : ''}{voter.birthDate || '-'}</div>
                   </div>
                 </div>
                 <div className="space-y-3">
-                  <div className="grid grid-cols-[120px_1fr]">
+                  <div className="grid grid-cols-[120px_auto_1fr] items-start">
                     <div className="text-muted-foreground">Jenis Kelamin</div>
-                    <div className="font-semibold">: {voter.gender || '-'}</div>
+                    <div className="font-semibold mx-2">:</div>
+                    <div className="font-semibold break-words">{voter.gender || '-'}</div>
                   </div>
-                  <div className="grid grid-cols-[120px_1fr]">
+                  <div className="grid grid-cols-[120px_auto_1fr] items-start">
                     <div className="text-muted-foreground">Alamat</div>
-                    <div className="font-semibold break-words">: {voter.address || '-'}</div>
+                    <div className="font-semibold mx-2">:</div>
+                    <div className="font-semibold break-words">{voter.address || '-'}</div>
                   </div>
                 </div>
              </div>
