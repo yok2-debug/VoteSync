@@ -76,7 +76,7 @@ export default function VoterDashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-xs">
                 <div className="space-y-3">
                   <div className="grid grid-cols-[120px_auto_1fr] items-start">
                     <div className="text-muted-foreground">Nama</div>
