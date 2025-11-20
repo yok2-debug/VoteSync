@@ -1,6 +1,6 @@
+
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { CandidateVoteForm } from './components/candidate-vote-form';
 import { VoterLogoutButton } from '../components/voter-logout-button';
 import { Button } from '@/components/ui/button';
@@ -72,7 +72,6 @@ function VotePageContent() {
   }
 
   const candidates = election.candidates ? Object.values(election.candidates) : [];
-  const defaultPhoto = PlaceHolderImages.find(p => p.id === 'default-avatar');
   
   return (
     <main className="flex min-h-screen flex-col items-center bg-background p-4 sm:p-8">
@@ -96,18 +95,18 @@ function VotePageContent() {
               <Card key={candidate.id} className="flex flex-col">
               <CardHeader className="items-center text-center p-4 pb-0 space-y-1">
                   <img
-                      src={candidate.photo || defaultPhoto?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
+                      src={candidate.photo || 'https://picsum.photos/seed/default/400/400'}
                       alt={`Photo of ${candidate.name}`}
                       width={160}
                       height={160}
-                      className="rounded-full border-4 border-primary object-cover"
+                      className="rounded-full border-4 border-primary object-cover mb-1"
                   />
-                  <CardTitle className="pt-1 text-lg">
+                  <CardTitle className="pt-0 text-lg">
                     {candidate.name}
                     {candidate.viceCandidateName && (
-                        <div className="flex flex-col items-center">
+                        <div className="flex flex-col items-center -mt-1">
                             <span className="text-base font-normal">&</span>
-                            <span className="text-lg">{candidate.viceCandidateName}</span>
+                            <span className="text-lg -mt-1">{candidate.viceCandidateName}</span>
                         </div>
                     )}
                   </CardTitle>
@@ -141,7 +140,7 @@ function VotePageContent() {
                       </DialogContent>
                   </Dialog>
               </CardContent>
-              <div className="p-4 pt-0">
+              <div className="p-4 pt-1">
                   <CandidateVoteForm electionId={election.id} candidate={candidate} voterId={session.voterId!} />
               </div>
               </Card>
