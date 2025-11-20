@@ -70,7 +70,10 @@ function VotePageContent() {
     return <Loading />;
   }
 
-  const candidates = election.candidates ? Object.values(election.candidates) : [];
+  const candidates = useMemo(() => {
+    if (!election.candidates) return [];
+    return Object.values(election.candidates).sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999));
+  }, [election.candidates]);
   
   return (
     <main className="flex min-h-screen flex-col items-center bg-background p-4 sm:p-8">
