@@ -1,4 +1,5 @@
 
+
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CandidateVoteForm } from './components/candidate-vote-form';
@@ -93,20 +94,29 @@ function VotePageContent() {
         <div className="grid justify-center gap-6 md:grid-cols-2 lg:grid-cols-3">
           {candidates.map(candidate => (
               <Card key={candidate.id} className="flex flex-col">
-              <CardHeader className="items-center text-center p-4 space-y-0 pb-0">
-                 <a href={candidate.photo || 'https://picsum.photos/seed/default/400/400'} target="_blank" rel="noopener noreferrer">
-                    <img
-                        src={candidate.photo || 'https://picsum.photos/seed/default/400/400'}
-                        alt={`Photo of ${candidate.name}`}
-                        width={144}
-                        height={144}
-                        className="rounded-full border-4 border-primary object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                    />
-                  </a>
-                  <CardTitle className="pt-2 text-xl">
+              <CardHeader className="items-center text-center p-2 space-y-0 pb-0">
+                 <Dialog>
+                    <DialogTrigger asChild>
+                       <img
+                          src={candidate.photo || 'https://picsum.photos/seed/default/400/400'}
+                          alt={`Photo of ${candidate.name}`}
+                          width={144}
+                          height={144}
+                          className="rounded-full border-4 border-primary object-cover cursor-pointer hover:opacity-90 transition-opacity w-36 h-36"
+                      />
+                    </DialogTrigger>
+                    <DialogContent className="max-w-xl p-2">
+                        <img
+                            src={candidate.photo || 'https://picsum.photos/seed/default/400/400'}
+                            alt={`Photo of ${candidate.name}`}
+                            className="w-full h-auto rounded-md"
+                        />
+                    </DialogContent>
+                 </Dialog>
+                  <CardTitle className="pt-0 text-xl">
                     {candidate.name}
                     {candidate.viceCandidateName && (
-                        <div className="flex flex-col items-center -mt-2.5 -mb-2">
+                        <div className="flex flex-col items-center -mt-2 -mb-2">
                             <span className="text-base font-normal">&</span>
                             <span className="text-xl -mt-1.5">{candidate.viceCandidateName}</span>
                         </div>
