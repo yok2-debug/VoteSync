@@ -74,7 +74,7 @@ function VotePageContent() {
   
   return (
     <main className="flex min-h-screen flex-col items-center bg-background p-4 sm:p-8">
-      <div className="w-full max-w-6xl space-y-8">
+      <div className="w-full max-w-7xl space-y-8">
         <header className="flex w-full items-center justify-between">
           <Button asChild variant="outline">
             <Link href="/vote">
@@ -89,9 +89,9 @@ function VotePageContent() {
           <h1 className="text-3xl font-bold tracking-tight">{election.name}</h1>
           <p className="text-muted-foreground">Pilih kandidat pilihan Anda di bawah ini.</p>
         </div>
-        <div className="flex flex-wrap justify-center gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 justify-items-center">
             {candidates.map(candidate => (
-                <Card key={candidate.id} className="flex flex-col w-full max-w-sm">
+                <Card key={candidate.id} className="flex flex-col w-full">
                 <CardHeader className="flex flex-col items-center p-0 pt-6">
                    <Dialog>
                       <DialogTrigger asChild>
