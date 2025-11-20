@@ -41,14 +41,14 @@ export function ElectionPieChart({ data }: ElectionPieChartProps) {
 
   if (!hasVotes) {
     return (
-        <div className="flex items-center justify-center h-full w-full bg-muted/50 rounded-lg">
+        <div className="flex items-center justify-center h-full w-full bg-muted/50 rounded-lg min-h-[256px]">
             <p className="text-sm text-muted-foreground">Belum ada suara masuk</p>
         </div>
     );
   }
 
   return (
-    <ResponsiveContainer width="100%" height="100%">
+    <ResponsiveContainer width="100%" aspect={1.5}>
       <PieChart>
         <Tooltip
           contentStyle={{
