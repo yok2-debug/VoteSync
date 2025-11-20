@@ -33,6 +33,7 @@ import { deleteCandidate } from '@/lib/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useRouter } from 'next/navigation';
+import React from 'react';
 
 type CandidateTableProps = {
   allElections: Election[];
