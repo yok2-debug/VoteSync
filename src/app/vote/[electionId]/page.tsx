@@ -45,6 +45,11 @@ function VotePageContent() {
   const voter = useMemo(() => voters.find(v => v.id === session?.voterId), [voters, session]);
   const category = useMemo(() => categories.find(c => c.id === voter?.category), [categories, voter]);
   
+  const candidates = useMemo(() => {
+    if (!election?.candidates) return [];
+    return Object.values(election.candidates).sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999));
+  }, [election?.candidates]);
+
   const isLoading = isDbLoading || isSessionLoading;
 
   useEffect(() => {
@@ -69,11 +74,6 @@ function VotePageContent() {
     }
     return <Loading />;
   }
-
-  const candidates = useMemo(() => {
-    if (!election.candidates) return [];
-    return Object.values(election.candidates).sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999));
-  }, [election.candidates]);
   
   return (
     <main className="flex min-h-screen flex-col items-center bg-background p-4 sm:p-8">
