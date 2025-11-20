@@ -14,8 +14,8 @@ export default function CandidateActionPage() {
 
   const { slug } = params as { slug: string[] };
   const action = slug ? slug[0] : null;
-  const electionId = slug && slug.length > 1 ? slug[0] : undefined;
-  const candidateId = slug && slug.length > 1 ? slug[1] : undefined;
+  const electionId = slug && slug.length > 1 ? slug[1] : undefined;
+  const candidateId = slug && slug.length > 2 ? slug[2] : undefined;
 
   if (action === 'new') {
     return (
