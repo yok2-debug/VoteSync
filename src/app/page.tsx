@@ -163,7 +163,7 @@ export default function LoginPage() {
                                   </Card>
                                 ))}
                               </div>
-                               <DialogFooter className="sm:justify-end pt-0.5">
+                               <DialogFooter className="sm:justify-end pt-px">
                                 <DialogClose asChild>
                                   <Button type="button" variant="secondary">
                                     Close
