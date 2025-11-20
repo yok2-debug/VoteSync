@@ -1,5 +1,4 @@
 
-
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CandidateVoteForm } from './components/candidate-vote-form';
@@ -94,15 +93,15 @@ function VotePageContent() {
         <div className="grid justify-center gap-6 md:grid-cols-2 lg:grid-cols-3">
           {candidates.map(candidate => (
               <Card key={candidate.id} className="flex flex-col">
-              <CardHeader className="items-center text-center p-4 pt-4 pb-0 space-y-0">
+              <CardHeader className="items-center text-center p-0 pt-6 space-y-0">
                  <Dialog>
                     <DialogTrigger asChild>
-                        <img
-                          src={candidate.photo || 'https://picsum.photos/seed/default/400/400'}
-                          alt={`Photo of ${candidate.name}`}
-                          width={144}
-                          height={144}
-                          className="rounded-full border-4 border-primary object-cover cursor-pointer hover:opacity-90 transition-opacity w-36 h-36"
+                      <img
+                        src={candidate.photo || 'https://picsum.photos/seed/default/400/400'}
+                        alt={`Photo of ${candidate.name}`}
+                        width={144}
+                        height={144}
+                        className="rounded-full border-4 border-primary object-cover cursor-pointer hover:opacity-90 transition-opacity h-36 w-36"
                       />
                     </DialogTrigger>
                     <DialogContent className="max-w-xl p-2">
@@ -116,14 +115,14 @@ function VotePageContent() {
                   <CardTitle className="pt-2 text-xl">
                     {candidate.name}
                     {candidate.viceCandidateName && (
-                        <div className="flex flex-col items-center -mt-2 -mb-2">
+                        <div className="flex flex-col items-center -my-2">
                             <span className="text-base font-normal">&</span>
-                            <span className="text-xl -mt-1.5">{candidate.viceCandidateName}</span>
+                            <span>{candidate.viceCandidateName}</span>
                         </div>
                     )}
                   </CardTitle>
               </CardHeader>
-              <CardContent className="flex-grow flex flex-col justify-center items-center p-0 pt-2">
+              <CardContent className="flex-grow flex flex-col justify-center items-center p-0 pt-4">
                   <Dialog>
                       <DialogTrigger asChild>
                       <Button variant="secondary">
@@ -152,7 +151,7 @@ function VotePageContent() {
                       </DialogContent>
                   </Dialog>
               </CardContent>
-              <div className="p-4 pt-2">
+              <div className="p-6 pt-2">
                   <CandidateVoteForm electionId={election.id} candidate={candidate} voterId={session.voterId!} />
               </div>
               </Card>
