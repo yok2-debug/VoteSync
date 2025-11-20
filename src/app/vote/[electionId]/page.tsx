@@ -1,5 +1,3 @@
-
-
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { CandidateVoteForm } from './components/candidate-vote-form';
@@ -61,7 +59,7 @@ function VotePageContent() {
   
   const now = new Date();
   const electionStarted = election?.startDate ? new Date(election.startDate) <= now : false;
-  const electionEnded = election?.endDate ? new Date(endDate) < now : false;
+  const electionEnded = election?.endDate ? new Date(election.endDate) < now : false;
   const isVoterAllowed = category?.allowedElections?.includes(electionId);
   const hasVoted = voter?.hasVoted?.[electionId];
 
