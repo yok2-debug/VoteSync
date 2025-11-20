@@ -104,12 +104,12 @@ function VotePageContent() {
                       className="rounded-full border-4 border-primary object-cover"
                       data-ai-hint={defaultPhoto?.imageHint || 'person portrait'}
                   />
-                  <CardTitle className="pt-4">
+                  <CardTitle className="pt-4 text-xl">
                     {candidate.name}
                     {candidate.viceCandidateName && (
                         <div className="flex flex-col items-center">
-                            <span className="text-lg font-normal">&</span>
-                            <span>{candidate.viceCandidateName}</span>
+                            <span className="text-base font-normal">&</span>
+                            <span className="text-xl">{candidate.viceCandidateName}</span>
                         </div>
                     )}
                   </CardTitle>
