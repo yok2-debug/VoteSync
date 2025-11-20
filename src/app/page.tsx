@@ -77,7 +77,6 @@ export default function LoginPage() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12 items-start">
-            {/* Left Column: Active Elections */}
             <div className="space-y-6 md:col-span-2">
               <h2 className="text-2xl font-semibold tracking-tight text-center md:text-left">Pemilihan Aktif</h2>
                {isLoading ? (
@@ -128,13 +127,24 @@ export default function LoginPage() {
                                           <span className="absolute -top-2 -left-2 bg-primary text-primary-foreground rounded-full h-8 w-8 flex items-center justify-center text-sm font-bold border-2 border-background">
                                             {candidate.orderNumber}
                                           </span>
-                                          <img
-                                            src={candidate.photo || defaultAvatar?.imageUrl}
-                                            alt={`Foto ${candidate.name}`}
-                                            width={100}
-                                            height={100}
-                                            className="rounded-full object-cover w-24 h-24 border"
-                                          />
+                                          <Dialog>
+                                            <DialogTrigger asChild>
+                                              <img
+                                                src={candidate.photo || defaultAvatar?.imageUrl}
+                                                alt={`Foto ${candidate.name}`}
+                                                width={100}
+                                                height={100}
+                                                className="rounded-full object-cover w-24 h-24 border cursor-pointer hover:opacity-90 transition-opacity"
+                                              />
+                                            </DialogTrigger>
+                                            <DialogContent className="p-0 border-0 max-w-xl">
+                                                <img
+                                                  src={candidate.photo || defaultAvatar?.imageUrl}
+                                                  alt={`Foto ${candidate.name}`}
+                                                  className="w-full h-auto rounded-md"
+                                                />
+                                            </DialogContent>
+                                          </Dialog>
                                       </div>
                                       <div className="text-center">
                                           <p className="font-bold">{candidate.name}</p>
@@ -164,7 +174,6 @@ export default function LoginPage() {
               )}
             </div>
 
-            {/* Right Column: Login Form */}
             <div className="space-y-6 md:col-span-1">
               <h2 className="text-2xl font-semibold tracking-tight text-center md:text-left">Login Pemilih</h2>
               <Card>
