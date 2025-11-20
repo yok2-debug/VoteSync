@@ -12,9 +12,19 @@ import { useDatabase } from '@/context/database-context';
 import { Badge } from '@/components/ui/badge';
 import Loading from './loading';
 import { useMemo } from 'react';
-import type { Election } from '@/lib/types';
+import type { Candidate, Election } from '@/lib/types';
 import { format } from 'date-fns';
-import { Calendar } from 'lucide-react';
+import { Calendar, Users } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function LoginPage() {
   const { elections, isLoading } = useDatabase();
@@ -52,6 +62,8 @@ export default function LoginPage() {
         return 'Jadwal tidak valid';
     }
   }
+  
+  const defaultAvatar = PlaceHolderImages.find(p => p.id === 'default-avatar');
 
   return (
     <>
@@ -73,7 +85,9 @@ export default function LoginPage() {
                 </div>
               ) : activeElections.length > 0 ? (
                 <div className="space-y-6">
-                  {activeElections.map((election: Election) => (
+                  {activeElections.map((election: Election) => {
+                    const candidates = election.candidates ? Object.values(election.candidates).sort((a,b) => (a.orderNumber || 999) - (b.orderNumber || 999)) : [];
+                    return (
                     <Card key={election.id} className="flex flex-col">
                       <CardHeader>
                         <div className="flex justify-between items-start">
@@ -86,13 +100,55 @@ export default function LoginPage() {
                            <span>{formatSchedule(election.startDate, election.endDate)}</span>
                         </div>
                       </CardHeader>
-                       <CardContent className="flex-grow flex items-end">
+                       <CardContent className="flex-grow flex items-end justify-between">
                         <p className="text-sm text-muted-foreground">
-                            Jumlah Kandidat: {Object.keys(election.candidates || {}).length}
+                            Jumlah Kandidat: {candidates.length}
                         </p>
+                        {candidates.length > 0 && (
+                          <Dialog>
+                            <DialogTrigger asChild>
+                               <Button variant="secondary">
+                                <Users className="mr-2 h-4 w-4" />
+                                Lihat Kandidat
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-2xl">
+                              <DialogHeader>
+                                <DialogTitle>Kandidat untuk {election.name}</DialogTitle>
+                                <DialogDescription>
+                                  Berikut adalah daftar kandidat yang berpartisipasi.
+                                </DialogDescription>
+                              </DialogHeader>
+                              <div className="max-h-[60vh] overflow-y-auto p-1">
+                                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                  {candidates.map((candidate: Candidate) => (
+                                    <div key={candidate.id} className="flex flex-col items-center text-center gap-2">
+                                       <div className="relative">
+                                          <span className="absolute -top-1 -left-1 bg-primary text-primary-foreground rounded-full h-6 w-6 flex items-center justify-center text-xs font-bold border-2 border-background">
+                                            {candidate.orderNumber}
+                                          </span>
+                                          <img
+                                            src={candidate.photo || defaultAvatar?.imageUrl}
+                                            alt={`Foto ${candidate.name}`}
+                                            width={80}
+                                            height={80}
+                                            className="rounded-full object-cover w-20 h-20 border"
+                                          />
+                                       </div>
+                                      <div className="text-sm font-medium leading-tight">
+                                        <p>{candidate.name}</p>
+                                        {candidate.viceCandidateName && <p className="text-xs text-muted-foreground">{candidate.viceCandidateName}</p>}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </DialogContent>
+                          </Dialog>
+                        )}
                       </CardContent>
                     </Card>
-                  ))}
+                  )})}
                 </div>
               ) : (
                 <p className="text-center md:text-left text-muted-foreground py-10">Tidak ada pemilihan yang sedang aktif saat ini.</p>
