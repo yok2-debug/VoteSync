@@ -55,17 +55,7 @@ Based on this information, provide:
 2. A margin of error for your prediction, indicating the range within which the actual results are likely to fall.
 3. A confidence level for your prediction, indicating how certain you are about the predicted outcome.
 
-Ensure that the predictedOutcome object contains the candidate IDs and their corresponding predicted vote percentages. The marginOfError should be a single number indicating the overall uncertainty in the prediction, and confidenceLevel indicating how sure you are about the predicted outcome.
-
-Output format:{
-  "predictedOutcome": {
-    "candidate_id_1": predicted_percentage_1,
-    "candidate_id_2": predicted_percentage_2,
-    ...
-  },
-  "marginOfError": margin_of_error,
-  "confidenceLevel": confidence_level
-}`,
+Ensure that the predictedOutcome object contains the candidate IDs and their corresponding predicted vote percentages. The marginOfError should be a single number indicating the overall uncertainty in the prediction, and confidenceLevel indicating how sure you are about the predicted outcome.`,
 });
 
 const predictElectionOutcomeFlow = ai.defineFlow(

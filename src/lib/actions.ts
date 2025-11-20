@@ -128,7 +128,6 @@ export async function saveCategory(category: { id?: string; name: string; allowe
     await set(ref(db, `categories/${categoryId}`), dataToSave);
     revalidatePath('/admin/categories');
   } catch (error) {
-    console.error('Error saving category:', error);
     throw new Error('Could not save category. Please try again.');
   }
 }
@@ -145,7 +144,6 @@ export async function deleteCategory(categoryId: string): Promise<void> {
       await remove(ref(db, `categories/${categoryId}`));
       revalidatePath('/admin/categories');
     } catch (error) {
-      console.error('Error deleting category:', error);
       if (error instanceof Error) {
         throw error;
       }
@@ -204,7 +202,6 @@ export async function saveElection(formData: FormData): Promise<{ savedElectionI
     return { savedElectionId };
 
   } catch (error) {
-    console.error('Error saving election:', error);
     if (error instanceof Error) {
       throw new Error(error.message);
     }
@@ -218,7 +215,6 @@ export async function deleteElection(electionId: string): Promise<void> {
         await remove(ref(db, `elections/${electionId}`));
         revalidatePath('/admin/elections');
     } catch (error) {
-        console.error('Error deleting election:', error);
         throw new Error('Could not delete election. Please try again.');
     }
 }
@@ -259,7 +255,6 @@ export async function saveVoter(voter: Omit<Voter, 'hasVoted' | 'followedElectio
     return { id, ...newSnapshot.val() };
 
   } catch (error) {
-    console.error('Error saving voter:', error);
     if (error instanceof Error) {
       throw error;
     }
@@ -272,7 +267,6 @@ export async function deleteVoter(voterId: string): Promise<void> {
     await remove(ref(db, `voters/${voterId}`));
     revalidatePath('/admin/voters');
   } catch (error) {
-    console.error('Error deleting voter:', error);
     throw new Error('Could not delete voter. Please try again.');
   }
 }
@@ -284,7 +278,6 @@ export async function resetVoterPassword(voterId: string, newPassword: string):P
     });
     revalidatePath('/admin/voters');
   } catch (error) {
-    console.error('Error resetting password:', error);
     throw new Error('Could not reset password. Please try again.');
   }
 }
@@ -369,7 +362,6 @@ export async function importVoters(data: any[]): Promise<{ importedCount: number
     try {
       await update(ref(db), votersToImport);
     } catch (error) {
-      console.error('Error importing voters:', error);
       throw new Error('Failed to save imported voters to the database.');
     }
   }
@@ -427,7 +419,6 @@ export async function saveVote(electionId: string, candidateId: string, voterId:
     revalidatePath('/admin/recapitulation');
     revalidatePath(`/admin/recapitulation/${electionId}`);
   } catch (error) {
-    console.error('Error saving vote:', error);
     if (error instanceof Error) {
       throw error;
     }
@@ -471,7 +462,6 @@ export async function saveCandidate(candidate: Omit<Candidate, 'id'> & { id?: st
     revalidatePath(`/admin/elections/${electionId}`);
 
   } catch (error) {
-    console.error('Error saving candidate:', error);
     if (error instanceof Error) {
       throw error;
     }
@@ -501,7 +491,6 @@ export async function deleteCandidate(candidateId: string, electionId: string): 
         revalidatePath(`/admin/elections/${electionId}`);
 
     } catch (error) {
-        console.error('Error deleting candidate:', error);
         if (error instanceof Error) {
             throw error;
         }
@@ -520,7 +509,6 @@ export async function reorderCandidates(electionId: string, candidates: Candidat
     revalidatePath('/admin/candidates');
     revalidatePath(`/admin/elections/${electionId}`);
   } catch (error) {
-    console.error('Error reordering candidates:', error);
     throw new Error('Could not reorder candidates.');
   }
 }

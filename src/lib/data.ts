@@ -10,7 +10,6 @@ export async function getAdminCredentials(): Promise<Admin | null> {
     const snapshot = await get(ref(db, 'admin'));
     return snapshot.val();
   } catch (error) {
-    console.error('Error fetching admin credentials:', error);
     return null;
   }
 }
@@ -39,7 +38,6 @@ export async function getVoterById(voterId: string): Promise<Voter | null> {
     }
     return null;
   } catch (error) {
-    console.error(`Error fetching voter ${voterId}:`, error);
     return null;
   }
 }
@@ -56,7 +54,6 @@ export async function getElections(): Promise<Election[]> {
         }
         return [];
     } catch (error) {
-        console.error('Error fetching elections:', error);
         return [];
     }
 }
@@ -77,7 +74,6 @@ export async function getVoters(): Promise<Voter[]> {
         );
         return await Promise.all(votersPromises);
     } catch (error) {
-        console.error('Error fetching voters:', error);
         return [];
     }
 }
@@ -94,7 +90,6 @@ export async function getCategories(): Promise<Category[]> {
         }
         return [];
     } catch (error) {
-        console.error('Error fetching categories:', error);
         return [];
     }
 }

@@ -16,33 +16,13 @@ type RecapitulationDisplayProps = {
   allCategories: Category[];
 };
 
-const capitalize = (s: string) => {
-  if (typeof s !== 'string' || s.length === 0) return ''
-  return s.charAt(0).toUpperCase() + s.slice(1)
-}
-
-const numberToWords = (num: number) => {
-  const terbilang = [
-    '', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh', 'sebelas'
-  ];
-
-  if (num < 12) return terbilang[num];
-  if (num < 20) return numberToWords(num - 10) + ' belas';
-  if (num < 100) return terbilang[Math.floor(num / 10)] + ' puluh ' + numberToWords(num % 10);
-  if (num < 200) return 'seratus ' + numberToWords(num - 100);
-  if (num < 1000) return terbilang[Math.floor(num / 100)] + ' ratus ' + numberToWords(num % 100);
-  if (num < 2000) return 'seribu ' + numberToWords(num - 1000);
-  if (num < 1000000) return numberToWords(Math.floor(num / 1000)) + ' ribu ' + numberToWords(num % 1000);
-  return num.toString();
-};
-
 const formatDateToWords = (date: Date) => {
     const dayName = format(date, 'EEEE', { locale: localeID });
-    const dayWords = capitalize(numberToWords(date.getDate()).trim());
-    const monthName = capitalize(format(date, 'MMMM', { locale: localeID }));
-    const yearWords = capitalize(numberToWords(date.getFullYear()).replace(/\s+/g, ' ').trim());
+    const day = date.getDate();
+    const monthName = format(date, 'MMMM', { locale: localeID });
+    const year = date.getFullYear();
 
-    return `Pada hari ini <b>${dayName}</b> tanggal <b>${dayWords}</b> bulan <b>${monthName}</b> tahun <b>${yearWords}</b>`;
+    return `Pada hari ini <b>${dayName}</b> tanggal <b>${day}</b> bulan <b>${monthName}</b> tahun <b>${year}</b>`;
 };
 
 
