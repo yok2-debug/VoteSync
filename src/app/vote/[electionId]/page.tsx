@@ -1,6 +1,5 @@
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import Image from 'next/image';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { CandidateVoteForm } from './components/candidate-vote-form';
 import { VoterLogoutButton } from '../components/voter-logout-button';
@@ -96,7 +95,7 @@ function VotePageContent() {
           {candidates.map(candidate => (
               <Card key={candidate.id} className="flex flex-col">
               <CardHeader className="items-center text-center">
-                  <Image
+                  <img
                       src={candidate.photo || defaultPhoto?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
                       alt={`Photo of ${candidate.name}`}
                       width={64}

@@ -30,7 +30,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { deleteCandidate } from '@/lib/actions';
-import Image from 'next/image';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useRouter } from 'next/navigation';
@@ -144,7 +143,7 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
               filteredCandidates.map((candidate) => (
                 <TableRow key={candidate.id}>
                    <TableCell>
-                      <Image
+                      <img
                         src={candidate.photo || defaultPhoto?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
                         alt={`Photo of ${candidate.name}`}
                         width={40}
