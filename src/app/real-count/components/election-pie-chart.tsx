@@ -1,5 +1,5 @@
 'use client';
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 type ChartData = {
   name: string;
@@ -27,28 +27,19 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
   );
 };
 
-const renderLegend = (value: string, entry: any) => {
-  return (
-    <span style={{ fontSize: '12px', lineHeight: '1.2' }}>
-      {value}
-    </span>
-  );
-};
-
-
 export function ElectionPieChart({ data }: ElectionPieChartProps) {
   const hasVotes = data.some(d => d.value > 0);
 
   if (!hasVotes) {
     return (
-        <div className="flex items-center justify-center h-full w-full bg-muted/50 rounded-lg min-h-[256px]">
+        <div className="flex items-center justify-center h-full w-full bg-muted/50 rounded-lg min-h-[200px]">
             <p className="text-sm text-muted-foreground">Belum ada suara masuk</p>
         </div>
     );
   }
 
   return (
-    <ResponsiveContainer width="100%" aspect={1.5}>
+    <ResponsiveContainer width="100%" height={200}>
       <PieChart>
         <Tooltip
           contentStyle={{
@@ -72,12 +63,6 @@ export function ElectionPieChart({ data }: ElectionPieChartProps) {
             <Cell key={`cell-${index}`} fill={entry.fill} />
           ))}
         </Pie>
-        <Legend 
-          iconSize={10} 
-          verticalAlign="bottom" 
-          align="left"
-          formatter={renderLegend} 
-        />
       </PieChart>
     </ResponsiveContainer>
   );

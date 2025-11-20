@@ -5,12 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { ElectionPieChart } from './election-pie-chart';
 
-type RealCountDisplayProps = {
-  election: Election;
-  allVoters: Voter[];
-  allCategories: Category[];
-};
-
 const getCandidateDisplayName = (candidate: Candidate) => {
     return candidate.viceCandidateName 
         ? `${candidate.name} & ${candidate.viceCandidateName}` 
@@ -70,8 +64,8 @@ export function RealCountDisplay({ election, allVoters, allCategories }: RealCou
             </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="w-full min-h-[256px]">
+        <div className="space-y-4">
+            <div className="w-full">
                 <ElectionPieChart data={chartData} />
             </div>
              <div className="space-y-3">
@@ -79,12 +73,18 @@ export function RealCountDisplay({ election, allVoters, allCategories }: RealCou
                 <ul className="space-y-2 text-sm">
                 {candidates.map(candidate => (
                     <li key={candidate.id} className="flex items-start justify-between gap-4">
-                      <span 
-                        className="flex-1 break-words font-medium"
-                        style={{ color: candidateColorMap.get(candidate.id) }}
-                      >
-                        {getCandidateDisplayName(candidate)}
-                      </span>
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                         <span 
+                          className="w-3 h-3 rounded-full inline-block flex-shrink-0" 
+                          style={{ backgroundColor: candidateColorMap.get(candidate.id) }}
+                        ></span>
+                        <span 
+                          className="break-words font-medium"
+                          style={{ color: candidateColorMap.get(candidate.id) }}
+                        >
+                          {getCandidateDisplayName(candidate)}
+                        </span>
+                      </div>
                       <span className="font-bold text-nowrap">
                         {liveResults[candidate.id] || 0} ({liveTotalVotes > 0 ? (((liveResults[candidate.id] || 0) / liveTotalVotes) * 100).toFixed(1) : 0}%)
                       </span>
