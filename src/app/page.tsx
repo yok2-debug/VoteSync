@@ -12,8 +12,6 @@ import { useDatabase } from '@/context/database-context';
 import { Badge } from '@/components/ui/badge';
 import Loading from './loading';
 import { useMemo } from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 
 export default function LoginPage() {
   const { elections, isLoading } = useDatabase();
@@ -41,22 +39,23 @@ export default function LoginPage() {
   return (
     <>
       <PublicNavbar />
-      <main className="flex min-h-screen flex-col items-center bg-background p-4 pt-20">
-        <div className="w-full max-w-4xl mx-auto space-y-10">
+      <main className="flex flex-1 flex-col items-center justify-center bg-background p-4 pt-20">
+        <div className="w-full max-w-6xl mx-auto space-y-10">
           <div className="flex flex-col space-y-2 text-center">
             <h1 className="text-3xl font-bold tracking-tight">Selamat Datang di VoteSync</h1>
             <p className="text-muted-foreground">Sistem E-Voting untuk pemilihan yang transparan dan aman.</p>
           </div>
-
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <p className="text-muted-foreground">Memuat data pemilihan...</p>
-            </div>
-          ) : (
-            <div>
-              <h2 className="text-2xl font-semibold tracking-tight text-center mb-6">Pemilihan Aktif</h2>
-              {activeElections.length > 0 ? (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16 items-start">
+            {/* Left Column: Active Elections */}
+            <div className="space-y-6">
+              <h2 className="text-2xl font-semibold tracking-tight text-center md:text-left">Pemilihan Aktif</h2>
+               {isLoading ? (
+                <div className="flex justify-center items-center h-64">
+                  <p className="text-muted-foreground">Memuat data pemilihan...</p>
+                </div>
+              ) : activeElections.length > 0 ? (
+                <div className="space-y-6">
                   {activeElections.map((election) => (
                     <Card key={election.id} className="flex flex-col">
                       <CardHeader>
@@ -75,23 +74,24 @@ export default function LoginPage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-center text-muted-foreground">Tidak ada pemilihan yang sedang aktif saat ini.</p>
+                <p className="text-center md:text-left text-muted-foreground py-10">Tidak ada pemilihan yang sedang aktif saat ini.</p>
               )}
             </div>
-          )}
 
-          <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
-            <Card>
-              <CardHeader className="text-center">
-                <CardTitle>Login Pemilih</CardTitle>
-                <CardDescription>
-                  Silakan masuk menggunakan ID Pemilih dan Kata Sandi Anda untuk memberikan suara.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <LoginForm />
-              </CardContent>
-            </Card>
+            {/* Right Column: Login Form */}
+            <div className="mx-auto flex w-full flex-col justify-center space-y-6 max-w-sm">
+                <Card>
+                <CardHeader className="text-center">
+                    <CardTitle>Login Pemilih</CardTitle>
+                    <CardDescription>
+                    Silakan masuk menggunakan ID Pemilih dan Kata Sandi Anda untuk memberikan suara.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <LoginForm />
+                </CardContent>
+                </Card>
+            </div>
           </div>
         </div>
       </main>
