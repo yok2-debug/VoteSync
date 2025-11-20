@@ -1,4 +1,3 @@
-
 'use client';
 import { LoginForm } from '@/components/login-form';
 import {
@@ -74,14 +73,11 @@ export default function LoginPage() {
       <PublicNavbar />
       <main className="flex flex-1 flex-col items-center justify-center bg-background p-4 pt-20">
         <div className="w-full max-w-6xl mx-auto space-y-10">
-          <div className="flex flex-col space-y-2 text-center">
-            <h1 className="text-3xl font-bold tracking-tight">Selamat Datang di VoteSync</h1>
-            <p className="text-muted-foreground">Sistem E-Voting untuk pemilihan yang transparan dan aman.</p>
-          </div>
-          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12 items-start">
             <div className="space-y-6 md:col-span-2">
-              <h2 className="text-2xl font-semibold tracking-tight text-center md:text-left">Pemilihan Aktif</h2>
+               <div className="flex flex-col space-y-2 text-center md:text-left">
+                  <h2 className="text-2xl font-semibold tracking-tight">Pemilihan Aktif</h2>
+               </div>
                {isLoading ? (
                 <div className="flex justify-center items-center h-64">
                   <p className="text-muted-foreground">Memuat data pemilihan...</p>
@@ -167,7 +163,7 @@ export default function LoginPage() {
                                   </Card>
                                 ))}
                               </div>
-                               <DialogFooter className="sm:justify-end pt-4">
+                               <DialogFooter className="sm:justify-end pt-2">
                                 <DialogClose asChild>
                                   <Button type="button" variant="secondary">
                                     Close
@@ -187,7 +183,9 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-6 md:col-span-1">
-              <h2 className="text-2xl font-semibold tracking-tight text-center md:text-left">Login Pemilih</h2>
+               <div className="flex flex-col space-y-2 text-center md:text-left">
+                 <h2 className="text-2xl font-semibold tracking-tight">Login Pemilih</h2>
+               </div>
               <Card>
                 <CardHeader className="text-center">
                     <CardDescription>
