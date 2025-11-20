@@ -64,7 +64,7 @@ export function ElectionPieChart({ data }: ElectionPieChartProps) {
             <Cell key={`cell-${index}`} fill={entry.fill} />
           ))}
         </Pie>
-        <Legend iconSize={10} layout="vertical" verticalAlign="middle" align="right" />
+        <Legend iconSize={10} verticalAlign="bottom" />
       </PieChart>
     </ResponsiveContainer>
   );
