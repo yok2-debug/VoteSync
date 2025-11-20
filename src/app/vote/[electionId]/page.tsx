@@ -111,13 +111,13 @@ function VotePageContent() {
                           />
                       </DialogContent>
                    </Dialog>
-                    <CardTitle className="pt-2 text-xl flex flex-col items-center">
-                      {candidate.name}
+                    <CardTitle className="pt-2 text-xl flex flex-col items-center text-center">
+                      <span>{candidate.name}</span>
                       {candidate.viceCandidateName && (
-                        <div className="flex flex-col items-center">
-                            <span className="text-base font-normal leading-none">&</span>
-                            <span>{candidate.viceCandidateName}</span>
-                        </div>
+                        <>
+                          <span className="text-base font-normal leading-none">&</span>
+                          <span>{candidate.viceCandidateName}</span>
+                        </>
                       )}
                     </CardTitle>
                 </CardHeader>
