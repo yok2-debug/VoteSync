@@ -111,7 +111,7 @@ export default function LoginPage() {
                                 Lihat Kandidat
                               </Button>
                             </DialogTrigger>
-                            <DialogContent className="sm:max-w-3xl">
+                            <DialogContent className="sm:max-w-3xl pb-2">
                               <DialogHeader>
                                 <DialogTitle>Kandidat untuk {election.name}</DialogTitle>
                                 <DialogDescription>
@@ -163,7 +163,7 @@ export default function LoginPage() {
                                   </Card>
                                 ))}
                               </div>
-                               <DialogFooter className="sm:justify-end pt-4">
+                               <DialogFooter className="sm:justify-end">
                                 <DialogClose asChild>
                                   <Button type="button" variant="secondary">
                                     Close
