@@ -17,6 +17,7 @@ import { format } from 'date-fns';
 import { Calendar, Users } from 'lucide-react';
 import {
   Dialog,
+  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -137,12 +138,14 @@ export default function LoginPage() {
                                                 className="rounded-full object-cover w-24 h-24 border cursor-pointer hover:opacity-90 transition-opacity"
                                               />
                                             </DialogTrigger>
-                                            <DialogContent className="p-0 border-0 max-w-xl">
-                                                <img
-                                                  src={candidate.photo || defaultAvatar?.imageUrl}
-                                                  alt={`Foto ${candidate.name}`}
-                                                  className="w-full h-auto rounded-md"
-                                                />
+                                            <DialogContent className="p-0 border-0 max-w-xl bg-transparent shadow-none">
+                                                <DialogClose asChild>
+                                                    <img
+                                                      src={candidate.photo || defaultAvatar?.imageUrl}
+                                                      alt={`Foto ${candidate.name}`}
+                                                      className="w-full h-auto rounded-md cursor-pointer"
+                                                    />
+                                                </DialogClose>
                                             </DialogContent>
                                           </Dialog>
                                       </div>
