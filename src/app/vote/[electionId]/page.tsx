@@ -98,8 +98,8 @@ function VotePageContent() {
                   <img
                       src={candidate.photo || defaultPhoto?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
                       alt={`Photo of ${candidate.name}`}
-                      width={64}
-                      height={64}
+                      width={128}
+                      height={128}
                       className="rounded-full border-4 border-primary object-cover"
                       data-ai-hint={defaultPhoto?.imageHint || 'person portrait'}
                   />
