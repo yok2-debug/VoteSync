@@ -94,14 +94,12 @@ function VotePageContent() {
         <div className="grid justify-center gap-6 md:grid-cols-2 lg:grid-cols-3">
           {candidates.map(candidate => (
               <Card key={candidate.id} className="flex flex-col">
-              <CardHeader className="items-center text-center p-0">
+              <CardHeader className="flex flex-col items-center p-0 pt-6">
                  <Dialog>
                     <DialogTrigger asChild>
                       <img
                         src={candidate.photo || 'https://picsum.photos/seed/default/400/400'}
                         alt={`Photo of ${candidate.name}`}
-                        width={144}
-                        height={144}
                         className="rounded-full border-4 border-primary object-cover cursor-pointer hover:opacity-90 transition-opacity h-36 w-36"
                       />
                     </DialogTrigger>
