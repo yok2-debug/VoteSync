@@ -42,8 +42,8 @@ const prompt = ai.definePrompt({
   prompt: `You are an expert in statistical analysis and election prediction. Given the current vote counts for an election, you will predict the final outcome, including a margin of error.
 
 Election ID: {{{electionId}}}
-Current Vote Data: {{{JSON.stringify(votes)}}}
-Candidate Details: {{{JSON.stringify(candidates)}}}
+Current Vote Data: {{{votes}}}
+Candidate Details: {{{candidates}}}
 
 Consider the following:
 - The number of votes cast so far.

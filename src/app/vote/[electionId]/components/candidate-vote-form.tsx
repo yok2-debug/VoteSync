@@ -44,7 +44,6 @@ export function CandidateVoteForm({ electionId, candidate, voterId }: CandidateV
       router.refresh();
 
     } catch (error) {
-      console.error(error);
       toast({
         variant: 'destructive',
         title: 'Failed to Cast Vote',

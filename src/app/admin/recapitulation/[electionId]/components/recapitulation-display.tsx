@@ -16,45 +16,37 @@ type RecapitulationDisplayProps = {
   allCategories: Category[];
 };
 
-// Helper function to convert number to words in Indonesian
-const toWords = (num: number): string => {
-  const
-    terbilang = [
-      '', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh', 'sebelas'
-    ];
+const capitalize = (s: string) => {
+  if (typeof s !== 'string' || s.length === 0) return ''
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+const numberToWords = (num: number) => {
+  const terbilang = [
+    '', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan', 'sepuluh', 'sebelas'
+  ];
 
   if (num < 12) return terbilang[num];
-  if (num < 20) return toWords(num - 10) + ' belas';
-  if (num < 100) return terbilang[Math.floor(num / 10)] + ' puluh ' + toWords(num % 10);
-  if (num < 200) return 'seratus ' + toWords(num - 100);
-  if (num < 1000) return terbilang[Math.floor(num / 100)] + ' ratus ' + toWords(num % 100);
-  if (num < 2000) return 'seribu ' + toWords(num - 1000);
-  if (num < 1000000) return toWords(Math.floor(num / 1000)) + ' ribu ' + toWords(num % 1000);
-  if (num < 1000000000) return toWords(Math.floor(num/1000000)) + ' juta ' + toWords(num % 1000000);
-  if (num < 1000000000000) return toWords(Math.floor(num/1000000000)) + ' milyar ' + toWords(num % 1000000000);
-  // Add more cases if needed for larger numbers
+  if (num < 20) return numberToWords(num - 10) + ' belas';
+  if (num < 100) return terbilang[Math.floor(num / 10)] + ' puluh ' + numberToWords(num % 10);
+  if (num < 200) return 'seratus ' + numberToWords(num - 100);
+  if (num < 1000) return terbilang[Math.floor(num / 100)] + ' ratus ' + numberToWords(num % 100);
+  if (num < 2000) return 'seribu ' + numberToWords(num - 1000);
+  if (num < 1000000) return numberToWords(Math.floor(num / 1000)) + ' ribu ' + numberToWords(num % 1000);
   return num.toString();
 };
 
-type FormattedDateParts = {
-    day: string;
-    dayWords: string;
-    month: string;
-    yearWords: string;
-}
+const formatDateToWords = (date: Date) => {
+  const dayName = format(date, 'EEEE', { locale: localeID });
+  const dayNumber = format(date, 'd', { locale: localeID });
+  const monthName = format(date, 'MMMM', { locale: localeID });
+  const year = format(date, 'yyyy', { locale: localeID });
 
-const formatDateToWords = (date: Date): FormattedDateParts => {
-    const day = date.getDate();
-    const year = date.getFullYear();
-    const month = format(date, 'MMMM', { locale: localeID });
-    
-    return {
-        day: format(date, 'EEEE', { locale: localeID }),
-        dayWords: toWords(day).trim(),
-        month: month,
-        yearWords: toWords(year).trim(),
-    };
-}
+  const dayWords = capitalize(numberToWords(parseInt(dayNumber, 10)).trim());
+  const yearWords = capitalize(numberToWords(parseInt(year, 10)).replace(/\s+/g, ' ').trim());
+
+  return `Pada hari ini <b>${dayName}</b> tanggal <b>${dayWords}</b> bulan <b>${capitalize(monthName)}</b> tahun <b>${yearWords}</b>`;
+};
 
 
 export function RecapitulationDisplay({ election, allVoters, allCategories }: RecapitulationDisplayProps) {
@@ -80,7 +72,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
   };
   
   const electionDateInfo = useMemo(() => {
-    if (!election.endDate) return null;
+    if (!election.endDate) return 'Pada hari ini <b>(Tanggal tidak diatur)</b>';
     return formatDateToWords(new Date(election.endDate));
   }, [election.endDate]);
 
@@ -204,9 +196,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
             </CardHeader>
             <CardContent className="space-y-8 pt-6 print-card-content">
                 
-                <p>
-                    Pada hari ini {electionDateInfo ? <><b>{electionDateInfo.day}</b>, <span>tanggal</span> <b className="capitalize">{electionDateInfo.dayWords}</b> <span>bulan</span> <b className="capitalize">{electionDateInfo.month}</b> <span>tahun</span> <b className="capitalize">{electionDateInfo.yearWords}</b></> : <span><b>(Tanggal tidak diatur)</b></span>}, telah dilaksanakan pemungutan suara untuk pemilihan {election.name} dengan hasil sebagai berikut:
-                </p>
+                <p dangerouslySetInnerHTML={{ __html: `${electionDateInfo}, telah dilaksanakan pemungutan suara untuk pemilihan ${election.name} dengan hasil sebagai berikut:` }} />
 
                 <div>
                     <h3 className="text-lg font-semibold mb-2">A. Data Pemilih dan Penggunaan Hak Pilih</h3>
