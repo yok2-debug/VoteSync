@@ -39,13 +39,7 @@ const prompt = ai.definePrompt({
   name: 'predictElectionOutcomePrompt',
   input: {schema: PredictElectionOutcomeInputSchema},
   output: {schema: PredictElectionOutcomeOutputSchema},
-  prompt: `You are an expert in statistical analysis and election prediction. Given the current vote counts for an election, you will predict the final outcome, including a margin of error and confidence level.
-
-Election ID: {{{electionId}}}
-Current Vote Data: {{{votes}}}
-Candidate Details: {{{candidates}}}
-
-Analyze the provided data to predict the final vote percentages for each candidate.`,
+  prompt: `You are an expert in statistical analysis and election prediction. Given the current vote counts for an election, you will predict the final outcome, including a margin of error and confidence level.`,
 });
 
 const predictElectionOutcomeFlow = ai.defineFlow(
