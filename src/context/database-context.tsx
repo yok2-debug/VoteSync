@@ -41,11 +41,11 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     // This function correctly handles both array-based (from JSON import) and object-based (Firebase native) voter data structures.
     const processVoters = (data: any): Voter[] => {
         if (!data) return [];
+        // Handle array structure from JSON, filtering out null/empty entries.
+        // The ID in the array data is the NIK or some other unique identifier, not the array index.
         if (Array.isArray(data)) {
-            // Handle array structure from JSON, filtering out null/empty entries
-            // and assigning the array index as a string ID if no ID exists.
-            return data.filter(v => v).map((v, index) => ({
-                id: v.id || String(index), // Use existing id or fallback to index
+            return data.filter(v => v && v.nik).map((v, index) => ({
+                id: v.id || v.nik || String(index), // Use existing id, fallback to NIK, then to index
                 ...v
             }));
         }
