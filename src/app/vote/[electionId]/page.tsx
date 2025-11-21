@@ -10,7 +10,7 @@ import { getVoterSession } from '@/lib/session-client';
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Loading from '@/app/loading';
-import type { Voter, VoterSessionPayload, Election, Category } from '@/lib/types';
+import type { Voter, VoterSessionPayload, Election, Category, Candidate } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 import {
   Dialog,
@@ -29,6 +29,8 @@ function VotePageContent() {
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
   const [isValidating, setIsValidating] = useState(true);
+  const [election, setElection] = useState<Election | null>(null);
+  const [voter, setVoter] = useState<Voter | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -43,49 +45,69 @@ function VotePageContent() {
     }
     fetchSession();
   }, [router]);
-
-  const election = useMemo(() => elections.find(e => e.id === electionId), [elections, electionId]);
-  const voter = useMemo(() => voters.find(v => v.id === session?.voterId), [voters, session]);
   
-  const candidates = useMemo(() => {
-    if (!election?.candidates) return [];
-    return Object.values(election.candidates).sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999));
-  }, [election?.candidates]);
-
   useEffect(() => {
+    // Wait until all data is loaded before starting validation
     if (isDbLoading || isSessionLoading) {
-      return; // Wait for all data to load
+      return; 
     }
 
-    const category = categories.find(c => c.id === voter?.category);
+    // Ensure we have a session before proceeding
+    if (!session?.voterId) {
+      router.push('/');
+      return;
+    }
+
+    // Find the relevant data inside the effect to ensure it's up-to-date
+    const currentElection = elections.find(e => e.id === electionId);
+    const currentVoter = voters.find(v => v.id === session.voterId);
     
-    if (!election || !voter || !category) {
+    // If election or voter data is not found, it's an invalid state, redirect.
+    if (!currentElection || !currentVoter) {
       router.push('/vote');
       return;
     }
 
+    const voterCategory = categories.find(c => c.id === currentVoter.category);
+    
+    if (!voterCategory) {
+      router.push('/vote');
+      return;
+    }
+    
+    // Perform all validation checks
     const now = new Date();
-    // If startDate is not set, assume it has started as long as status is active
-    const electionStarted = election.startDate ? new Date(election.startDate) <= now : true;
-    const electionEnded = election.endDate ? new Date(election.endDate) < now : false;
-    const isVoterAllowed = category.allowedElections?.includes(electionId);
-    const hasVoted = voter.hasVoted?.[electionId];
+    const electionStarted = currentElection.startDate ? new Date(currentElection.startDate) <= now : true;
+    const electionEnded = currentElection.endDate ? new Date(currentElection.endDate) < now : false;
+    const isVoterAllowed = voterCategory.allowedElections?.includes(electionId);
+    const hasVoted = currentVoter.hasVoted?.[electionId];
 
-    if (election.status !== 'active' || !electionStarted || electionEnded || !isVoterAllowed || hasVoted) {
+    // If any check fails, redirect
+    if (
+      currentElection.status !== 'active' || 
+      !electionStarted || 
+      electionEnded || 
+      !isVoterAllowed || 
+      hasVoted
+    ) {
       router.push('/vote');
     } else {
-      setIsValidating(false); // All checks passed, allow rendering
+      // All checks passed. Set the state and allow rendering.
+      setElection(currentElection);
+      setVoter(currentVoter);
+      setIsValidating(false);
     }
 
-  }, [isDbLoading, isSessionLoading, election, voter, categories, electionId, router]);
+  }, [isDbLoading, isSessionLoading, session, elections, voters, categories, electionId, router]);
 
 
   const isLoading = isDbLoading || isSessionLoading || isValidating;
 
-  if (isLoading || !session?.voterId || !election || !voter) {
+  if (isLoading || !election || !voter) {
     return <Loading />; 
   }
   
+  const candidates = Object.values(election.candidates || {}).sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999));
   const defaultAvatar = PlaceHolderImages.find(p => p.id === 'default-avatar');
   
   return (
@@ -169,7 +191,7 @@ function VotePageContent() {
                     </Dialog>
                 </CardContent>
                 <div className="p-6 pt-2">
-                    <CandidateVoteForm electionId={election.id} candidate={candidate} voterId={session.voterId!} />
+                    <CandidateVoteForm electionId={election.id} candidate={candidate} voterId={voter.id} />
                 </div>
                 </Card>
             ))}
