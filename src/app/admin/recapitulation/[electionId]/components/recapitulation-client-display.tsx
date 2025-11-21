@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Election, Voter, Category } from '@/lib/types';
@@ -9,11 +8,12 @@ import { format } from 'date-fns';
 import { id as localeID } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
+import { useDatabase } from '@/context/database-context';
+import Loading from '@/app/loading';
+import { useRouter } from 'next/navigation';
 
-type RecapitulationDisplayProps = {
-  election: Election;
-  allVoters: Voter[];
-  allCategories: Category[];
+type RecapitulationClientDisplayProps = {
+  electionId: string;
 };
 
 const formatDateToWords = (date: Date) => {
@@ -26,21 +26,35 @@ const formatDateToWords = (date: Date) => {
 };
 
 
-export function RecapitulationDisplay({ election, allVoters, allCategories }: RecapitulationDisplayProps) {
-  const candidates = useMemo(() => 
-      Object.values(election.candidates || {})
-        .sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999)), 
-      [election.candidates]
-  );
-  const totalVotesCast = useMemo(() => Object.keys(election.votes || {}).length, [election.votes]);
+export function RecapitulationClientDisplay({ electionId }: RecapitulationClientDisplayProps) {
+  const { elections, voters, categories, isLoading } = useDatabase();
+  const router = useRouter();
 
-  const DPT = useMemo(() => {
-    const allowedCategoryIds = allCategories
+  const election = useMemo(() => elections.find(e => e.id === electionId), [elections, electionId]);
+
+  if (isLoading) {
+    return <Loading />;
+  }
+
+  if (!election) {
+    if (typeof window !== 'undefined') {
+        router.push('/admin/recapitulation');
+    }
+    return <Loading />;
+  }
+
+  const candidates = Object.values(election.candidates || {})
+        .sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999));
+  
+  const totalVotesCast = Object.keys(election.votes || {}).length;
+
+  const DPT = (() => {
+    const allowedCategoryIds = categories
       .filter(cat => cat.allowedElections?.includes(election.id))
       .map(cat => cat.id);
     
-    return allVoters.filter(voter => allowedCategoryIds.includes(voter.category)).length;
-  }, [election.id, allVoters, allCategories]);
+    return voters.filter(voter => allowedCategoryIds.includes(voter.category)).length;
+  })();
 
   const votersWhoDidNotVote = DPT - totalVotesCast;
   
@@ -48,10 +62,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
     window.print();
   };
   
-  const electionDateInfo = useMemo(() => {
-    if (!election.endDate) return 'Pada hari ini <b>(Tanggal tidak diatur)</b>';
-    return formatDateToWords(new Date(election.endDate));
-  }, [election.endDate]);
+  const electionDateInfo = election.endDate ? formatDateToWords(new Date(election.endDate)) : 'Pada hari ini <b>(Tanggal tidak diatur)</b>';
 
 
   return (
