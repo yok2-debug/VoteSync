@@ -7,10 +7,10 @@ import Link from 'next/link';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { useDatabase } from '@/context/database-context';
 import { getVoterSession } from '@/lib/session-client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Loading from '@/app/loading';
-import type { Voter, Election, Category, Candidate } from '@/lib/types';
+import type { Voter, VoterSessionPayload, Election, Category, Candidate } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 import {
   Dialog,
@@ -26,31 +26,57 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 function VotePageContent() {
   const { electionId } = useParams() as { electionId: string };
   const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
-  const [session, setSession] = useState<any>(null);
-  const [election, setElection] = useState<Election | null>(null);
-  const [voter, setVoter] = useState<Voter | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [session, setSession] = useState<VoterSessionPayload | null>(null);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [isValidating, setIsValidating] = useState(true);
   const router = useRouter();
 
+  const voter = useMemo(() => {
+    if (!session?.voterId || isDbLoading) return null;
+    return voters.find(v => v.id === session.voterId);
+  }, [voters, session, isDbLoading]);
+  
+  const election = useMemo(() => {
+    if (isDbLoading) return null;
+    return elections.find(e => e.id === electionId);
+  }, [elections, electionId, isDbLoading]);
+
   useEffect(() => {
+    // 1. Get session
     const voterSession = getVoterSession();
     if (!voterSession?.voterId) {
       router.push('/');
       return;
     }
     setSession(voterSession);
+    setIsSessionLoading(false);
 
-    if (isDbLoading) return;
-
-    const currentElection = elections.find(e => e.id === electionId);
-    const currentVoter = voters.find(v => v.id === voterSession.voterId);
-    const voterCategory = currentVoter ? categories.find(c => c.id === currentVoter.category) : undefined;
-
-    if (!currentElection || !currentVoter || !voterCategory) {
-      router.push('/vote');
+    // 2. Wait for all data to be loaded
+    if (isDbLoading || isSessionLoading) {
       return;
     }
 
+    // 3. Find the relevant data
+    const currentElection = elections.find(e => e.id === electionId);
+    const currentVoter = voters.find(v => v.id === voterSession.voterId);
+    
+    // 4. If data is not ready yet, or voter has changed, wait for next effect run.
+    if (!currentElection || !currentVoter) {
+        // If the database is loaded but we can't find the election/voter, redirect.
+        if (!isDbLoading) {
+           router.push('/vote');
+        }
+        return;
+    }
+    
+    const voterCategory = categories.find(c => c.id === currentVoter.category);
+
+    if (!voterCategory) {
+       router.push('/vote');
+       return;
+    }
+    
+    // 5. Perform validation
     const now = new Date();
     const electionStarted = currentElection.startDate ? new Date(currentElection.startDate) <= now : true;
     const electionEnded = currentElection.endDate ? new Date(currentElection.endDate) < now : false;
@@ -68,13 +94,13 @@ function VotePageContent() {
       return;
     }
 
-    setElection(currentElection);
-    setVoter(currentVoter);
-    setIsLoading(false);
+    // 6. If all checks pass, allow rendering
+    setIsValidating(false);
 
-  }, [isDbLoading, elections, voters, categories, electionId, router]);
+  }, [isDbLoading, isSessionLoading, elections, voters, categories, electionId, router, voter]);
 
-  if (isLoading || !election || !voter) {
+
+  if (isValidating || !election || !voter) {
     return <Loading />; 
   }
   
@@ -113,7 +139,7 @@ function VotePageContent() {
                         />
                       </DialogTrigger>
                       <DialogContent className="max-w-xl p-2 border-0 bg-transparent shadow-none">
-                        <DialogHeader>
+                         <DialogHeader>
                           <DialogTitle className="sr-only">
                             Foto {candidate.name} diperbesar
                           </DialogTitle>
