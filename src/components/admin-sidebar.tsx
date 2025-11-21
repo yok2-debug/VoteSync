@@ -26,7 +26,6 @@ import {
   UserSquare,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { logout } from '@/lib/actions';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -39,6 +38,7 @@ import {
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { deleteAdminSession } from '@/lib/session';
 
 export function AdminSidebar() {
   const pathname = usePathname();
@@ -48,7 +48,7 @@ export function AdminSidebar() {
 
   const handleLogout = async () => {
     try {
-      await logout('admin');
+      await deleteAdminSession();
       toast({
         title: 'Logged Out',
         description: 'You have been successfully logged out.',

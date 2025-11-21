@@ -16,8 +16,9 @@ import * as z from 'zod';
 import { useEffect, useState } from 'react';
 import type { Voter } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { resetVoterPassword } from '@/lib/actions';
 import { Loader2 } from 'lucide-react';
+import { db } from '@/lib/firebase';
+import { ref, update } from 'firebase/database';
 
 const passwordSchema = z.object({
   password: z.string().min(6, { message: 'New password must be at least 6 characters.' }),
@@ -62,7 +63,9 @@ export function ResetPasswordDialog({
   const onSubmit: SubmitHandler<PasswordFormData> = async (data) => {
     setIsSubmitting(true);
     try {
-      await resetVoterPassword(voter.id, data.password);
+      await update(ref(db, `voters/${voter.id}`), {
+        password: data.password
+      });
       toast({
         title: 'Password Reset Successful',
         description: `Password for ${voter.name} has been updated.`,

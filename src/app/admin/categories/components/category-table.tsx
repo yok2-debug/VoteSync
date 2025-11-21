@@ -29,8 +29,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { CategoryFormDialog } from './category-form-dialog';
-import { deleteCategory } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
+import { getVoters } from '@/lib/data';
+import { db } from '@/lib/firebase';
+import { ref, remove } from 'firebase/database';
 
 type CategoryTableProps = {
   initialCategories: Category[];
@@ -69,7 +71,14 @@ export function CategoryTable({ initialCategories, allElections }: CategoryTable
     if (!selectedCategory) return;
     setIsDeleting(true);
     try {
-      await deleteCategory(selectedCategory.id);
+      const allVoters = await getVoters();
+      const isCategoryInUse = allVoters.some(voter => voter.category === selectedCategory.id);
+  
+      if (isCategoryInUse) {
+        throw new Error('Cannot delete category. It is currently assigned to one or more voters.');
+      }
+  
+      await remove(ref(db, `categories/${selectedCategory.id}`));
       setCategories(categories.filter((c) => c.id !== selectedCategory.id));
       toast({ title: 'Category deleted successfully.' });
     } catch (error) {

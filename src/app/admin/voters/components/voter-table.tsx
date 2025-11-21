@@ -30,14 +30,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { deleteVoter, importVoters, saveVoter } from '@/lib/actions';
 import { ResetPasswordDialog } from './reset-password-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Papa from 'papaparse';
 import { VoterImportDialog } from './voter-import-dialog';
-import { getVoters } from '@/lib/data';
+import { getVoters, getCategories } from '@/lib/data';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { VoterCard } from '../../voters/print/components/voter-card';
+import { db } from '@/lib/firebase';
+import { ref, remove, update } from 'firebase/database';
+import * as z from 'zod';
 
 type VoterTableProps = {
   voters: Voter[];
@@ -46,7 +48,8 @@ type VoterTableProps = {
 
 const ITEMS_PER_PAGE = 100;
 
-export function VoterTable({ voters, categories }: VoterTableProps) {
+export function VoterTable({ voters: initialVoters, categories }: VoterTableProps) {
+  const [voters, setVoters] = useState<Voter[]>(initialVoters);
   const [filter, setFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -188,7 +191,6 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
         skipEmptyLines: true,
         complete: (results) => {
           setImportedData(results.data.filter(row => Object.values(row).some(val => val !== '' && val !== null)));
-          setShowImportDialog(true);
         },
         error: (error: any) => {
            toast({
@@ -198,6 +200,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
           });
         }
       });
+      setShowImportDialog(true);
     }
     // Reset file input to allow re-uploading the same file
     if(event.target) {
@@ -207,10 +210,50 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   
   const handleImportSave = async (dataToImport: any[]) => {
     try {
-      const result = await importVoters(dataToImport);
+        const categories = await getCategories();
+        const categoryNameMap = new Map(categories.map(c => [c.name.replace(/\s+/g, '').toLowerCase(), c.id]));
+        const allVoters = await getVoters();
+        const existingVoterIds = new Set(allVoters.map(v => v.id));
+        const votersToImport: Record<string, Omit<Voter, 'id' | 'hasVoted'>> = {};
+
+        const importVoterSchema = z.object({
+            id: z.string().min(1, 'ID is required'),
+            nik: z.string().optional(),
+            name: z.string().min(1, 'Name is required'),
+            birthPlace: z.string().optional(),
+            birthDate: z.string().optional(),
+            gender: z.string().optional(),
+            address: z.string().optional(),
+            category: z.string().min(1, 'Category is required'),
+            password: z.string().optional(),
+        });
+    
+        for (const row of dataToImport) {
+            const validation = importVoterSchema.safeParse(row);
+            if (!validation.success) {
+                throw new Error(`Invalid data in CSV: ${JSON.stringify(validation.error.flatten().fieldErrors)}`);
+            }
+            const { id, category, ...rest } = validation.data;
+            if (existingVoterIds.has(id)) {
+                throw new Error(`Voter with ID "${id}" already exists.`);
+            }
+            const categoryId = categoryNameMap.get(category.replace(/\s+/g, '').toLowerCase());
+            if (!categoryId) {
+                throw new Error(`Category "${category}" not found for voter "${rest.name}".`);
+            }
+            votersToImport[`voters/${id}`] = {
+                ...rest,
+                category: categoryId,
+                password: rest.password || Math.random().toString(36).substring(2, 8),
+            };
+        }
+
+        if (Object.keys(votersToImport).length > 0) {
+            await update(ref(db), votersToImport);
+        }
       toast({
         title: 'Import Successful',
-        description: `${result.importedCount} voters were successfully imported.`,
+        description: `${Object.keys(votersToImport).length} voters were successfully imported.`,
       });
       // The DatabaseProvider will automatically refresh the data
     } catch (error) {
@@ -248,7 +291,8 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     if (!selectedVoter) return;
     setIsDeleting(true);
     try {
-      await deleteVoter(selectedVoter.id);
+      await remove(ref(db, `voters/${selectedVoter.id}`));
+      setVoters(voters.filter(v => v.id !== selectedVoter.id));
       toast({ title: 'Voter deleted successfully.' });
     } catch (error) {
        toast({
@@ -266,7 +310,12 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   const onFormSave = async (voterToSave: Voter & { isNew?: boolean }) => {
     try {
       const isEditing = !voterToSave.isNew;
-      await saveVoter({ ...voterToSave, isEditing });
+      // This is now handled in VoterFormDialog
+      if (isEditing) {
+        setVoters(voters.map(v => v.id === voterToSave.id ? voterToSave : v));
+      } else {
+        setVoters([...voters, voterToSave]);
+      }
       toast({
         title: `Voter ${isEditing ? 'updated' : 'created'}`,
         description: `"${voterToSave.name}" has been successfully saved.`,

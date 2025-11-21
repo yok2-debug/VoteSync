@@ -15,10 +15,11 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { login } from '@/lib/actions';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { getAdminCredentials } from '@/lib/data';
+import { createAdminSession } from '@/lib/session';
 
 const adminLoginSchema = z.object({
   username: z.string().min(1, { message: 'Username is required.' }),
@@ -38,17 +39,21 @@ export function AdminLoginForm() {
   async function handleAdminLogin(values: z.infer<typeof adminLoginSchema>) {
     setIsSubmitting(true);
     try {
-      const result = await login(values, 'admin');
-      if (result.success) {
-        toast({
-          title: 'Login Successful',
-          description: 'Redirecting to your dashboard...',
-        });
-        // Replace router.push and router.refresh with a single router.replace
-        router.replace(result.redirectPath);
-      } else {
-        throw new Error(result.error);
-      }
+        const adminCreds = await getAdminCredentials();
+        if (
+            adminCreds &&
+            adminCreds.username === values.username &&
+            adminCreds.password === values.password
+        ) {
+            await createAdminSession({ isAdmin: true });
+            toast({
+                title: 'Login Successful',
+                description: 'Redirecting to your dashboard...',
+            });
+            router.replace('/admin/dashboard');
+        } else {
+            throw new Error('Invalid admin credentials.');
+        }
     } catch (error) {
       toast({
         variant: 'destructive',

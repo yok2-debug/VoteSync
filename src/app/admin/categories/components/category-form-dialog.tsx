@@ -16,12 +16,13 @@ import * as z from 'zod';
 import { useEffect, useState } from 'react';
 import type { Category, Election } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { saveCategory } from '@/lib/actions';
 import { Loader2 } from 'lucide-react';
 import { getCategories } from '@/lib/data';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { db } from '@/lib/firebase';
+import { ref, push, set } from 'firebase/database';
 
 const categorySchema = z.object({
   name: z.string().min(3, { message: 'Category name must be at least 3 characters.' }),
@@ -68,10 +69,18 @@ export function CategoryFormDialog({
         name: data.name,
         allowedElections: data.allowedElections || [],
       };
-      await saveCategory(categoryToSave);
+
+      const dataToSave = {
+        name: categoryToSave.name,
+        allowedElections: categoryToSave.allowedElections || [],
+      };
+      let categoryId = categoryToSave.id;
+      if (!categoryId) {
+        categoryId = push(ref(db, 'categories')).key!;
+      }
+      await set(ref(db, `categories/${categoryId}`), dataToSave);
       
-      const updatedCategories = await getCategories();
-      const saved = updatedCategories.find(c => c.name === data.name && (category ? c.id === category.id : true));
+      const saved = { ...dataToSave, id: categoryId };
 
 
       toast({

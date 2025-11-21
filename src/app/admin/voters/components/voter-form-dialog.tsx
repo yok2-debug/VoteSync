@@ -25,6 +25,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { db } from '@/lib/firebase';
+import { ref, get, set } from 'firebase/database';
+import { getVoterById } from '@/lib/data';
 
 const voterSchema = z.object({
   id: z.string().min(1, { message: 'Voter ID is required.' }),
@@ -101,26 +104,52 @@ export function VoterFormDialog({
   const onSubmit: SubmitHandler<VoterFormData> = async (data) => {
     setIsSubmitting(true);
     try {
-      let passwordToSave = data.password;
+      const { id, ...voterData } = data;
+
       if (!isEditing) {
-        // Auto-generate password for new voters
-        passwordToSave = Math.random().toString(36).substring(2, 8);
+          const existingVoter = await getVoterById(id);
+          if (existingVoter) {
+              throw new Error(`Voter with ID "${id}" already exists.`);
+          }
       }
       
-      const voterToSave = {
-        ...data,
-        password: passwordToSave,
-      };
+      const { ...dataToSave } = voterData;
+  
+      const voterRef = ref(db, `voters/${id}`);
       
-      onSave({ ...voterToSave, isNew: !isEditing });
+      if (isEditing) {
+        const snapshot = await get(voterRef);
+        const existingData = snapshot.val() || {};
+        
+        if (!dataToSave.password) {
+          dataToSave.password = existingData.password;
+        }
+        
+        await set(voterRef, { ...existingData, ...dataToSave });
+      } else {
+        if (!dataToSave.password) {
+          dataToSave.password = Math.random().toString(36).substring(2, 8);
+        }
+        await set(voterRef, dataToSave);
+      }
+  
+      const newSnapshot = await get(voterRef);
+      const savedVoter = { id, ...newSnapshot.val() };
+      
+      onSave({ ...savedVoter, isNew: !isEditing });
       onOpenChange(false);
     } catch (error) {
        // Error is handled by the parent component's onSave handler
+       toast({
+        variant: 'destructive',
+        title: 'Error saving voter',
+        description: error instanceof Error ? error.message : 'An unknown error occurred.',
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
-
+  const { toast } = useToast();
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">

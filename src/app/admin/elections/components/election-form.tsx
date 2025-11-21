@@ -23,7 +23,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Trash2, PlusCircle, Loader2, CalendarIcon } from 'lucide-react';
-import { saveElection } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -32,6 +31,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { cn } from '@/lib/utils';
 import { format, setHours, setMinutes, getHours, getMinutes } from 'date-fns';
+import { db } from '@/lib/firebase';
+import { ref, set, get, push } from 'firebase/database';
+import { revalidatePath } from 'next/cache';
 
 const committeeMemberSchema = z.object({
   name: z.string().min(1, 'Committee member name is required.'),
@@ -86,22 +88,36 @@ export function ElectionForm({ election }: ElectionFormProps) {
   const onSubmit = async (data: ElectionFormData) => {
     setIsSubmitting(true);
 
-    const formData = new FormData();
-    formData.append('id', data.id);
-    formData.append('name', data.name);
-    formData.append('description', data.description);
-    formData.append('status', data.status);
-    if (data.startDate) {
-        formData.append('startDate', data.startDate.toISOString());
-    }
-    if (data.endDate) {
-        formData.append('endDate', data.endDate.toISOString());
-    }
-    formData.append('committee', JSON.stringify(data.committee || []));
-
-
     try {
-      const result = await saveElection(formData);
+        let savedElectionId = data.id;
+        const isNewElection = savedElectionId === 'new';
+        if (isNewElection) {
+            const newElectionRef = push(ref(db, `elections`));
+            savedElectionId = newElectionRef.key!;
+        }
+        
+        const electionData: Partial<Omit<Election, 'id' | 'candidates'>> = {
+            name: data.name,
+            description: data.description,
+            status: data.status,
+            committee: data.committee || [],
+        };
+    
+        if (data.startDate) {
+            electionData.startDate = data.startDate.toISOString();
+        }
+        if (data.endDate) {
+            electionData.endDate = data.endDate.toISOString();
+        }
+        
+        const electionSnapshot = await get(ref(db, `elections/${savedElectionId}`));
+        const existingData = electionSnapshot.val() || {};
+    
+        await set(ref(db, `elections/${savedElectionId}`), {
+            ...existingData,
+            ...electionData
+        });
+
       toast({
         title: `Election ${data.id === 'new' ? 'created' : 'updated'}`,
         description: `The election "${data.name}" has been saved successfully.`,

@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { logout } from '@/lib/actions';
+import { deleteVoterSession } from '@/lib/session';
 import { LogOut } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -15,7 +15,7 @@ export function VoterLogoutButton() {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      await logout('voter');
+      await deleteVoterSession();
       toast({
         title: 'Logged Out',
         description: 'You have been successfully logged out.',

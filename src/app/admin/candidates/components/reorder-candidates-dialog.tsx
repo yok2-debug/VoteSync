@@ -30,7 +30,8 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { reorderCandidates } from '@/lib/actions';
+import { db } from '@/lib/firebase';
+import { ref, update } from 'firebase/database';
 
 interface ReorderCandidatesDialogProps {
   open: boolean;
@@ -126,12 +127,12 @@ export function ReorderCandidatesDialog({
 
     setIsSubmitting(true);
     try {
-      const orderedCandidates = candidates.map((c, index) => ({
-        ...c,
-        orderNumber: index + 1,
-      }));
-
-      await reorderCandidates(selectedElectionId, orderedCandidates);
+        const updates: { [key: string]: any } = {};
+        candidates.forEach((candidate, index) => {
+          updates[`/elections/${selectedElectionId}/candidates/${candidate.id}/orderNumber`] = index + 1;
+        });
+    
+        await update(ref(db), updates);
 
       toast({
         title: 'Urutan berhasil disimpan',

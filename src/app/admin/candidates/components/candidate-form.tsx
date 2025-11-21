@@ -16,11 +16,12 @@ import * as z from 'zod';
 import { useEffect, useState } from 'react';
 import type { Candidate, Election } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { saveCandidate } from '@/lib/actions';
 import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
 import { MarkdownEditor } from '@/components/ui/markdown-editor';
+import { db } from '@/lib/firebase';
+import { ref, set, get, push } from 'firebase/database';
 
 const candidateSchema = z.object({
   id: z.string().optional(),
@@ -103,18 +104,42 @@ export function CandidateForm({
         return;
       }
 
-
-      const candidateToSave: Candidate = {
-        id: data.id || `new-${Date.now()}`,
+      let candidateId = data.id;
+      const electionRef = ref(db, `elections/${data.electionId}`);
+      
+      const electionSnapshot = await get(electionRef);
+      if (electionSnapshot.exists()) {
+        const electionData: Election = electionSnapshot.val();
+        const candidates = electionData.candidates || {};
+        const isOrderNumberTaken = Object.values(candidates).some(
+          c => c.orderNumber === finalOrderNumber && c.id !== candidateId
+        );
+        if (isOrderNumberTaken) {
+          throw new Error(`Nomor urut ${finalOrderNumber} sudah digunakan oleh kandidat lain pada pemilihan ini.`);
+        }
+      } else {
+          throw new Error("Pemilihan tidak ditemukan.");
+      }
+  
+      const electionCandidatesRef = ref(db, `elections/${data.electionId}/candidates`);
+  
+      if (!candidateId || candidateId.startsWith('new-')) {
+        candidateId = push(electionCandidatesRef).key!;
+      }
+      
+      const candidateToSave = {
+        id: candidateId,
         orderNumber: finalOrderNumber,
         name: data.name,
         viceCandidateName: data.viceCandidateName,
         vision: data.vision,
         mission: data.mission,
         photo: data.photo,
-      };
+       };
+      
+      const candidateRef = ref(db, `elections/${data.electionId}/candidates/${candidateId}`);
+      await set(candidateRef, candidateToSave);
 
-      await saveCandidate(candidateToSave, data.electionId);
 
       toast({
         title: `Candidate ${isEditing ? 'updated' : 'created'}`,

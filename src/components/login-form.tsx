@@ -15,10 +15,11 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { login } from '@/lib/actions';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { getVoterById } from '@/lib/data';
+import { createVoterSession } from '@/lib/session';
 
 const voterLoginSchema = z.object({
   voterId: z.string().min(1, { message: 'Voter ID is required.' }),
@@ -38,17 +39,18 @@ export function LoginForm() {
   async function handleVoterLogin(values: z.infer<typeof voterLoginSchema>) {
     setIsSubmitting(true);
     try {
-      const result = await login(values, 'voter');
-      if (result.success) {
-        toast({
-          title: 'Login Successful',
-          description: 'Redirecting to your dashboard...',
-        });
-        router.push(result.redirectPath);
-        router.refresh();
-      } else {
-        throw new Error(result.error);
-      }
+        const voter = await getVoterById(values.voterId);
+        if (voter && voter.password === values.password) {
+            await createVoterSession({ voterId: voter.id });
+            toast({
+                title: 'Login Successful',
+                description: 'Redirecting to your dashboard...',
+            });
+            router.push('/vote');
+            router.refresh();
+        } else {
+            throw new Error('Invalid voter ID or password.');
+        }
     } catch (error) {
       toast({
         variant: 'destructive',

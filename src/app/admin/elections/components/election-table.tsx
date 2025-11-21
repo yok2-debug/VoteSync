@@ -31,8 +31,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { deleteElection } from '@/lib/actions';
 import { format } from 'date-fns';
+import { db } from '@/lib/firebase';
+import { ref, remove } from 'firebase/database';
 
 type ElectionTableProps = {
   initialElections: Election[];
@@ -79,7 +80,7 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
     if (!selectedElection) return;
     setIsDeleting(true);
     try {
-      await deleteElection(selectedElection.id);
+      await remove(ref(db, `elections/${selectedElection.id}`));
       setElections(elections.filter((e) => e.id !== selectedElection.id));
       toast({ title: 'Election deleted successfully.' });
     } catch (error) {

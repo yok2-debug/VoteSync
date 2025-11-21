@@ -29,12 +29,13 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { deleteCandidate } from '@/lib/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import { ReorderCandidatesDialog } from './reorder-candidates-dialog';
+import { db } from '@/lib/firebase';
+import { ref, get, remove } from 'firebase/database';
 
 type CandidateTableProps = {
   allElections: Election[];
@@ -106,8 +107,21 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
     if (!selectedCandidate) return;
     setIsDeleting(true);
     try {
-      await deleteCandidate(selectedCandidate.candidate.id, selectedCandidate.electionId);
-      toast({ title: 'Candidate deleted successfully.' });
+        const { candidate, electionId } = selectedCandidate;
+        const electionVotesRef = ref(db, `elections/${electionId}/votes`);
+        const votesSnapshot = await get(electionVotesRef);
+        if (votesSnapshot.exists()) {
+            const votes = votesSnapshot.val();
+            const hasVotes = Object.values(votes).some(vote => vote === candidate.id);
+            if (hasVotes) {
+                throw new Error("Cannot delete candidate. They have already received votes in this election.");
+            }
+        }
+        
+        await remove(ref(db, `elections/${electionId}/candidates/${candidate.id}`));
+        await remove(ref(db, `elections/${electionId}/results/${candidate.id}`));
+
+        toast({ title: 'Candidate deleted successfully.' });
       // The context will auto-update the UI, no need for local state management
     } catch (error) {
        toast({

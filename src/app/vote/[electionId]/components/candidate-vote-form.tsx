@@ -17,7 +17,8 @@ import { Vote, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { Candidate } from '@/lib/types';
 import { useState } from 'react';
-import { saveVote } from '@/lib/actions';
+import { db } from '@/lib/firebase';
+import { ref, runTransaction } from 'firebase/database';
 
 interface CandidateVoteFormProps {
   electionId: string;
@@ -32,8 +33,37 @@ export function CandidateVoteForm({ electionId, candidate, voterId }: CandidateV
 
   async function handleVote() {
     setIsSubmitting(true);
+    const electionRef = ref(db, `elections/${electionId}`);
+    const voterRef = ref(db, `voters/${voterId}`);
+
     try {
-      await saveVote(electionId, candidate.id, voterId);
+      // Transaction on election data
+      await runTransaction(electionRef, (election) => {
+        if (election) {
+          if (!election.votes) election.votes = {};
+          if (!election.results) election.results = {};
+          if (election.votes[voterId]) {
+            return; // Abort
+          }
+          election.votes[voterId] = candidate.id;
+          if (!election.results[candidate.id]) {
+            election.results[candidate.id] = 0;
+          }
+          election.results[candidate.id]++;
+        }
+        return election;
+      });
+
+      // Transaction on voter data
+      await runTransaction(voterRef, (voter) => {
+        if (voter) {
+          if (!voter.hasVoted) {
+            voter.hasVoted = {};
+          }
+          voter.hasVoted[electionId] = true;
+        }
+        return voter;
+      });
       
       toast({
         title: 'Vote Cast Successfully!',
