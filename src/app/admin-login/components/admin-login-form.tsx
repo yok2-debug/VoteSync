@@ -17,9 +17,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createAdminSession } from '@/lib/session';
-import { getAdminCredentials } from '@/lib/data';
+import { loginAdmin } from '@/lib/session';
 
 const adminLoginSchema = z.object({
   username: z.string().min(1, { message: 'Username is required.' }),
@@ -28,7 +26,6 @@ const adminLoginSchema = z.object({
 
 export function AdminLoginForm() {
   const { toast } = useToast();
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof adminLoginSchema>>({
@@ -39,21 +36,16 @@ export function AdminLoginForm() {
   async function onSubmit(values: z.infer<typeof adminLoginSchema>) {
     setIsSubmitting(true);
     try {
-      const adminCreds = await getAdminCredentials();
-      if (
-        adminCreds &&
-        adminCreds.username === values.username &&
-        adminCreds.password === values.password
-      ) {
-        await createAdminSession({ isAdmin: true });
-        toast({
-          title: 'Login Successful',
-          description: 'Redirecting to your dashboard...',
-        });
-        window.location.href = '/admin/dashboard';
-      } else {
-        throw new Error('Invalid admin credentials.');
+      const result = await loginAdmin(values);
+      if (result?.error) {
+        throw new Error(result.error);
       }
+      // The redirect will be handled by the server action.
+      // We can show a toast as a visual feedback before the redirection occurs.
+      toast({
+        title: 'Login Successful',
+        description: 'Redirecting to your dashboard...',
+      });
     } catch (error) {
       toast({
         variant: 'destructive',
