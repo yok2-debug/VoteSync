@@ -2,7 +2,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import type { AdminSessionPayload, VoterSessionPayload } from './types';
+import type { AdminSessionPayload, Voter, VoterSessionPayload } from './types';
 import { getAdminCredentials, getVoters } from './data';
 import { z } from 'zod';
 
@@ -69,32 +69,29 @@ const voterLoginSchema = z.object({
   password: z.string(),
 });
 
-export async function loginVoter(values: unknown) {
-  const parsedCredentials = voterLoginSchema.safeParse(values);
+export async function loginVoter(values: unknown): Promise<{ success: boolean; error?: string; voterId?: string }> {
+    const parsedCredentials = voterLoginSchema.safeParse(values);
 
-  if (!parsedCredentials.success) {
-    return { success: false, error: 'Invalid data format.' };
-  }
-
-  const { voterId, password } = parsedCredentials.data;
-
-  try {
-    // 1. Fetch all voters from the database.
-    const allVoters = await getVoters();
-
-    // 2. Find the specific voter within the array on the server.
-    const voter = allVoters.find(v => v.id === voterId);
-
-    // 3. Check if voter exists and password matches.
-    if (voter && voter.password === password) {
-      const sessionPayload = { voterId: voter.id };
-      await createVoterSession(sessionPayload);
-      return { success: true, voterId: voter.id };
-    } else {
-      return { success: false, error: 'Invalid voter ID or password.' };
+    if (!parsedCredentials.success) {
+        return { success: false, error: 'Invalid data format.' };
     }
-  } catch (error) {
-    console.error('Voter login error:', error);
-    return { success: false, error: 'An internal server error occurred.' };
-  }
+
+    const { voterId, password } = parsedCredentials.data;
+
+    try {
+        const allVoters = await getVoters();
+        
+        const voter = allVoters.find(v => v.id === voterId);
+        
+        if (voter && voter.password === password) {
+            const sessionPayload = { voterId: voter.id };
+            await createVoterSession(sessionPayload);
+            return { success: true, voterId: voter.id };
+        } else {
+            return { success: false, error: 'Invalid voter ID or password.' };
+        }
+    } catch (error) {
+        console.error('Voter login error:', error);
+        return { success: false, error: 'An internal server error occurred.' };
+    }
 }

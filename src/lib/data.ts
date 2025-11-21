@@ -5,26 +5,28 @@ import { db } from '@/lib/firebase';
 import type { Admin, Category, Election, Voter } from '@/lib/types';
 import { get, ref } from 'firebase/database';
 
-export async function getAdminCredentials(): Promise<Admin | null> {
+export async function getAdminCredentials(): Promise<Admin> {
   try {
     const snapshot = await get(ref(db, 'admin'));
     if (snapshot.exists()) {
       return snapshot.val() as Admin;
     }
-    return null;
+    // Return a default/empty object if it doesn't exist to prevent crashes
+    return { username: '', password: '' };
   } catch (error) {
     console.error("Failed to get admin credentials:", error);
-    return null;
+    // Return a default/empty object on error
+    return { username: '', password: '' };
   }
 }
 
 export async function getVoters(): Promise<Voter[]> {
     try {
-        const votersSnapshot = await get(ref(db, 'voters'));
-        const votersData = votersSnapshot.val();
-        if (Array.isArray(votersData)) {
-            // Firebase can return arrays with null values for empty indices, filter them out.
-            return votersData.filter(v => v !== null);
+        const snapshot = await get(ref(db, 'voters'));
+        const data = snapshot.val();
+        // Ensure we always return an array, even if data is null or not an array
+        if (Array.isArray(data)) {
+            return data.filter(Boolean); // Filter out any null/falsy values from sparse arrays
         }
         return [];
     } catch (error) {
@@ -33,16 +35,21 @@ export async function getVoters(): Promise<Voter[]> {
     }
 }
 
-
 export async function getElections(): Promise<Election[]> {
     try {
         const snapshot = await get(ref(db, 'elections'));
         if (snapshot.exists()) {
             const electionsData = snapshot.val();
-            return Object.keys(electionsData).map(id => ({
-                id,
-                ...electionsData[id],
-            }));
+            // Handle both object and array structures from Firebase
+            if (Array.isArray(electionsData)) {
+              return electionsData.filter(Boolean);
+            }
+            if (typeof electionsData === 'object' && electionsData !== null) {
+              return Object.keys(electionsData).map(id => ({
+                  id,
+                  ...electionsData[id],
+              }));
+            }
         }
         return [];
     } catch (error) {
@@ -56,10 +63,12 @@ export async function getCategories(): Promise<Category[]> {
         const snapshot = await get(ref(db, 'categories'));
         if (snapshot.exists()) {
             const categoriesData = snapshot.val();
-            return Object.keys(categoriesData).map(id => ({
-                id,
-                ...categoriesData[id],
-            }));
+            if (typeof categoriesData === 'object' && categoriesData !== null) {
+                return Object.keys(categoriesData).map(id => ({
+                    id,
+                    ...categoriesData[id],
+                }));
+            }
         }
         return [];
     } catch (error) {
