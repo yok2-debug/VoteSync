@@ -1,3 +1,4 @@
+
 import { db } from '@/lib/firebase';
 import type { Admin, Category, Election, Voter } from '@/lib/types';
 import { get, ref } from 'firebase/database';
@@ -15,14 +16,26 @@ export async function getAdminCredentials(): Promise<Admin | null> {
   }
 }
 
+// Helper function to robustly process voter data which might be an array or object
+const processVotersArray = (data: any): Voter[] => {
+    if (!data) return [];
+    if (Array.isArray(data)) {
+        // Filter out null/undefined entries which can happen in Firebase arrays
+        return data.filter(v => v).map((voter, index) => ({
+            id: voter.id || voter.nik || String(index),
+            ...voter
+        }));
+    }
+    // Handle object-based structure from Firebase if it ever changes
+    return Object.keys(data).map(id => ({ id, ...data[id] }));
+}
+
 export async function getVoterById(voterId: string): Promise<Voter | null> {
   try {
-    const snapshot = await get(ref(db, `voters/${voterId}`));
-    if (snapshot.exists()) {
-        const voterData = snapshot.val();
-        return { id: snapshot.key!, ...voterData };
-    }
-    return null;
+    // Since the data is an array, we must fetch all voters and then find the specific one.
+    const voters = await getVoters();
+    const voter = voters.find(v => v.id === voterId);
+    return voter || null;
   } catch (error) {
     console.error(`Failed to get voter by ID ${voterId}:`, error);
     return null;
@@ -51,25 +64,7 @@ export async function getVoters(): Promise<Voter[]> {
         const votersSnapshot = await get(ref(db, 'voters'));
         if (!votersSnapshot.exists()) return [];
         const votersData = votersSnapshot.val();
-
-        // Handle both array and object structures
-        if (Array.isArray(votersData)) {
-            return votersData
-                .filter(v => v !== null) // Filter out null entries in the array
-                .map((voter, index) => {
-                  const id = voter.id || voter.nik || String(index);
-                   if (voter.id) return voter;
-                    return {
-                      id: id,
-                      ...voter
-                    };
-                });
-        }
-        
-        return Object.keys(votersData).map(id => ({
-          id,
-          ...votersData[id],
-        }));
+        return processVotersArray(votersData);
     } catch (error) {
         console.error("Failed to get voters:", error);
         return [];
