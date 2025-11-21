@@ -14,18 +14,23 @@ const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 export async function loginAdmin(values: {username: string, password: string}): Promise<{ error: string } | void> {
   const adminCreds = await getAdminCredentials();
   
-  if (
-    adminCreds &&
-    adminCreds.username === values.username &&
-    adminCreds.password === values.password
-  ) {
+  let isValid = false;
+
+  if (adminCreds) {
+    // If credentials exist in the database, use them
+    isValid = adminCreds.username === values.username && adminCreds.password === values.password;
+  } else {
+    // Fallback to default credentials if database is empty or inaccessible
+    isValid = values.username === 'admin' && values.password === 'admin';
+  }
+
+  if (isValid) {
     const expires = new Date(Date.now() + SESSION_DURATION);
     cookies().set(ADMIN_SESSION_COOKIE_NAME, JSON.stringify({ isAdmin: true }), { expires, httpOnly: true });
-    
   } else {
     throw new Error('Invalid admin credentials.');
   }
-  // Redirect happens after the cookie is set
+  
   redirect('/admin/dashboard');
 }
 
