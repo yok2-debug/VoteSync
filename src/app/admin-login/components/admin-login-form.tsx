@@ -50,8 +50,7 @@ export function AdminLoginForm() {
           title: 'Login Successful',
           description: 'Redirecting to your dashboard...',
         });
-        router.push('/admin/dashboard');
-        router.refresh();
+        window.location.href = '/admin/dashboard';
       } else {
         throw new Error('Invalid admin credentials.');
       }
