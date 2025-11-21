@@ -37,6 +37,17 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     const electionsRef = ref(db, 'elections');
     const votersRef = ref(db, 'voters');
     const categoriesRef = ref(db, 'categories');
+    
+    const processVoters = (data: any): Voter[] => {
+        if (!data) return [];
+        if (Array.isArray(data)) {
+            // Handle array structure from JSON
+            return data.filter(v => v && v.id).map(v => ({...v}));
+        }
+        // Handle object structure from Firebase
+        return Object.keys(data).map(id => ({ id, ...data[id] }));
+    }
+
 
     // Function to fetch initial data once
     const fetchInitialData = async () => {
@@ -54,7 +65,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
         setElections(electionsArray);
 
         const votersData = votersSnap.val();
-        const votersArray = votersData ? Object.keys(votersData).map(id => ({ id, ...votersData[id] })) : [];
+        const votersArray = processVoters(votersData);
         setVoters(votersArray);
 
         const categoriesData = categoriesSnap.val();
@@ -80,7 +91,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
 
     const unsubscribeVoters = onValue(votersRef, (snapshot) => {
       const data = snapshot.val();
-      const votersArray = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
+      const votersArray = processVoters(data);
       setVoters(votersArray);
     });
 

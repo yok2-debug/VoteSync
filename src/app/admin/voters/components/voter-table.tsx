@@ -38,7 +38,7 @@ import { getVoters, getCategories } from '@/lib/data';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { VoterCard } from '../../voters/print/components/voter-card';
 import { db } from '@/lib/firebase';
-import { ref, remove, update } from 'firebase/database';
+import { ref, remove, update, set } from 'firebase/database';
 import * as z from 'zod';
 import { useDatabase } from '@/context/database-context';
 
@@ -66,10 +66,17 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const categoryMap = new Map(categories.map((c) => [c.id, c.name]));
+  const categoryMap = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
+  
+  // Update local state when context data changes
+  useEffect(() => {
+    setVoters(initialVoters);
+  }, [initialVoters]);
+
 
   const filteredVoters = useMemo(() => voters.filter(
     (voter) =>
+      voter && voter.id && // Ensure voter and voter.id are not null/undefined
       (voter.name.toLowerCase().includes(filter.toLowerCase()) ||
       voter.id.toLowerCase().includes(filter.toLowerCase()) ||
       (voter.nik && voter.nik.includes(filter))) &&
@@ -217,9 +224,8 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
     try {
         const categories = await getCategories();
         const categoryNameMap = new Map(categories.map(c => [c.name.replace(/\s+/g, '').toLowerCase(), c.id]));
-        const allVoters = await getVoters();
-        const existingVoterIds = new Set(allVoters.map(v => v.id));
-        const votersToImport: Record<string, Omit<Voter, 'id' | 'hasVoted'>> = {};
+        
+        const votersToImportUpdates: Record<string, Omit<Voter, 'id' | 'hasVoted'>> = {};
 
         const importVoterSchema = z.object({
             id: z.string().min(1, 'ID is required'),
@@ -239,28 +245,31 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
                 throw new Error(`Invalid data in CSV: ${JSON.stringify(validation.error.flatten().fieldErrors)}`);
             }
             const { id, category, ...rest } = validation.data;
-            if (existingVoterIds.has(id)) {
-                throw new Error(`Voter with ID "${id}" already exists.`);
-            }
+
             const categoryId = categoryNameMap.get(category.replace(/\s+/g, '').toLowerCase());
             if (!categoryId) {
                 throw new Error(`Category "${category}" not found for voter "${rest.name}".`);
             }
-            votersToImport[`voters/${id}`] = {
+            
+            // Note: We're not checking for existing IDs here because `update` will handle both creation and update.
+            // If you want to prevent overwriting, you'd need a `get` first.
+            
+            votersToImportUpdates[`voters/${id}`] = {
                 ...rest,
                 category: categoryId,
                 password: rest.password || Math.random().toString(36).substring(2, 8),
             };
         }
 
-        if (Object.keys(votersToImport).length > 0) {
-            await update(ref(db), votersToImport);
+        if (Object.keys(votersToImportUpdates).length > 0) {
+            await update(ref(db), votersToImportUpdates);
         }
+
       toast({
         title: 'Import Successful',
-        description: `${Object.keys(votersToImport).length} voters were successfully imported.`,
+        description: `${Object.keys(votersToImportUpdates).length} voters were successfully imported or updated.`,
       });
-      // The DatabaseProvider will automatically refresh the data
+      // The DatabaseProvider will automatically refresh the data, so no need to call setVoters here.
     } catch (error) {
        toast({
         variant: 'destructive',
@@ -297,7 +306,7 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
     setIsDeleting(true);
     try {
       await remove(ref(db, `voters/${selectedVoter.id}`));
-      setVoters(voters.filter(v => v.id !== selectedVoter.id));
+      // No need to call setVoters, the context provider's onValue listener will handle it.
       toast({ title: 'Voter deleted successfully.' });
     } catch (error) {
        toast({
@@ -313,25 +322,13 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
   };
   
   const onFormSave = async (voterToSave: Voter & { isNew?: boolean }) => {
-    try {
-      const isEditing = !voterToSave.isNew;
-      // This is now handled in VoterFormDialog
-      if (isEditing) {
-        setVoters(voters.map(v => v.id === voterToSave.id ? voterToSave : v));
-      } else {
-        setVoters([...voters, voterToSave]);
-      }
-      toast({
-        title: `Voter ${isEditing ? 'updated' : 'created'}`,
-        description: `"${voterToSave.name}" has been successfully saved.`,
-      });
-    } catch (error) {
-       toast({
-        variant: 'destructive',
-        title: 'Error saving voter',
-        description: error instanceof Error ? error.message : 'An unknown error occurred.',
-      });
-    }
+    // The form dialog now handles the database write. We don't need to do anything here
+    // as the real-time listener in the context will update the state.
+    const isEditing = !voterToSave.isNew;
+    toast({
+      title: `Voter ${isEditing ? 'updated' : 'created'}`,
+      description: `"${voterToSave.name}" has been successfully saved.`,
+    });
   };
 
 

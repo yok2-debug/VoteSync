@@ -27,7 +27,6 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { db } from '@/lib/firebase';
 import { ref, get, set } from 'firebase/database';
-import { getVoterById } from '@/lib/data';
 
 const voterSchema = z.object({
   id: z.string().min(1, { message: 'Voter ID is required.' }),
@@ -58,6 +57,7 @@ export function VoterFormDialog({
   categories,
   onSave,
 }: VoterFormDialogProps) {
+  const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditing = !!voter;
 
@@ -106,40 +106,35 @@ export function VoterFormDialog({
     try {
       const { id, ...voterData } = data;
 
+      const voterRef = ref(db, `voters/${id}`);
+
       if (!isEditing) {
-          const existingVoter = await getVoterById(id);
-          if (existingVoter) {
+          const existingVoterSnapshot = await get(voterRef);
+          if (existingVoterSnapshot.exists()) {
               throw new Error(`Voter with ID "${id}" already exists.`);
           }
       }
       
-      const { ...dataToSave } = voterData;
-  
-      const voterRef = ref(db, `voters/${id}`);
+      const dataToSave: Partial<Omit<Voter, 'id'>> = {
+        ...voterData
+      };
       
-      if (isEditing) {
-        const snapshot = await get(voterRef);
-        const existingData = snapshot.val() || {};
-        
-        if (!dataToSave.password) {
-          dataToSave.password = existingData.password;
-        }
-        
-        await set(voterRef, { ...existingData, ...dataToSave });
-      } else {
-        if (!dataToSave.password) {
-          dataToSave.password = Math.random().toString(36).substring(2, 8);
-        }
-        await set(voterRef, dataToSave);
+      // Get existing data to merge, preserving fields not in the form (like hasVoted)
+      const snapshot = await get(voterRef);
+      const existingData = snapshot.val() || {};
+      
+      if (!dataToSave.password) {
+        // If password is blank on edit, keep existing; if new, generate one
+        dataToSave.password = existingData.password || Math.random().toString(36).substring(2, 8);
       }
+      
+      await set(voterRef, { ...existingData, ...dataToSave });
   
-      const newSnapshot = await get(voterRef);
-      const savedVoter = { id, ...newSnapshot.val() };
+      const savedVoter = { id, ...existingData, ...dataToSave };
       
       onSave({ ...savedVoter, isNew: !isEditing });
       onOpenChange(false);
     } catch (error) {
-       // Error is handled by the parent component's onSave handler
        toast({
         variant: 'destructive',
         title: 'Error saving voter',
@@ -149,7 +144,7 @@ export function VoterFormDialog({
       setIsSubmitting(false);
     }
   };
-  const { toast } = useToast();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -231,13 +226,11 @@ export function VoterFormDialog({
             />
             {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
           </div>
-          {isEditing && (
-            <div className="space-y-2">
+          <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" {...register('password')} className="w-full" placeholder="Leave blank to keep current" />
+              <Input id="password" type="password" {...register('password')} className="w-full" placeholder={isEditing ? "Leave blank to keep current" : "Leave blank to auto-generate"} />
               {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
-            </div>
-          )}
+          </div>
         </form>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
