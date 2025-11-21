@@ -23,10 +23,8 @@ export async function getVoters(): Promise<Voter[]> {
         const votersSnapshot = await get(ref(db, 'voters'));
         const votersData = votersSnapshot.val();
         if (Array.isArray(votersData)) {
-            return votersData.filter(Boolean) as Voter[];
-        }
-        if (typeof votersData === 'object' && votersData !== null) {
-            return Object.keys(votersData).map(id => ({ id, ...votersData[id] }));
+            // Firebase can return arrays with null values for empty indices, filter them out.
+            return votersData.filter(v => v !== null);
         }
         return [];
     } catch (error) {
@@ -35,20 +33,6 @@ export async function getVoters(): Promise<Voter[]> {
     }
 }
 
-
-export async function getVoterById(voterId: string): Promise<Voter | null> {
-  try {
-    const voters = await getVoters();
-    if (!Array.isArray(voters)) {
-        return null;
-    }
-    const voter = voters.find(v => v && v.id === voterId);
-    return voter || null;
-  } catch (error) {
-    console.error(`Failed to get voter by ID ${voterId}:`, error);
-    return null;
-  }
-}
 
 export async function getElections(): Promise<Election[]> {
     try {

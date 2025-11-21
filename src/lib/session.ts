@@ -3,7 +3,7 @@
 
 import { cookies } from 'next/headers';
 import type { AdminSessionPayload, VoterSessionPayload } from './types';
-import { getAdminCredentials, getVoterById } from './data';
+import { getAdminCredentials, getVoters } from './data';
 import { z } from 'zod';
 
 const ADMIN_SESSION_COOKIE_NAME = 'votesync_admin_session';
@@ -39,7 +39,7 @@ export async function loginAdmin(values: unknown) {
     const adminCreds = await getAdminCredentials();
 
     if (adminCreds && adminCreds.username === username && adminCreds.password === password) {
-      const sessionPayload = { isAdmin: true, username: username };
+      const sessionPayload = { isAdmin: true };
       await createAdminSession(sessionPayload);
       return { success: true };
     } else {
@@ -79,8 +79,13 @@ export async function loginVoter(values: unknown) {
   const { voterId, password } = parsedCredentials.data;
 
   try {
-    const voter = await getVoterById(voterId);
+    // 1. Fetch all voters from the database.
+    const allVoters = await getVoters();
 
+    // 2. Find the specific voter within the array on the server.
+    const voter = allVoters.find(v => v.id === voterId);
+
+    // 3. Check if voter exists and password matches.
     if (voter && voter.password === password) {
       const sessionPayload = { voterId: voter.id };
       await createVoterSession(sessionPayload);
