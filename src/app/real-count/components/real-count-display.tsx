@@ -1,5 +1,5 @@
 'use client';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import type { Election, Voter, Category, Candidate } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -19,7 +19,16 @@ interface RealCountDisplayProps {
 }
 
 export function RealCountDisplay({ election, allVoters, allCategories }: RealCountDisplayProps) {
-  
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    // Update the 'now' state every 10 seconds to re-evaluate time-sensitive UI
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 10000); // every 10 seconds
+    return () => clearInterval(timer);
+  }, []);
+
   const liveResults = election.results || {};
   const liveTotalVotes = Object.keys(election.votes || {}).length;
 
@@ -53,7 +62,6 @@ export function RealCountDisplay({ election, allVoters, allCategories }: RealCou
   }, [chartData]);
   
   const getScheduleStatusBadge = (election: Election) => {
-    const now = new Date();
     const startDate = election.startDate ? new Date(election.startDate) : null;
     const endDate = election.endDate ? new Date(election.endDate) : null;
 
