@@ -1,5 +1,3 @@
-
-
 import { db } from '@/lib/firebase';
 import type { Admin, Category, Election, Voter } from '@/lib/types';
 import { get, ref } from 'firebase/database';
@@ -8,10 +6,11 @@ export async function getAdminCredentials(): Promise<Admin | null> {
   try {
     const snapshot = await get(ref(db, 'admin'));
     if (snapshot.exists()) {
-      return snapshot.val();
+      return snapshot.val() as Admin;
     }
     return null;
   } catch (error) {
+    console.error("Failed to get admin credentials:", error);
     return null;
   }
 }
@@ -50,6 +49,17 @@ export async function getVoters(): Promise<Voter[]> {
         const votersSnapshot = await get(ref(db, 'voters'));
         if (!votersSnapshot.exists()) return [];
         const votersData = votersSnapshot.val();
+
+        // Handle both array and object structures
+        if (Array.isArray(votersData)) {
+            return votersData
+                .filter(v => v !== null) // Filter out null entries in the array
+                .map((voter, index) => ({
+                    id: voter.id || voter.nik || String(index),
+                    ...voter,
+                }));
+        }
+        
         return Object.keys(votersData).map(id => ({
           id,
           ...votersData[id],
