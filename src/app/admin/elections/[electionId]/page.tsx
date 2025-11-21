@@ -14,6 +14,6 @@ export async function generateStaticParams() {
   return paths;
 }
 
-export default function ElectionEditPage({ params }: { params: { electionId: string } }) {
+export default async function ElectionEditPage({ params }: { params: { electionId: string } }) {
   return <ElectionEditForm electionId={params.electionId} />;
 }

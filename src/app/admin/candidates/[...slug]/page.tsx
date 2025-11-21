@@ -23,7 +23,7 @@ export async function generateStaticParams() {
 }
 
 
-export default function CandidateActionPage({ params }: { params: { slug: string[] } }) {
+export default async function CandidateActionPage({ params }: { params: { slug: string[] } }) {
   const { slug } = params;
   return <CandidateAction slug={slug} />;
 }

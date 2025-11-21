@@ -10,7 +10,7 @@ export async function generateStaticParams() {
   }));
 }
 
-export default function RecapitulationPage({ params }: { params: { electionId: string } }) {
+export default async function RecapitulationPage({ params }: { params: { electionId: string } }) {
   const { electionId } = params;
 
   return (

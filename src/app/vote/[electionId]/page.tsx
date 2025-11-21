@@ -10,6 +10,6 @@ export async function generateStaticParams() {
   }));
 }
 
-export default function VotePage({ params }: { params: { electionId: string } }) {
+export default async function VotePage({ params }: { params: { electionId: string } }) {
   return <VoteClientPage electionId={params.electionId} />;
 }
