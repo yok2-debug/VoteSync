@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import type { Election, Voter, Category } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { ref, onValue } from 'firebase/database';
+import { ref, onValue, get } from 'firebase/database';
 
 interface DatabaseContextType {
   elections: Election[];
@@ -25,11 +25,32 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     const votersRef = ref(db, 'voters');
     const categoriesRef = ref(db, 'categories');
 
+    // Set initial loading state
+    setIsLoading(true);
+
+    // Function to fetch initial data once
+    const fetchInitialData = async () => {
+      try {
+        await Promise.all([
+          get(electionsRef),
+          get(votersRef),
+          get(categoriesRef),
+        ]);
+      } finally {
+        // This ensures loading is set to false even if one of the fetches fails,
+        // preventing the app from being stuck on loading forever.
+        // The onValue listeners below will still provide live updates.
+        setIsLoading(false);
+      }
+    };
+    
+    fetchInitialData();
+
+    // Set up live listeners
     const unsubscribeElections = onValue(electionsRef, (snapshot) => {
       const data = snapshot.val();
       const electionsArray = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
       setElections(electionsArray);
-      setIsLoading(false);
     });
 
     const unsubscribeVoters = onValue(votersRef, (snapshot) => {
@@ -44,6 +65,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
       setCategories(categoriesArray);
     });
 
+    // Cleanup listeners on unmount
     return () => {
       unsubscribeElections();
       unsubscribeVoters();
