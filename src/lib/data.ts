@@ -7,7 +7,10 @@ import { get, ref } from 'firebase/database';
 export async function getAdminCredentials(): Promise<Admin | null> {
   try {
     const snapshot = await get(ref(db, 'admin'));
-    return snapshot.val();
+    if (snapshot.exists()) {
+      return snapshot.val();
+    }
+    return null;
   } catch (error) {
     return null;
   }
