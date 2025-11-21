@@ -80,7 +80,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
 
     const unsubscribeVoters = onValue(votersRef, (snapshot) => {
       const data = snapshot.val();
-      const votersArray = data ? Object.keys(data).map(id => ({ id, ...votersData[id] })) : [];
+      const votersArray = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
       setVoters(votersArray);
     });
 
