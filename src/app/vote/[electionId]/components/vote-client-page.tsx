@@ -27,6 +27,7 @@ export function VoteClientPage({ electionId }: { electionId: string }) {
   const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
+  const [isValidating, setIsValidating] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -44,56 +45,45 @@ export function VoteClientPage({ electionId }: { electionId: string }) {
 
   const election = useMemo(() => elections.find(e => e.id === electionId), [elections, electionId]);
   const voter = useMemo(() => voters.find(v => v.id === session?.voterId), [voters, session]);
-  const category = useMemo(() => categories.find(c => c.id === voter?.category), [categories, voter]);
   
   const candidates = useMemo(() => {
     if (!election?.candidates) return [];
     return Object.values(election.candidates).sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999));
   }, [election?.candidates]);
 
-  const isLoading = isDbLoading || isSessionLoading;
-
   useEffect(() => {
-    if (isLoading) return;
+    if (isDbLoading || isSessionLoading) {
+      return; // Wait for all data to load
+    }
 
-    const checkVoterAndElection = () => {
-      if (!election || !voter) {
-        router.push('/vote');
-        return;
-      }
-      const now = new Date();
-      const electionStarted = election?.startDate ? new Date(election.startDate) <= now : false;
-      const electionEnded = election?.endDate ? new Date(election.endDate) < now : false;
-      const categoryForVoter = categories.find(c => c.id === voter?.category);
-      const isVoterAllowed = categoryForVoter?.allowedElections?.includes(electionId);
-      const hasVoted = voter?.hasVoted?.[electionId];
+    const category = categories.find(c => c.id === voter?.category);
+    
+    if (!election || !voter || !category) {
+      router.push('/vote');
+      return;
+    }
 
-      if (election.status !== 'active' || !electionStarted || electionEnded || !isVoterAllowed || hasVoted) {
-        router.push('/vote');
-      }
-    };
+    const now = new Date();
+    const electionStarted = election.startDate ? new Date(election.startDate) <= now : false;
+    const electionEnded = election.endDate ? new Date(election.endDate) < now : false;
+    const isVoterAllowed = category.allowedElections?.includes(electionId);
+    const hasVoted = voter.hasVoted?.[electionId];
 
-    checkVoterAndElection();
-  }, [isLoading, election, voter, category, router, electionId, categories]);
+    if (election.status !== 'active' || !electionStarted || electionEnded || !isVoterAllowed || hasVoted) {
+      router.push('/vote');
+    } else {
+      setIsValidating(false); // All checks passed, allow rendering
+    }
+  }, [isDbLoading, isSessionLoading, election, voter, categories, electionId, router]);
 
-  if (isLoading || !session?.voterId || !election || !voter || !category) {
+
+  const isLoading = isDbLoading || isSessionLoading || isValidating;
+
+  if (isLoading || !session?.voterId || !election || !voter) {
     return <Loading />; 
   }
   
-  const now = new Date();
-  const electionStarted = election?.startDate ? new Date(election.startDate) <= now : false;
-  const electionEnded = election?.endDate ? new Date(election.endDate) < now : false;
-  const isVoterAllowed = category?.allowedElections?.includes(electionId);
-  const hasVoted = voter?.hasVoted?.[electionId];
-  
   const defaultAvatar = PlaceHolderImages.find(p => p.id === 'default-avatar');
-
-  if (election.status !== 'active' || !electionStarted || electionEnded || !isVoterAllowed || hasVoted) {
-     if (typeof window !== 'undefined') {
-        router.push('/vote');
-    }
-    return <Loading />;
-  }
   
   return (
     <main className="flex min-h-screen flex-col items-center bg-background p-4 sm:p-8">
