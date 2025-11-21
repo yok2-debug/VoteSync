@@ -26,82 +26,63 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 function VotePageContent() {
   const { electionId } = useParams() as { electionId: string };
   const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
-  const [session, setSession] = useState<VoterSessionPayload | null>(null);
-  const [isSessionLoading, setIsSessionLoading] = useState(true);
-  const [isValidating, setIsValidating] = useState(true);
   const [election, setElection] = useState<Election | null>(null);
   const [voter, setVoter] = useState<Voter | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    async function fetchSession() {
+    const validateAndSetState = async () => {
+      // 1. Get session
       const voterSession = getVoterSession();
       if (!voterSession?.voterId) {
         router.push('/');
-      } else {
-        setSession(voterSession);
+        return; // Stop execution if no session
       }
-      setIsSessionLoading(false);
-    }
-    fetchSession();
-  }, [router]);
-  
-  useEffect(() => {
-    // Wait until all data is loaded before starting validation
-    if (isDbLoading || isSessionLoading) {
-      return; 
-    }
 
-    // Ensure we have a session before proceeding
-    if (!session?.voterId) {
-      router.push('/');
-      return;
-    }
+      // 2. Wait for DB data
+      if (isDbLoading) {
+        return; // Wait for the next run when data is ready
+      }
 
-    // Find the relevant data inside the effect to ensure it's up-to-date
-    const currentElection = elections.find(e => e.id === electionId);
-    const currentVoter = voters.find(v => v.id === session.voterId);
-    
-    // If election or voter data is not found, it's an invalid state, redirect.
-    if (!currentElection || !currentVoter) {
-      router.push('/vote');
-      return;
-    }
+      // 3. Find all necessary data pieces
+      const currentElection = elections.find(e => e.id === electionId);
+      const currentVoter = voters.find(v => v.id === voterSession.voterId);
+      const voterCategory = currentVoter ? categories.find(c => c.id === currentVoter.category) : undefined;
+      
+      // 4. Perform all validation checks
+      if (!currentElection || !currentVoter || !voterCategory) {
+        router.push('/vote');
+        return;
+      }
 
-    const voterCategory = categories.find(c => c.id === currentVoter.category);
-    
-    if (!voterCategory) {
-      router.push('/vote');
-      return;
-    }
-    
-    // Perform all validation checks
-    const now = new Date();
-    const electionStarted = currentElection.startDate ? new Date(currentElection.startDate) <= now : true;
-    const electionEnded = currentElection.endDate ? new Date(currentElection.endDate) < now : false;
-    const isVoterAllowed = voterCategory.allowedElections?.includes(electionId);
-    const hasVoted = currentVoter.hasVoted?.[electionId];
+      const now = new Date();
+      const electionStarted = currentElection.startDate ? new Date(currentElection.startDate) <= now : true;
+      const electionEnded = currentElection.endDate ? new Date(currentElection.endDate) < now : false;
+      const isVoterAllowed = voterCategory.allowedElections?.includes(electionId);
+      const hasVoted = currentVoter.hasVoted?.[electionId];
 
-    // If any check fails, redirect
-    if (
-      currentElection.status !== 'active' || 
-      !electionStarted || 
-      electionEnded || 
-      !isVoterAllowed || 
-      hasVoted
-    ) {
-      router.push('/vote');
-    } else {
-      // All checks passed. Set the state and allow rendering.
+      if (
+        currentElection.status !== 'active' || 
+        !electionStarted || 
+        electionEnded || 
+        !isVoterAllowed || 
+        hasVoted
+      ) {
+        router.push('/vote');
+        return;
+      }
+
+      // 5. All checks passed. Set state to render the page.
       setElection(currentElection);
       setVoter(currentVoter);
-      setIsValidating(false);
-    }
+      setIsLoading(false);
+    };
 
-  }, [isDbLoading, isSessionLoading, session, elections, voters, categories, electionId, router]);
+    validateAndSetState();
+    // This effect depends on all data sources. It will re-run if any of them change.
+  }, [isDbLoading, elections, voters, categories, electionId, router]);
 
-
-  const isLoading = isDbLoading || isSessionLoading || isValidating;
 
   if (isLoading || !election || !voter) {
     return <Loading />; 
