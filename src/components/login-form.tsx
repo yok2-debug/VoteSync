@@ -20,6 +20,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createVoterSession } from '@/lib/session';
 import { getVoterById } from '@/lib/data';
+import { setVoterSession } from '@/lib/session-client';
 
 const voterLoginSchema = z.object({
   voterId: z.string().min(1, { message: 'Voter ID is required.' }),
@@ -41,7 +42,9 @@ export function LoginForm() {
     try {
       const voter = await getVoterById(values.voterId);
       if (voter && voter.password === values.password) {
-        await createVoterSession({ voterId: voter.id });
+        const sessionPayload = { voterId: voter.id };
+        await createVoterSession(sessionPayload);
+        setVoterSession(sessionPayload);
         toast({
           title: 'Login Successful',
           description: 'Redirecting to your dashboard...',
