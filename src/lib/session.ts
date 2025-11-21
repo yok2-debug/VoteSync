@@ -1,3 +1,4 @@
+
 'use server';
 
 import { cookies } from 'next/headers';
@@ -15,7 +16,7 @@ async function createSession(payload: AdminSessionPayload | VoterSessionPayload,
   cookies().set(cookieName, session, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    expires,
+    expires: expires.getTime(),
     path: '/',
     sameSite: 'lax',
   });
