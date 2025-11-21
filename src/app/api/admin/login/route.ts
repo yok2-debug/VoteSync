@@ -24,13 +24,10 @@ export async function POST(request: Request) {
 
     if (adminCreds && adminCreds.username === username && adminCreds.password === password) {
       const sessionPayload = { isAdmin: true, username: username };
-      // createAdminSession will set the cookie on the response
+      
+      const response = NextResponse.json({ success: true });
       await createAdminSession(sessionPayload);
       
-      // We need to construct a new response to which the cookie can be attached.
-      const response = NextResponse.json({ success: true });
-      // The cookie is actually set in the createAdminSession function via the cookies() helper.
-      // Next.js automatically handles passing this to the final response.
       return response;
 
     } else {
