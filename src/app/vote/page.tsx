@@ -6,7 +6,7 @@ import { Check, Vote as VoteIcon, Lock, Clock, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { VoterLogoutButton } from './components/voter-logout-button';
 import { useDatabase } from '@/context/database-context';
-import { getVoterSession } from '@/lib/session';
+import { getVoterSession } from '@/lib/session-client';
 import { useEffect, useState, useMemo } from 'react';
 import Loading from '../loading';
 import type { VoterSessionPayload } from '@/lib/types';
@@ -18,16 +18,13 @@ export default function VoterDashboardPage() {
   const [isSessionLoading, setIsSessionLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchSessionAndCheck() {
-      const voterSession = await getVoterSession();
-      if (!voterSession?.voterId) {
-          router.push('/');
-      } else {
-        setSession(voterSession);
-      }
-      setIsSessionLoading(false);
+    const voterSession = getVoterSession();
+    if (!voterSession?.voterId) {
+      router.push('/');
+    } else {
+      setSession(voterSession);
     }
-    fetchSessionAndCheck();
+    setIsSessionLoading(false);
   }, [router]);
 
   const voter = useMemo(() => {
@@ -114,7 +111,7 @@ export default function VoterDashboardPage() {
           <div className="space-y-4">
             {availableElections.map(election => {
               const hasVoted = voter?.hasVoted?.[election.id] === true;
-              const electionStarted = election.startDate ? new Date(election.startDate) <= now : false;
+              const electionStarted = election.startDate ? new Date(election.startDate) <= now : true;
               const electionEnded = election.endDate ? new Date(election.endDate) < now : false;
 
               let content;

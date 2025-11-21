@@ -18,8 +18,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getVoterById } from '@/lib/data';
-import { createVoterSession } from '@/lib/session';
+import { getVoters } from '@/lib/data';
+import { setVoterSession } from '@/lib/session-client';
 
 const voterLoginSchema = z.object({
   voterId: z.string().min(1, { message: 'Voter ID is required.' }),
@@ -39,18 +39,24 @@ export function LoginForm() {
   async function handleVoterLogin(values: z.infer<typeof voterLoginSchema>) {
     setIsSubmitting(true);
     try {
-        const voter = await getVoterById(values.voterId);
-        if (voter && voter.password === values.password) {
-            await createVoterSession({ voterId: voter.id });
-            toast({
-                title: 'Login Successful',
-                description: 'Redirecting to your dashboard...',
-            });
-            router.push('/vote');
-            router.refresh();
-        } else {
-            throw new Error('Invalid voter ID or password.');
-        }
+      // Get all voters and find the one that matches
+      const allVoters = await getVoters();
+      const voter = allVoters.find(v => v.id === values.voterId);
+
+      if (voter && voter.password === values.password) {
+        // Use client-side session management
+        setVoterSession({ voterId: voter.id });
+
+        toast({
+          title: 'Login Successful',
+          description: 'Redirecting to your dashboard...',
+        });
+        
+        router.push('/vote');
+        router.refresh();
+      } else {
+        throw new Error('Invalid voter ID or password.');
+      }
     } catch (error) {
       toast({
         variant: 'destructive',

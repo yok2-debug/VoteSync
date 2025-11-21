@@ -7,10 +7,10 @@ import Link from 'next/link';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { useDatabase } from '@/context/database-context';
 import { getVoterSession } from '@/lib/session-client';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Loading from '@/app/loading';
-import type { Voter, VoterSessionPayload, Election, Category, Candidate } from '@/lib/types';
+import type { Voter, Election, Category, Candidate } from '@/lib/types';
 import ReactMarkdown from 'react-markdown';
 import {
   Dialog,
@@ -32,15 +32,15 @@ function VotePageContent() {
   const router = useRouter();
 
   useEffect(() => {
-    const validateAndSetState = async () => {
-      // 1. Get session
+    const validateAndSetState = () => {
+      // 1. Get session from localStorage
       const voterSession = getVoterSession();
       if (!voterSession?.voterId) {
         router.push('/');
         return; // Stop execution if no session
       }
 
-      // 2. Wait for DB data
+      // 2. Wait for DB data from context
       if (isDbLoading) {
         return; // Wait for the next run when data is ready
       }
@@ -52,6 +52,7 @@ function VotePageContent() {
       
       // 4. Perform all validation checks
       if (!currentElection || !currentVoter || !voterCategory) {
+        // This might happen if data is still inconsistent, redirect to safety
         router.push('/vote');
         return;
       }
@@ -80,7 +81,6 @@ function VotePageContent() {
     };
 
     validateAndSetState();
-    // This effect depends on all data sources. It will re-run if any of them change.
   }, [isDbLoading, elections, voters, categories, electionId, router]);
 
 
