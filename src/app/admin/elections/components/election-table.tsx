@@ -52,14 +52,29 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
     election.name.toLowerCase().includes(filter.toLowerCase())
   );
 
-  const getStatusBadge = (status: Election['status']) => {
-    switch (status) {
+  const getStatusBadge = (election: Election) => {
+    const now = new Date();
+    const startDate = election.startDate ? new Date(election.startDate) : null;
+    const endDate = election.endDate ? new Date(election.endDate) : null;
+
+    if (endDate && now > endDate) {
+      return <Badge variant="destructive">Berakhir</Badge>;
+    }
+    if (startDate && now >= startDate && endDate && now < endDate) {
+      return <Badge className="bg-green-500 text-white">Berlangsung</Badge>;
+    }
+    if (startDate && now < startDate) {
+      return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Belum Mulai</Badge>;
+    }
+
+    // Fallback to original status if schedule is not set or doesn't fit conditions
+    switch (election.status) {
       case 'pending':
         return <Badge variant="secondary">Pending</Badge>;
       case 'active':
-        return <Badge className="bg-green-500 text-white">Active</Badge>;
+        return <Badge className="bg-yellow-400 text-black">Active (No Schedule)</Badge>;
       default:
-        return <Badge>{status}</Badge>;
+        return <Badge>{election.status}</Badge>;
     }
   };
   
@@ -138,7 +153,7 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
                   <TableCell>
                     {formatSchedule(election.startDate, election.endDate)}
                   </TableCell>
-                  <TableCell>{getStatusBadge(election.status)}</TableCell>
+                  <TableCell>{getStatusBadge(election)}</TableCell>
                   <TableCell>{election.candidates ? Object.keys(election.candidates).length : 0}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
