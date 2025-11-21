@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { useDatabase } from '@/context/database-context';
-import { getVoterSession } from '@/lib/session';
+import { getVoterSession } from '@/lib/session-client';
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Loading from '@/app/loading';
@@ -31,7 +31,7 @@ export function VoteClientPage({ electionId }: { electionId: string }) {
 
   useEffect(() => {
     async function fetchSession() {
-      const voterSession = await getVoterSession();
+      const voterSession = getVoterSession();
       if (!voterSession?.voterId) {
         router.push('/');
       } else {

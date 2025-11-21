@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getAdminSession, getVoterSession } from '@/lib/session';
+import { getAdminSession, getVoterSession } from '@/lib/get-session';
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
