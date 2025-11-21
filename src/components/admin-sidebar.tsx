@@ -24,6 +24,7 @@ import {
   Users,
   Vote,
   UserSquare,
+  User as UserIcon,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -114,6 +115,11 @@ export function AdminSidebar() {
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56 mb-2" side="top" align="start">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+             <DropdownMenuItem onClick={() => router.push('/admin/profile')}>
+              <UserIcon className="mr-2 h-4 w-4" />
+              <span>Profile</span>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500 focus:bg-red-500/10">
               <LogOut className="mr-2 h-4 w-4" />
