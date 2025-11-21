@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import type { Election, Voter, Category } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { ref, onValue, get } from 'firebase/database';
+import { ref, onValue, get, set } from 'firebase/database';
 
 interface DatabaseContextType {
   elections: Election[];
@@ -13,6 +13,19 @@ interface DatabaseContextType {
 }
 
 const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined);
+
+// Function to ensure default admin credentials exist
+async function ensureAdminExists() {
+  const adminRef = ref(db, 'admin');
+  const snapshot = await get(adminRef);
+  if (!snapshot.exists()) {
+    console.log('Admin credentials not found, creating default admin...');
+    await set(adminRef, {
+      username: 'admin',
+      password: 'admin',
+    });
+  }
+}
 
 export function DatabaseProvider({ children }: { children: ReactNode }) {
   const [elections, setElections] = useState<Election[]>([]);
@@ -28,6 +41,8 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     // Function to fetch initial data once
     const fetchInitialData = async () => {
       try {
+        await ensureAdminExists(); // Ensure admin exists before fetching other data
+
         const [electionsSnap, votersSnap, categoriesSnap] = await Promise.all([
           get(electionsRef),
           get(votersRef),
@@ -65,7 +80,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
 
     const unsubscribeVoters = onValue(votersRef, (snapshot) => {
       const data = snapshot.val();
-      const votersArray = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
+      const votersArray = data ? Object.keys(data).map(id => ({ id, ...votersData[id] })) : [];
       setVoters(votersArray);
     });
 
