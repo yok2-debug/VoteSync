@@ -25,28 +25,38 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     const votersRef = ref(db, 'voters');
     const categoriesRef = ref(db, 'categories');
 
-    // Set initial loading state
-    setIsLoading(true);
-
     // Function to fetch initial data once
     const fetchInitialData = async () => {
       try {
-        await Promise.all([
+        const [electionsSnap, votersSnap, categoriesSnap] = await Promise.all([
           get(electionsRef),
           get(votersRef),
           get(categoriesRef),
         ]);
+        
+        const electionsData = electionsSnap.val();
+        const electionsArray = electionsData ? Object.keys(electionsData).map(id => ({ id, ...electionsData[id] })) : [];
+        setElections(electionsArray);
+
+        const votersData = votersSnap.val();
+        const votersArray = votersData ? Object.keys(votersData).map(id => ({ id, ...votersData[id] })) : [];
+        setVoters(votersArray);
+
+        const categoriesData = categoriesSnap.val();
+        const categoriesArray = categoriesData ? Object.keys(categoriesData).map(id => ({ id, ...categoriesData[id] })) : [];
+        setCategories(categoriesArray);
+
+      } catch (error) {
+        console.error("Failed to fetch initial data:", error);
       } finally {
-        // This ensures loading is set to false even if one of the fetches fails,
-        // preventing the app from being stuck on loading forever.
-        // The onValue listeners below will still provide live updates.
+        // This is crucial: set loading to false after the initial fetch attempt
         setIsLoading(false);
       }
     };
     
     fetchInitialData();
 
-    // Set up live listeners
+    // Set up live listeners for real-time updates
     const unsubscribeElections = onValue(electionsRef, (snapshot) => {
       const data = snapshot.val();
       const electionsArray = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
