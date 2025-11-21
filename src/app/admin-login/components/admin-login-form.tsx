@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +28,7 @@ const adminLoginSchema = z.object({
 export function AdminLoginForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof adminLoginSchema>>({
     resolver: zodResolver(adminLoginSchema),
@@ -35,22 +37,24 @@ export function AdminLoginForm() {
 
   async function onSubmit(values: z.infer<typeof adminLoginSchema>) {
     setIsSubmitting(true);
-    try {
-      await loginAdmin(values);
-      // The redirect is handled by the server action.
-      // We can show a toast as a visual feedback before the redirection occurs.
+    
+    const result = await loginAdmin(values);
+
+    setIsSubmitting(false);
+
+    if (result?.success) {
       toast({
         title: 'Login Successful',
         description: 'Redirecting to your dashboard...',
       });
-    } catch (error) {
+      router.push('/admin/dashboard');
+      router.refresh(); // Ensure the layout re-renders with new session state
+    } else {
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: error instanceof Error ? error.message : 'An unknown error occurred.',
+        description: result?.error || 'An unknown error occurred.',
       });
-    } finally {
-      setIsSubmitting(false);
     }
   }
 
@@ -64,7 +68,7 @@ export function AdminLoginForm() {
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="admin" {...field} />
+                <Input placeholder="admin" {...field} autoComplete="username" />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -77,7 +81,7 @@ export function AdminLoginForm() {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
+                <Input type="password" placeholder="••••••••" {...field} autoComplete="current-password" />
               </FormControl>
               <FormMessage />
             </FormItem>
