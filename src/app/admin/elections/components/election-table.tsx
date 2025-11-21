@@ -52,31 +52,33 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
     election.name.toLowerCase().includes(filter.toLowerCase())
   );
 
-  const getStatusBadge = (election: Election) => {
+  const getScheduleStatusBadge = (election: Election) => {
     const now = new Date();
     const startDate = election.startDate ? new Date(election.startDate) : null;
-    const endDate = election.endDate ? new Date(election.endDate) : null;
+    const endDate = election.endDate ? new Date(endDate) : null;
 
     if (endDate && now > endDate) {
       return <Badge variant="destructive">Berakhir</Badge>;
     }
     if (startDate && now >= startDate && endDate && now < endDate) {
-      return <Badge className="bg-green-500 text-white">Berlangsung</Badge>;
+      return <Badge className="bg-green-500 text-white hover:bg-green-500/90">Berlangsung</Badge>;
     }
     if (startDate && now < startDate) {
-      return <Badge variant="secondary" className="bg-blue-100 text-blue-800">Belum Mulai</Badge>;
+      return <Badge className="bg-blue-500 text-white hover:bg-blue-500/90">Belum Mulai</Badge>;
     }
-
-    // Fallback to original status if schedule is not set or doesn't fit conditions
-    switch (election.status) {
-      case 'pending':
-        return <Badge variant="secondary">Pending</Badge>;
-      case 'active':
-        return <Badge className="bg-yellow-400 text-black">Active (No Schedule)</Badge>;
-      default:
-        return <Badge>{election.status}</Badge>;
-    }
+    return <Badge variant="secondary">Jadwal Tidak Diatur</Badge>;
   };
+
+  const getDbStatusBadge = (election: Election) => {
+    switch (election.status) {
+        case 'pending':
+          return <Badge variant="secondary">Pending</Badge>;
+        case 'active':
+          return <Badge className="bg-yellow-400 text-black hover:bg-yellow-400/90">Active</Badge>;
+        default:
+          return <Badge>{election.status}</Badge>;
+      }
+  }
   
   const handleAdd = () => {
     router.push('/admin/elections/new');
@@ -140,7 +142,8 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Schedule</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>DB Status</TableHead>
+              <TableHead>Schedule Status</TableHead>
               <TableHead>Candidates</TableHead>
               <TableHead className="w-[100px] text-right">Actions</TableHead>
             </TableRow>
@@ -153,7 +156,8 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
                   <TableCell>
                     {formatSchedule(election.startDate, election.endDate)}
                   </TableCell>
-                  <TableCell>{getStatusBadge(election)}</TableCell>
+                  <TableCell>{getDbStatusBadge(election)}</TableCell>
+                  <TableCell>{getScheduleStatusBadge(election)}</TableCell>
                   <TableCell>{election.candidates ? Object.keys(election.candidates).length : 0}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -179,7 +183,7 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
+                <TableCell colSpan={6} className="h-24 text-center">
                   No elections found.
                 </TableCell>
               </TableRow>
