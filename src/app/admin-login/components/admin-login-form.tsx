@@ -18,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { loginAdmin } from '@/lib/session';
 
 const adminLoginSchema = z.object({
   username: z.string().min(1, { message: 'Username is required.' }),
@@ -38,21 +39,15 @@ export function AdminLoginForm() {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(values),
-      });
+      const result = await loginAdmin(values);
 
-      const result = await response.json();
-
-      if (response.ok) {
+      if (result.success) {
         toast({
           title: 'Login Successful',
           description: 'Redirecting to your dashboard...',
         });
         router.push('/admin/dashboard');
-        router.refresh();
+        router.refresh(); // Important to refresh server components and session
       } else {
         throw new Error(result.error || 'An unknown error occurred.');
       }
