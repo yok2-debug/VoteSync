@@ -14,19 +14,6 @@ interface DatabaseContextType {
 
 const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined);
 
-// Function to ensure default admin credentials exist
-async function ensureAdminExists() {
-  const adminRef = ref(db, 'admin');
-  const snapshot = await get(adminRef);
-  if (!snapshot.exists()) {
-    console.log('Admin credentials not found, creating default admin...');
-    await set(adminRef, {
-      username: 'admin',
-      password: 'admin', // Default password if none exists
-    });
-  }
-}
-
 export function DatabaseProvider({ children }: { children: ReactNode }) {
   const [elections, setElections] = useState<Election[]>([]);
   const [voters, setVoters] = useState<Voter[]>([]);
@@ -41,10 +28,14 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
       if (Array.isArray(data)) {
           return data
               .filter(v => v) // Filter out null/undefined entries in the array
-              .map((voter, index) => ({
-                  id: voter.id || voter.nik || String(index), // Use existing id, fallback to NIK, then to index
-                  ...voter
-              }));
+              .map((voter, index) => {
+                  const id = voter.id || voter.nik || String(index);
+                  if (voter.id) return voter;
+                  return {
+                    id: id,
+                    ...voter
+                  };
+              });
       }
 
       // Handle object structure from Firebase
@@ -59,7 +50,6 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     // Function to fetch initial data once
     const fetchInitialData = async () => {
       try {
-        // We don't call ensureAdminExists here anymore, login logic handles it.
         const [electionsSnap, votersSnap, categoriesSnap] = await Promise.all([
           get(electionsRef),
           get(votersRef),
