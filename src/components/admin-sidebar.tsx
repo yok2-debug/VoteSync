@@ -118,7 +118,7 @@ export function AdminSidebar() {
             <DropdownMenuSeparator />
              <DropdownMenuItem onClick={() => router.push('/admin/profile')}>
               <UserIcon className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+              <span>Change Password</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500 focus:bg-red-500/10">
