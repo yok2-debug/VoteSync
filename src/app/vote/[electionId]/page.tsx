@@ -65,7 +65,8 @@ function VotePageContent() {
     }
 
     const now = new Date();
-    const electionStarted = election.startDate ? new Date(election.startDate) <= now : false;
+    // If startDate is not set, assume it has started as long as status is active
+    const electionStarted = election.startDate ? new Date(election.startDate) <= now : true;
     const electionEnded = election.endDate ? new Date(election.endDate) < now : false;
     const isVoterAllowed = category.allowedElections?.includes(electionId);
     const hasVoted = voter.hasVoted?.[electionId];
