@@ -55,7 +55,7 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
   const getScheduleStatusBadge = (election: Election) => {
     const now = new Date();
     const startDate = election.startDate ? new Date(election.startDate) : null;
-    const endDate = election.endDate ? new Date(endDate) : null;
+    const endDate = election.endDate ? new Date(election.endDate) : null;
 
     if (endDate && now > endDate) {
       return <Badge variant="destructive">Berakhir</Badge>;
