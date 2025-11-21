@@ -70,8 +70,7 @@ export function CandidateVoteForm({ electionId, candidate, voterId }: CandidateV
         description: `Your vote for ${candidate.name} has been recorded.`,
       });
       
-      router.push('/vote');
-      router.refresh();
+      router.replace('/vote');
 
     } catch (error) {
       toast({
