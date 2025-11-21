@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import type { Voter, Category } from '@/lib/types';
 import {
   Table,
@@ -196,6 +196,7 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
         skipEmptyLines: true,
         complete: (results) => {
           setImportedData(results.data.filter(row => Object.values(row).some(val => val !== '' && val !== null)));
+          setShowImportDialog(true);
         },
         error: (error: any) => {
            toast({
@@ -205,7 +206,6 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
           });
         }
       });
-      setShowImportDialog(true);
     }
     // Reset file input to allow re-uploading the same file
     if(event.target) {
@@ -273,6 +273,8 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
         title: 'Import Failed',
         description: error instanceof Error ? error.message : 'An unknown error occurred during import.',
       });
+    } finally {
+        setShowImportDialog(false);
     }
   }
 
@@ -498,13 +500,13 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
         onSave={onFormSave}
       />
       
-      <VoterImportDialog 
+      {importedData.length > 0 && showImportDialog && <VoterImportDialog 
         open={showImportDialog}
         onOpenChange={setShowImportDialog}
         data={importedData}
         categories={categories}
         onSave={handleImportSave}
-      />
+      />}
 
        {selectedVoter && (
         <ResetPasswordDialog
@@ -535,3 +537,5 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
     </div>
   );
 }
+
+    

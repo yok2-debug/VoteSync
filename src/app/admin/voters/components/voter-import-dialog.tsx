@@ -16,7 +16,7 @@ import { AlertTriangle, Loader2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import type { Category } from '@/lib/types';
+import type { Category, Voter } from '@/lib/types';
 import { getVoters } from '@/lib/data';
 
 interface VoterImportDialogProps {
@@ -40,7 +40,18 @@ const normalizeCategory = (name: string) => name ? name.replace(/\s+/g, '').toLo
 export function VoterImportDialog({ open, onOpenChange, data, categories, onSave }: VoterImportDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validatedData, setValidatedData] = useState<ValidatedRow[]>([]);
+  const [existingVoters, setExistingVoters] = useState<Voter[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    async function fetchVoters() {
+      const voters = await getVoters();
+      setExistingVoters(voters);
+    }
+    if (open) {
+      fetchVoters();
+    }
+  }, [open]);
 
   const categoryNameMap = useMemo(() => new Map(categories.map(c => [normalizeCategory(c.name), c.id])), [categories]);
   
@@ -48,12 +59,11 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
     async function validateData() {
         const filteredData = data.filter(row => row && typeof row === 'object' && Object.values(row).some(val => val !== null && val !== ''));
 
-        if (!open || filteredData.length === 0) {
+        if (!open || filteredData.length === 0 || existingVoters.length === 0) {
             setValidatedData([]);
             return;
         }
 
-        const existingVoters = await getVoters();
         const existingVoterIds = new Set(existingVoters.map(v => v.id));
         const currentImportIds = new Set();
 
@@ -111,7 +121,7 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
     }
     validateData();
 
-  }, [data, open, categoryNameMap]);
+  }, [data, open, categoryNameMap, existingVoters]);
   
   const hasErrors = useMemo(() => validatedData.some(row => !row.isValid), [validatedData]);
   const validRowCount = useMemo(() => validatedData.filter(row => row.isValid).length, [validatedData]);
@@ -210,3 +220,5 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
     </Dialog>
   );
 }
+
+    
