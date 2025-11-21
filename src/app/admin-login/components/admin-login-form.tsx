@@ -3,7 +3,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -18,7 +17,9 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { loginAdmin } from '@/lib/session';
+import { useRouter } from 'next/navigation';
+import { getAdminCredentials } from '@/lib/data';
+import { createAdminSession } from '@/lib/session';
 
 const adminLoginSchema = z.object({
   username: z.string().min(1, { message: 'Username is required.' }),
@@ -27,44 +28,46 @@ const adminLoginSchema = z.object({
 
 export function AdminLoginForm() {
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof adminLoginSchema>>({
     resolver: zodResolver(adminLoginSchema),
     defaultValues: { username: 'admin', password: '' },
   });
 
-  async function onSubmit(values: z.infer<typeof adminLoginSchema>) {
+  async function handleAdminLogin(values: z.infer<typeof adminLoginSchema>) {
     setIsSubmitting(true);
-    
     try {
-      const result = await loginAdmin(values);
-
-      if (result.success) {
-        toast({
-          title: 'Login Successful',
-          description: 'Redirecting to your dashboard...',
-        });
-        router.push('/admin/dashboard');
-        router.refresh(); // Important to refresh server components and session
-      } else {
-        throw new Error(result.error || 'An unknown error occurred.');
-      }
+        const adminCreds = await getAdminCredentials();
+        if (
+            adminCreds &&
+            adminCreds.username === values.username &&
+            adminCreds.password === values.password
+        ) {
+            await createAdminSession({ isAdmin: true });
+            toast({
+                title: 'Login Successful',
+                description: 'Redirecting to your dashboard...',
+            });
+            router.replace('/admin/dashboard');
+        } else {
+            throw new Error('Invalid admin credentials.');
+        }
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: error instanceof Error ? error.message : 'An unknown server error occurred.',
+        description: error instanceof Error ? error.message : 'An unknown error occurred.',
       });
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   }
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleAdminLogin)} className="space-y-4">
         <FormField
           control={form.control}
           name="username"
@@ -72,7 +75,7 @@ export function AdminLoginForm() {
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="admin" {...field} autoComplete="username" />
+                <Input placeholder="admin" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -85,7 +88,7 @@ export function AdminLoginForm() {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} autoComplete="current-password" />
+                <Input type="password" placeholder="••••••••" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

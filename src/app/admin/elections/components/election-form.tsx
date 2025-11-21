@@ -33,6 +33,7 @@ import { cn } from '@/lib/utils';
 import { format, setHours, setMinutes, getHours, getMinutes } from 'date-fns';
 import { db } from '@/lib/firebase';
 import { ref, set, get, push } from 'firebase/database';
+import { revalidatePath } from 'next/cache';
 
 const committeeMemberSchema = z.object({
   name: z.string().min(1, 'Committee member name is required.'),

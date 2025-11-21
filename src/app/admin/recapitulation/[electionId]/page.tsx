@@ -1,27 +1,41 @@
-'use server';
+'use client';
+import { redirect, useParams } from 'next/navigation';
+import { RecapitulationDisplay } from './components/recapitulation-display';
+import { useDatabase } from '@/context/database-context';
+import Loading from '@/app/loading';
+import { useMemo } from 'react';
 
-import { getElections } from '@/lib/data';
-import { RecapitulationClientDisplay } from './components/recapitulation-client-display';
+export default function RecapitulationPage() {
+  const { electionId } = useParams() as { electionId: string };
+  const { elections, voters, categories, isLoading } = useDatabase();
 
-export async function generateStaticParams() {
-  const elections = await getElections();
-  return elections.map((election) => ({
-    electionId: election.id,
-  }));
-}
+  const election = useMemo(() => {
+    if (isLoading) return null;
+    return elections.find(e => e.id === electionId);
+  }, [elections, electionId, isLoading]);
 
-export default async function RecapitulationPage({ params }: { params: { electionId: string } }) {
-  const { electionId } = params;
+  if (isLoading) {
+    return <Loading />;
+  }
+
+  if (!election) {
+    redirect('/admin/recapitulation');
+    return <Loading />;
+  }
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Recapitulation</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Recapitulation: {election.name}</h1>
         <p className="text-muted-foreground">
           Detailed report of election results and voter participation.
         </p>
       </div>
-      <RecapitulationClientDisplay electionId={electionId} />
+      <RecapitulationDisplay 
+        election={election} 
+        allVoters={voters}
+        allCategories={categories}
+      />
     </div>
   );
 }

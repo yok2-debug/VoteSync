@@ -1,15 +1,15 @@
 {
-  "name": "votesync",
-  "version": "1.0.0",
+  "name": "nextn",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
+    "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
+    "build": "NODE_ENV=production next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit",
-    "genkit:dev": "node src/ai/dev.ts",
-    "genkit:watch": "node src/ai/dev.ts --watch"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",

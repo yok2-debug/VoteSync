@@ -18,8 +18,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginVoter } from '@/lib/session';
-import { setVoterSession } from '@/lib/session-client';
+import { getVoterById } from '@/lib/data';
+import { createVoterSession } from '@/lib/session';
 
 const voterLoginSchema = z.object({
   voterId: z.string().min(1, { message: 'Voter ID is required.' }),
@@ -36,22 +36,21 @@ export function LoginForm() {
     defaultValues: { voterId: '', password: '' },
   });
 
-  async function onSubmit(values: z.infer<typeof voterLoginSchema>) {
+  async function handleVoterLogin(values: z.infer<typeof voterLoginSchema>) {
     setIsSubmitting(true);
     try {
-      const result = await loginVoter(values);
-      if (result.success && result.voterId) {
-        const sessionPayload = { voterId: result.voterId };
-        setVoterSession(sessionPayload); // Set session in local storage for client-side access
-        toast({
-          title: 'Login Successful',
-          description: 'Redirecting to your dashboard...',
-        });
-        router.push('/vote');
-        router.refresh();
-      } else {
-        throw new Error(result.error || 'Invalid voter ID or password.');
-      }
+        const voter = await getVoterById(values.voterId);
+        if (voter && voter.password === values.password) {
+            await createVoterSession({ voterId: voter.id });
+            toast({
+                title: 'Login Successful',
+                description: 'Redirecting to your dashboard...',
+            });
+            router.push('/vote');
+            router.refresh();
+        } else {
+            throw new Error('Invalid voter ID or password.');
+        }
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -65,7 +64,7 @@ export function LoginForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(handleVoterLogin)} className="space-y-4">
         <FormField
           control={form.control}
           name="voterId"

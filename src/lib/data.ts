@@ -5,34 +5,41 @@ import { db } from '@/lib/firebase';
 import type { Admin, Category, Election, Voter } from '@/lib/types';
 import { get, ref } from 'firebase/database';
 
-export async function getAdminCredentials(): Promise<Admin> {
+export async function getAdminCredentials(): Promise<Admin | null> {
   try {
     const snapshot = await get(ref(db, 'admin'));
-    if (snapshot.exists()) {
-      return snapshot.val() as Admin;
-    }
-    // Return a default/empty object if it doesn't exist to prevent crashes
-    return { username: '', password: '' };
+    return snapshot.val();
   } catch (error) {
-    console.error("Failed to get admin credentials:", error);
-    // Return a default/empty object on error
-    return { username: '', password: '' };
+    return null;
   }
 }
 
-export async function getVoters(): Promise<Voter[]> {
-    try {
-        const snapshot = await get(ref(db, 'voters'));
-        const data = snapshot.val();
-        // Ensure we always return an array, even if data is null or not an array
-        if (Array.isArray(data)) {
-            return data.filter(Boolean); // Filter out any null/falsy values from sparse arrays
-        }
-        return [];
-    } catch (error) {
-        console.error("Failed to get voters:", error);
-        return [];
+async function enrichVoterWithElections(
+    voterData: Omit<Voter, 'id' | 'followedElections'>, 
+    id: string,
+    allCategories: Category[],
+    allElections: Election[]
+): Promise<Voter> {
+    const voterCategory = allCategories.find(c => c.id === voterData.category);
+    const followedElections = allElections.filter(e => voterCategory?.allowedElections?.includes(e.id));
+    return { id, ...voterData, followedElections };
+}
+
+export async function getVoterById(voterId: string): Promise<Voter | null> {
+  try {
+    const snapshot = await get(ref(db, `voters/${voterId}`));
+    if (snapshot.exists()) {
+        const voterData = snapshot.val();
+        const [categories, elections] = await Promise.all([
+            getCategories(),
+            getElections()
+        ]);
+        return await enrichVoterWithElections(voterData, snapshot.key!, categories, elections);
     }
+    return null;
+  } catch (error) {
+    return null;
+  }
 }
 
 export async function getElections(): Promise<Election[]> {
@@ -40,20 +47,33 @@ export async function getElections(): Promise<Election[]> {
         const snapshot = await get(ref(db, 'elections'));
         if (snapshot.exists()) {
             const electionsData = snapshot.val();
-            // Handle both object and array structures from Firebase
-            if (Array.isArray(electionsData)) {
-              return electionsData.filter(Boolean);
-            }
-            if (typeof electionsData === 'object' && electionsData !== null) {
-              return Object.keys(electionsData).map(id => ({
-                  id,
-                  ...electionsData[id],
-              }));
-            }
+            return Object.keys(electionsData).map(id => ({
+                id,
+                ...electionsData[id],
+            }));
         }
         return [];
     } catch (error) {
-        console.error("Failed to get elections:", error);
+        return [];
+    }
+}
+
+export async function getVoters(): Promise<Voter[]> {
+    try {
+        const votersSnapshot = await get(ref(db, 'voters'));
+        if (!votersSnapshot.exists()) return [];
+
+        const votersData = votersSnapshot.val();
+        const [categories, elections] = await Promise.all([
+            getCategories(),
+            getElections()
+        ]);
+        
+        const votersPromises = Object.keys(votersData).map(id => 
+            enrichVoterWithElections(votersData[id], id, categories, elections)
+        );
+        return await Promise.all(votersPromises);
+    } catch (error) {
         return [];
     }
 }
@@ -63,16 +83,13 @@ export async function getCategories(): Promise<Category[]> {
         const snapshot = await get(ref(db, 'categories'));
         if (snapshot.exists()) {
             const categoriesData = snapshot.val();
-            if (typeof categoriesData === 'object' && categoriesData !== null) {
-                return Object.keys(categoriesData).map(id => ({
-                    id,
-                    ...categoriesData[id],
-                }));
-            }
+            return Object.keys(categoriesData).map(id => ({
+                id,
+                ...categoriesData[id],
+            }));
         }
         return [];
     } catch (error) {
-        console.error("Failed to get categories:", error);
         return [];
     }
 }

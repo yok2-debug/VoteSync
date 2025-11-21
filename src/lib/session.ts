@@ -2,79 +2,71 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import type { AdminSessionPayload, Voter, VoterSessionPayload } from './types';
-import { getAdminCredentials, getVoters } from './data';
-import { z } from 'zod';
+import type { AdminSessionPayload, VoterSessionPayload } from './types';
 
 const ADMIN_SESSION_COOKIE_NAME = 'votesync_admin_session';
 const VOTER_SESSION_COOKIE_NAME = 'votesync_voter_session';
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-// --- Admin Session ---
+async function createSession(payload: AdminSessionPayload | VoterSessionPayload, role: 'admin' | 'voter') {
+  const expires = new Date(Date.now() + SESSION_DURATION);
+  const session = JSON.stringify({ ...payload, expires: expires.getTime() });
+  const cookieName = role === 'admin' ? ADMIN_SESSION_COOKIE_NAME : VOTER_SESSION_COOKIE_NAME;
 
-export async function createAdminSession(payload: AdminSessionPayload) {
-    const expires = new Date(Date.now() + SESSION_DURATION);
-    cookies().set(ADMIN_SESSION_COOKIE_NAME, JSON.stringify(payload), { expires, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+  cookies().set(cookieName, session, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    expires: expires.getTime(),
+    path: '/',
+    sameSite: 'lax',
+  });
+}
+
+export async function createAdminSession(payload: Omit<AdminSessionPayload, 'expires'>) {
+    await createSession({ ...payload, isAdmin: true }, 'admin');
+}
+
+export async function createVoterSession(payload: Omit<VoterSessionPayload, 'expires'>) {
+    await createSession(payload, 'voter');
+}
+
+
+async function getSession<T>(cookieName: string): Promise<T | null> {
+    const sessionCookie = cookies().get(cookieName)?.value;
+
+    if (!sessionCookie) {
+        return null;
+    }
+
+    try {
+        const parsed = JSON.parse(sessionCookie);
+        if (parsed.expires && parsed.expires < Date.now()) {
+            await deleteSession(cookieName);
+            return null;
+        }
+        return parsed;
+    } catch (error) {
+        return null;
+    }
+}
+
+export async function getAdminSession(): Promise<AdminSessionPayload | null> {
+    return await getSession<AdminSessionPayload>(ADMIN_SESSION_COOKIE_NAME);
+}
+
+export async function getVoterSession(): Promise<VoterSessionPayload | null> {
+    return await getSession<VoterSessionPayload>(VOTER_SESSION_COOKIE_NAME);
+}
+
+
+async function deleteSession(cookieName: string) {
+  cookies().delete(cookieName);
 }
 
 export async function deleteAdminSession() {
-  cookies().delete(ADMIN_SESSION_COOKIE_NAME);
-}
-
-const adminLoginSchema = z.object({
-  username: z.string(),
-  password: z.string(),
-});
-
-export async function loginAdmin(values: z.infer<typeof adminLoginSchema>) {
-  try {
-    const adminCreds = await getAdminCredentials();
-    
-    // Correctly compare form values with database values
-    if (adminCreds && adminCreds.username === values.username && adminCreds.password === values.password) {
-      const sessionPayload = { isAdmin: true };
-      await createAdminSession(sessionPayload);
-      return { success: true };
-    } else {
-      return { success: false, error: 'Invalid username or password' };
-    }
-  } catch (error) {
-    console.error('Admin login error:', error);
-    return { success: false, error: 'An internal server error occurred.' };
-  }
-}
-
-
-// --- Voter Session ---
-
-export async function createVoterSession(payload: VoterSessionPayload) {
-    const expires = new Date(Date.now() + SESSION_DURATION);
-    cookies().set(VOTER_SESSION_COOKIE_NAME, JSON.stringify(payload), { expires, httpOnly: true, secure: process.env.NODE_ENV === 'production' });
+    await deleteSession(ADMIN_SESSION_COOKIE_NAME);
 }
 
 export async function deleteVoterSession() {
-    cookies().delete(VOTER_SESSION_COOKIE_NAME);
-}
-
-const voterLoginSchema = z.object({
-  voterId: z.string(),
-  password: z.string(),
-});
-
-export async function loginVoter(values: z.infer<typeof voterLoginSchema>): Promise<{ success: boolean; error?: string; voterId?: string }> {
-    try {
-        const allVoters = await getVoters();
-        const voter = allVoters.find(v => v.id === values.voterId);
-        
-        if (voter && voter.password === values.password) {
-            const sessionPayload = { voterId: voter.id };
-            await createVoterSession(sessionPayload);
-            return { success: true, voterId: voter.id };
-        } else {
-            return { success: false, error: 'Invalid voter ID or password.' };
-        }
-    } catch (error) {
-        console.error('Voter login error:', error);
-        return { success: false, error: 'An internal server error occurred.' };
-    }
+    await deleteSession(VOTER_SESSION_COOKIE_NAME);
 }
