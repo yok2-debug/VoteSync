@@ -1,5 +1,4 @@
 
-'use server';
 
 import { db } from '@/lib/firebase';
 import type { Admin, Category, Election, Voter } from '@/lib/types';
