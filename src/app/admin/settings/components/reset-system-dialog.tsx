@@ -18,7 +18,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { ref, update, remove, get, child } from 'firebase/database';
 import { db } from '@/lib/firebase';
-import { revalidatePath } from 'next/cache';
 
 type ResetSystemDialogProps = {
   action: string;
