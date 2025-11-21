@@ -4,6 +4,19 @@ import { redirect, useParams } from 'next/navigation';
 import { useDatabase } from '@/context/database-context';
 import Loading from '@/app/loading';
 import { useMemo } from 'react';
+import { getElections } from '@/lib/data';
+
+export async function generateStaticParams() {
+  const elections = await getElections();
+  const paths = elections.map(election => ({
+    electionId: election.id,
+  }));
+  
+  // Add path for creating a new election
+  paths.push({ electionId: 'new' });
+
+  return paths;
+}
 
 export default function ElectionEditPage() {
   const { electionId } = useParams() as { electionId: string };
@@ -31,7 +44,12 @@ export default function ElectionEditPage() {
   }
 
   if (!election) {
-    redirect('/admin/elections');
+    // This might happen briefly on first load or if the election is deleted
+    // A loading state or a specific "not found" component could be better
+    // For static export, redirecting might be tricky, but let's keep it for client-side logic
+    if (typeof window !== 'undefined') {
+      redirect('/admin/elections');
+    }
     return <Loading />;
   }
   

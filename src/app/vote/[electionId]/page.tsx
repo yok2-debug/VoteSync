@@ -21,6 +21,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { getElections } from '@/lib/data';
+
+
+export async function generateStaticParams() {
+  const elections = await getElections();
+  return elections.map((election) => ({
+    electionId: election.id,
+  }));
+}
 
 function VotePageContent() {
   const { electionId } = useParams() as { electionId: string };
@@ -54,10 +63,27 @@ function VotePageContent() {
   const isLoading = isDbLoading || isSessionLoading;
 
   useEffect(() => {
-    if (!isLoading && (!election || !voter)) {
+    if (isLoading) return;
+
+    const checkVoterAndElection = () => {
+      if (!election || !voter) {
         router.push('/vote');
-    }
-  }, [isLoading, election, voter, router]);
+        return;
+      }
+      const now = new Date();
+      const electionStarted = election?.startDate ? new Date(election.startDate) <= now : false;
+      const electionEnded = election?.endDate ? new Date(election.endDate) < now : false;
+      const categoryForVoter = categories.find(c => c.id === voter?.category);
+      const isVoterAllowed = categoryForVoter?.allowedElections?.includes(electionId);
+      const hasVoted = voter?.hasVoted?.[electionId];
+
+      if (election.status !== 'active' || !electionStarted || electionEnded || !isVoterAllowed || hasVoted) {
+        router.push('/vote');
+      }
+    };
+
+    checkVoterAndElection();
+  }, [isLoading, election, voter, category, router, electionId, categories]);
 
   if (isLoading || !session?.voterId || !election || !voter || !category) {
     return <Loading />; 
