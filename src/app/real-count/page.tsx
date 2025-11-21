@@ -3,6 +3,7 @@ import { PublicNavbar } from '@/components/public-navbar';
 import { RealCountDisplay } from './components/real-count-display';
 import { useDatabase } from '@/context/database-context';
 import Loading from '../loading';
+import { cn } from '@/lib/utils';
 
 export default function RealCountPage() {
   const { elections, voters, categories, isLoading } = useDatabase();
@@ -23,15 +24,19 @@ export default function RealCountPage() {
             <p className="text-sm text-muted-foreground">Pantuan hasil perolehan suara secara real-time.</p>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className={cn(
+              "grid gap-8",
+              activeElections.length === 1 ? "grid-cols-1" : "grid-cols-1 lg:grid-cols-2"
+          )}>
             {activeElections.length > 0 ? (
               activeElections.map(election => (
-                <RealCountDisplay
-                  key={election.id}
-                  election={election}
-                  allVoters={voters}
-                  allCategories={categories}
-                />
+                <div key={election.id} className={cn(activeElections.length === 1 && "max-w-2xl mx-auto w-full")}>
+                  <RealCountDisplay
+                    election={election}
+                    allVoters={voters}
+                    allCategories={categories}
+                  />
+                </div>
               ))
             ) : (
               <div className="col-span-full text-center py-10">
