@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import { getAdminCredentials } from '@/lib/data';
 import { createAdminSession } from '@/lib/session';
@@ -28,6 +27,7 @@ export async function POST(request: Request) {
       const response = NextResponse.json({ success: true });
       await createAdminSession(sessionPayload);
       
+      // This was missing before. The response with the cookie must be returned.
       return response;
 
     } else {

@@ -24,6 +24,7 @@ export async function getVoterById(voterId: string): Promise<Voter | null> {
     }
     return null;
   } catch (error) {
+    console.error(`Failed to get voter by ID ${voterId}:`, error);
     return null;
   }
 }
@@ -40,6 +41,7 @@ export async function getElections(): Promise<Election[]> {
         }
         return [];
     } catch (error) {
+        console.error("Failed to get elections:", error);
         return [];
     }
 }
@@ -54,10 +56,14 @@ export async function getVoters(): Promise<Voter[]> {
         if (Array.isArray(votersData)) {
             return votersData
                 .filter(v => v !== null) // Filter out null entries in the array
-                .map((voter, index) => ({
-                    id: voter.id || voter.nik || String(index),
-                    ...voter,
-                }));
+                .map((voter, index) => {
+                  const id = voter.id || voter.nik || String(index);
+                   if (voter.id) return voter;
+                    return {
+                      id: id,
+                      ...voter
+                    };
+                });
         }
         
         return Object.keys(votersData).map(id => ({
@@ -65,6 +71,7 @@ export async function getVoters(): Promise<Voter[]> {
           ...votersData[id],
         }));
     } catch (error) {
+        console.error("Failed to get voters:", error);
         return [];
     }
 }
@@ -81,6 +88,7 @@ export async function getCategories(): Promise<Category[]> {
         }
         return [];
     } catch (error) {
+        console.error("Failed to get categories:", error);
         return [];
     }
 }
