@@ -15,25 +15,17 @@ export async function loginAdmin(values: {username: string, password: string}): 
   try {
     const adminCreds = await getAdminCredentials();
     
-    let isValid = false;
-    
-    // Check against credentials from DB
-    if (adminCreds) {
-      isValid = adminCreds.username === values.username && adminCreds.password === values.password;
-    } else {
-      // Fallback to default if DB is empty
-      isValid = values.username === 'admin' && values.password === 'admin';
-    }
-
-    if (isValid) {
+    if (adminCreds && adminCreds.username === values.username && adminCreds.password === values.password) {
       const expires = new Date(Date.now() + SESSION_DURATION);
-      cookies().set(ADMIN_SESSION_COOKIE_NAME, JSON.stringify({ isAdmin: true }), { expires, httpOnly: true });
+      const sessionPayload = JSON.stringify({ isAdmin: true });
+      cookies().set(ADMIN_SESSION_COOKIE_NAME, sessionPayload, { expires, httpOnly: true });
       return { success: true };
     } else {
       return { error: 'Invalid admin credentials.' };
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    console.error('Admin login error:', errorMessage);
     return { error: errorMessage };
   }
 }
