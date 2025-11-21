@@ -26,63 +26,53 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 function VotePageContent() {
   const { electionId } = useParams() as { electionId: string };
   const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
+  const [session, setSession] = useState<any>(null);
   const [election, setElection] = useState<Election | null>(null);
   const [voter, setVoter] = useState<Voter | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const validateAndSetState = () => {
-      // 1. Get session from localStorage
-      const voterSession = getVoterSession();
-      if (!voterSession?.voterId) {
-        router.push('/');
-        return; // Stop execution if no session
-      }
+    const voterSession = getVoterSession();
+    if (!voterSession?.voterId) {
+      router.push('/');
+      return;
+    }
+    setSession(voterSession);
 
-      // 2. Wait for DB data from context
-      if (isDbLoading) {
-        return; // Wait for the next run when data is ready
-      }
+    if (isDbLoading) return;
 
-      // 3. Find all necessary data pieces
-      const currentElection = elections.find(e => e.id === electionId);
-      const currentVoter = voters.find(v => v.id === voterSession.voterId);
-      const voterCategory = currentVoter ? categories.find(c => c.id === currentVoter.category) : undefined;
-      
-      // 4. Perform all validation checks
-      if (!currentElection || !currentVoter || !voterCategory) {
-        // This might happen if data is still inconsistent, redirect to safety
-        router.push('/vote');
-        return;
-      }
+    const currentElection = elections.find(e => e.id === electionId);
+    const currentVoter = voters.find(v => v.id === voterSession.voterId);
+    const voterCategory = currentVoter ? categories.find(c => c.id === currentVoter.category) : undefined;
 
-      const now = new Date();
-      const electionStarted = currentElection.startDate ? new Date(currentElection.startDate) <= now : true;
-      const electionEnded = currentElection.endDate ? new Date(currentElection.endDate) < now : false;
-      const isVoterAllowed = voterCategory.allowedElections?.includes(electionId);
-      const hasVoted = currentVoter.hasVoted?.[electionId];
+    if (!currentElection || !currentVoter || !voterCategory) {
+      router.push('/vote');
+      return;
+    }
 
-      if (
-        currentElection.status !== 'active' || 
-        !electionStarted || 
-        electionEnded || 
-        !isVoterAllowed || 
-        hasVoted
-      ) {
-        router.push('/vote');
-        return;
-      }
+    const now = new Date();
+    const electionStarted = currentElection.startDate ? new Date(currentElection.startDate) <= now : true;
+    const electionEnded = currentElection.endDate ? new Date(currentElection.endDate) < now : false;
+    const isVoterAllowed = voterCategory.allowedElections?.includes(electionId);
+    const hasVoted = currentVoter.hasVoted?.[electionId];
 
-      // 5. All checks passed. Set state to render the page.
-      setElection(currentElection);
-      setVoter(currentVoter);
-      setIsLoading(false);
-    };
+    if (
+      currentElection.status !== 'active' || 
+      !electionStarted || 
+      electionEnded || 
+      !isVoterAllowed || 
+      hasVoted
+    ) {
+      router.push('/vote');
+      return;
+    }
 
-    validateAndSetState();
+    setElection(currentElection);
+    setVoter(currentVoter);
+    setIsLoading(false);
+
   }, [isDbLoading, elections, voters, categories, electionId, router]);
-
 
   if (isLoading || !election || !voter) {
     return <Loading />; 
@@ -123,6 +113,11 @@ function VotePageContent() {
                         />
                       </DialogTrigger>
                       <DialogContent className="max-w-xl p-2 border-0 bg-transparent shadow-none">
+                        <DialogHeader>
+                          <DialogTitle className="sr-only">
+                            Foto {candidate.name} diperbesar
+                          </DialogTitle>
+                        </DialogHeader>
                         <DialogClose asChild>
                           <img
                               src={candidate.photo || defaultAvatar?.imageUrl || 'https://picsum.photos/seed/default/400/400'}

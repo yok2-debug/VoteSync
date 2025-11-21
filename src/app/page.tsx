@@ -137,13 +137,18 @@ export default function LoginPage() {
                                               />
                                             </DialogTrigger>
                                             <DialogContent className="p-0 border-0 max-w-xl bg-transparent shadow-none">
-                                                <DialogClose asChild>
-                                                    <img
-                                                      src={candidate.photo || defaultAvatar?.imageUrl}
-                                                      alt={`Foto ${candidate.name}`}
-                                                      className="w-full h-auto rounded-md cursor-pointer"
-                                                    />
-                                                </DialogClose>
+                                              <DialogHeader>
+                                                <DialogTitle className="sr-only">
+                                                  Foto {candidate.name} diperbesar
+                                                </DialogTitle>
+                                              </DialogHeader>
+                                              <DialogClose asChild>
+                                                  <img
+                                                    src={candidate.photo || defaultAvatar?.imageUrl}
+                                                    alt={`Foto ${candidate.name}`}
+                                                    className="w-full h-auto rounded-md cursor-pointer"
+                                                  />
+                                              </DialogClose>
                                             </DialogContent>
                                           </Dialog>
                                       </div>
