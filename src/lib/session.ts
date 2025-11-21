@@ -1,72 +1,68 @@
-
-'use server';
-
-import { cookies } from 'next/headers';
 import type { AdminSessionPayload, VoterSessionPayload } from './types';
 
 const ADMIN_SESSION_COOKIE_NAME = 'votesync_admin_session';
 const VOTER_SESSION_COOKIE_NAME = 'votesync_voter_session';
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-async function createSession(payload: AdminSessionPayload | VoterSessionPayload, role: 'admin' | 'voter') {
-  const expires = new Date(Date.now() + SESSION_DURATION);
-  const session = JSON.stringify({ ...payload, expires: expires.getTime() });
-  const cookieName = role === 'admin' ? ADMIN_SESSION_COOKIE_NAME : VOTER_SESSION_COOKIE_NAME;
+// This function now runs only on the client
+function createSession(payload: AdminSessionPayload | VoterSessionPayload, role: 'admin' | 'voter') {
+  if (typeof window === 'undefined') return; // Guard against server-side execution
+  
+  const expires = Date.now() + SESSION_DURATION;
+  const session = JSON.stringify({ ...payload, expires });
+  const storageKey = role === 'admin' ? ADMIN_SESSION_COOKIE_NAME : VOTER_SESSION_COOKIE_NAME;
 
-  cookies().set(cookieName, session, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    expires: expires.getTime(),
-    path: '/',
-    sameSite: 'lax',
-  });
+  window.localStorage.setItem(storageKey, session);
 }
 
 export async function createAdminSession(payload: Omit<AdminSessionPayload, 'expires'>) {
-    await createSession({ ...payload, isAdmin: true }, 'admin');
+    createSession({ ...payload, isAdmin: true }, 'admin');
 }
 
 export async function createVoterSession(payload: Omit<VoterSessionPayload, 'expires'>) {
-    await createSession(payload, 'voter');
+    createSession(payload, 'voter');
 }
 
+// This function now runs only on the client
+async function getSession<T>(storageKey: string): Promise<T | null> {
+    if (typeof window === 'undefined') return null; // Guard against server-side execution
 
-async function getSession<T>(cookieName: string): Promise<T | null> {
-    const sessionCookie = cookies().get(cookieName)?.value;
+    const sessionString = window.localStorage.getItem(storageKey);
 
-    if (!sessionCookie) {
+    if (!sessionString) {
         return null;
     }
 
     try {
-        const parsed = JSON.parse(sessionCookie);
+        const parsed = JSON.parse(sessionString);
         if (parsed.expires && parsed.expires < Date.now()) {
-            await deleteSession(cookieName);
+            deleteSession(storageKey);
             return null;
         }
-        return parsed;
+        return parsed as T;
     } catch (error) {
         return null;
     }
 }
 
 export async function getAdminSession(): Promise<AdminSessionPayload | null> {
-    return await getSession<AdminSessionPayload>(ADMIN_SESSION_COOKIE_NAME);
+    return getSession<AdminSessionPayload>(ADMIN_SESSION_COOKIE_NAME);
 }
 
 export async function getVoterSession(): Promise<VoterSessionPayload | null> {
-    return await getSession<VoterSessionPayload>(VOTER_SESSION_COOKIE_NAME);
+    return getSession<VoterSessionPayload>(VOTER_SESSION_COOKIE_NAME);
 }
 
-
-async function deleteSession(cookieName: string) {
-  cookies().delete(cookieName);
+// This function now runs only on the client
+function deleteSession(storageKey: string) {
+  if (typeof window === 'undefined') return; // Guard against server-side execution
+  window.localStorage.removeItem(storageKey);
 }
 
 export async function deleteAdminSession() {
-    await deleteSession(ADMIN_SESSION_COOKIE_NAME);
+    deleteSession(ADMIN_SESSION_COOKIE_NAME);
 }
 
 export async function deleteVoterSession() {
-    await deleteSession(VOTER_SESSION_COOKIE_NAME);
+    deleteSession(VOTER_SESSION_COOKIE_NAME);
 }
