@@ -13,27 +13,12 @@ export async function getAdminCredentials(): Promise<Admin | null> {
   }
 }
 
-async function enrichVoterWithElections(
-    voterData: Omit<Voter, 'id' | 'followedElections'>, 
-    id: string,
-    allCategories: Category[],
-    allElections: Election[]
-): Promise<Voter> {
-    const voterCategory = allCategories.find(c => c.id === voterData.category);
-    const followedElections = allElections.filter(e => voterCategory?.allowedElections?.includes(e.id));
-    return { id, ...voterData, followedElections };
-}
-
 export async function getVoterById(voterId: string): Promise<Voter | null> {
   try {
     const snapshot = await get(ref(db, `voters/${voterId}`));
     if (snapshot.exists()) {
         const voterData = snapshot.val();
-        const [categories, elections] = await Promise.all([
-            getCategories(),
-            getElections()
-        ]);
-        return await enrichVoterWithElections(voterData, snapshot.key!, categories, elections);
+        return { id: snapshot.key!, ...voterData };
     }
     return null;
   } catch (error) {
@@ -61,17 +46,11 @@ export async function getVoters(): Promise<Voter[]> {
     try {
         const votersSnapshot = await get(ref(db, 'voters'));
         if (!votersSnapshot.exists()) return [];
-
         const votersData = votersSnapshot.val();
-        const [categories, elections] = await Promise.all([
-            getCategories(),
-            getElections()
-        ]);
-        
-        const votersPromises = Object.keys(votersData).map(id => 
-            enrichVoterWithElections(votersData[id], id, categories, elections)
-        );
-        return await Promise.all(votersPromises);
+        return Object.keys(votersData).map(id => ({
+          id,
+          ...votersData[id],
+        }));
     } catch (error) {
         return [];
     }

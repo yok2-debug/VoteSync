@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef, useMemo } from 'react';
-import type { Voter, Category } from '@/lib/types';
+import type { Voter, Category, Election } from '@/lib/types';
 import {
   Table,
   TableBody,
@@ -40,6 +40,7 @@ import { VoterCard } from '../../voters/print/components/voter-card';
 import { db } from '@/lib/firebase';
 import { ref, remove, update } from 'firebase/database';
 import * as z from 'zod';
+import { useDatabase } from '@/context/database-context';
 
 type VoterTableProps = {
   voters: Voter[];
@@ -49,6 +50,7 @@ type VoterTableProps = {
 const ITEMS_PER_PAGE = 100;
 
 export function VoterTable({ voters: initialVoters, categories }: VoterTableProps) {
+  const { elections: allElections } = useDatabase();
   const [voters, setVoters] = useState<Voter[]>(initialVoters);
   const [filter, setFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -93,13 +95,16 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
     }
 
     setIsPrinting(true);
-    toast({ title: 'Preparing print...', description: 'Fetching latest voter data...' });
+    toast({ title: 'Preparing print...', description: 'Generating voter cards...' });
 
     try {
-      const allEnrichedVoters = await getVoters();
-      const idsToPrint = new Set(filteredVoters.map(v => v.id));
-      const votersToPrint = allEnrichedVoters.filter(v => idsToPrint.has(v.id));
-
+      const categoryMap = new Map(categories.map(c => [c.id, c]));
+      const votersToPrint = filteredVoters.map(voter => {
+        const voterCategory = categoryMap.get(voter.category);
+        const followedElections = allElections.filter(e => voterCategory?.allowedElections?.includes(e.id));
+        return { ...voter, followedElections };
+      });
+      
       const printContent = renderToStaticMarkup(
         <div className="grid grid-cols-4 gap-2">
           {votersToPrint.map(voter => <VoterCard key={voter.id} voter={voter} />)}
