@@ -12,14 +12,19 @@ export async function loginAdmin(values: {username: string, password: string}): 
   try {
     const adminCreds = await getAdminCredentials();
 
-    if (adminCreds && adminCreds.username === values.username && adminCreds.password === values.password) {
-      const expires = new Date(Date.now() + SESSION_DURATION);
-      const sessionPayload = JSON.stringify({ isAdmin: true, username: values.username });
-      cookies().set(ADMIN_SESSION_COOKIE_NAME, sessionPayload, { expires, httpOnly: true });
-      return { success: true };
-    } else {
-      return { error: 'Invalid username or password.' };
+    if (adminCreds) {
+      const isValid = adminCreds.username === values.username && adminCreds.password === values.password;
+
+      if (isValid) {
+        const expires = new Date(Date.now() + SESSION_DURATION);
+        const sessionPayload = JSON.stringify({ isAdmin: true, username: values.username });
+        cookies().set(ADMIN_SESSION_COOKIE_NAME, sessionPayload, { expires, httpOnly: true });
+        return { success: true };
+      }
     }
+    
+    return { error: 'Invalid username or password.' };
+
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown server error occurred.';
     console.error('Admin login error:', errorMessage);
