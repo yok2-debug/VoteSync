@@ -4,9 +4,9 @@ import type { AdminSessionPayload, VoterSessionPayload } from './types';
 const ADMIN_SESSION_COOKIE_NAME = 'votesync_admin_session';
 const VOTER_SESSION_COOKIE_NAME = 'votesync_voter_session';
 
-// --- Synchronous functions for reading sessions, safe for Middleware & Server Components ---
+// --- Asynchronous functions for reading sessions ---
 
-export function getAdminSession(): AdminSessionPayload | null {
+export async function getAdminSession(): Promise<AdminSessionPayload | null> {
     const session = cookies().get(ADMIN_SESSION_COOKIE_NAME)?.value;
     if (!session) return null;
     try {
@@ -16,7 +16,7 @@ export function getAdminSession(): AdminSessionPayload | null {
     }
 }
 
-export function getVoterSession(): VoterSessionPayload | null {
+export async function getVoterSession(): Promise<VoterSessionPayload | null> {
     const session = cookies().get(VOTER_SESSION_COOKIE_NAME)?.value;
     if (!session) return null;
     try {

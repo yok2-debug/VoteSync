@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getAdminSession, getVoterSession } from '@/lib/get-session';
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const adminSession = getAdminSession();
-  const voterSession = getVoterSession();
+  const adminSession = await getAdminSession();
+  const voterSession = await getVoterSession();
 
   if (pathname.startsWith('/admin')) {
     if (pathname === '/admin-login') {
