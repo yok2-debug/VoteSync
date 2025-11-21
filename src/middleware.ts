@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getAdminSession, getVoterSession } from '@/lib/get-session';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const adminSession = await getAdminSession();
-  const voterSession = await getVoterSession();
+  
+  const adminCookie = request.cookies.get('votesync_admin_session');
+  const voterCookie = request.cookies.get('votesync_voter_session');
+
+  const adminSession = adminCookie ? JSON.parse(adminCookie.value) : null;
+  const voterSession = voterCookie ? JSON.parse(voterCookie.value) : null;
 
   if (pathname.startsWith('/admin')) {
     if (pathname === '/admin-login') {
