@@ -22,7 +22,7 @@ async function ensureAdminExists() {
     console.log('Admin credentials not found, creating default admin...');
     await set(adminRef, {
       username: 'admin',
-      password: 'admin',
+      password: 'admin', // Default password if none exists
     });
   }
 }
@@ -33,32 +33,33 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // This function correctly handles both array-based (from JSON import) and object-based (Firebase native) voter data structures.
+  const processVoters = (data: any): Voter[] => {
+      if (!data) return [];
+      
+      // Handle array structure from JSON, filtering out null/empty entries.
+      if (Array.isArray(data)) {
+          return data
+              .filter(v => v) // Filter out null/undefined entries in the array
+              .map((voter, index) => ({
+                  id: voter.id || voter.nik || String(index), // Use existing id, fallback to NIK, then to index
+                  ...voter
+              }));
+      }
+
+      // Handle object structure from Firebase
+      return Object.keys(data).map(id => ({ id, ...data[id] }));
+  }
+
   useEffect(() => {
     const electionsRef = ref(db, 'elections');
     const votersRef = ref(db, 'voters');
     const categoriesRef = ref(db, 'categories');
     
-    // This function correctly handles both array-based (from JSON import) and object-based (Firebase native) voter data structures.
-    const processVoters = (data: any): Voter[] => {
-        if (!data) return [];
-        // Handle array structure from JSON, filtering out null/empty entries.
-        // The ID in the array data is the NIK or some other unique identifier, not the array index.
-        if (Array.isArray(data)) {
-            return data.filter(v => v && v.nik).map((v, index) => ({
-                id: v.id || v.nik || String(index), // Use existing id, fallback to NIK, then to index
-                ...v
-            }));
-        }
-        // Handle object structure from Firebase
-        return Object.keys(data).map(id => ({ id, ...data[id] }));
-    }
-
-
     // Function to fetch initial data once
     const fetchInitialData = async () => {
       try {
-        await ensureAdminExists(); // Ensure admin exists before fetching other data
-
+        // We don't call ensureAdminExists here anymore, login logic handles it.
         const [electionsSnap, votersSnap, categoriesSnap] = await Promise.all([
           get(electionsRef),
           get(votersRef),
