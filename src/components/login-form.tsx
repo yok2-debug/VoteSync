@@ -18,8 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getVoterById } from '@/lib/data';
-import { createVoterSession } from '@/lib/session';
+import { handleVoterLogin } from '@/lib/session';
 
 const voterLoginSchema = z.object({
   voterId: z.string().min(1, { message: 'Voter ID is required.' }),
@@ -36,12 +35,11 @@ export function LoginForm() {
     defaultValues: { voterId: '', password: '' },
   });
 
-  async function handleVoterLogin(values: z.infer<typeof voterLoginSchema>) {
+  async function onSubmit(values: z.infer<typeof voterLoginSchema>) {
     setIsSubmitting(true);
     try {
-        const voter = await getVoterById(values.voterId);
-        if (voter && voter.password === values.password) {
-            await createVoterSession({ voterId: voter.id });
+        const loginSuccess = await handleVoterLogin(values);
+        if (loginSuccess) {
             toast({
                 title: 'Login Successful',
                 description: 'Redirecting to your dashboard...',
@@ -64,7 +62,7 @@ export function LoginForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleVoterLogin)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="voterId"

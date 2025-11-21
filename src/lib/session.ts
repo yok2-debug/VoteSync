@@ -1,4 +1,5 @@
 import type { AdminSessionPayload, VoterSessionPayload } from './types';
+import { getAdminCredentials, getVoterById } from './data';
 
 const ADMIN_SESSION_COOKIE_NAME = 'votesync_admin_session';
 const VOTER_SESSION_COOKIE_NAME = 'votesync_voter_session';
@@ -13,14 +14,6 @@ function createSession(payload: AdminSessionPayload | VoterSessionPayload, role:
   const storageKey = role === 'admin' ? ADMIN_SESSION_COOKIE_NAME : VOTER_SESSION_COOKIE_NAME;
 
   window.localStorage.setItem(storageKey, session);
-}
-
-export async function createAdminSession(payload: Omit<AdminSessionPayload, 'expires'>) {
-    createSession({ ...payload, isAdmin: true }, 'admin');
-}
-
-export async function createVoterSession(payload: Omit<VoterSessionPayload, 'expires'>) {
-    createSession(payload, 'voter');
 }
 
 // This function now runs only on the client
@@ -65,4 +58,27 @@ export async function deleteAdminSession() {
 
 export async function deleteVoterSession() {
     deleteSession(VOTER_SESSION_COOKIE_NAME);
+}
+
+
+export async function handleAdminLogin(values: {username: string, password: string}): Promise<boolean> {
+    const adminCreds = await getAdminCredentials();
+    if (
+        adminCreds &&
+        adminCreds.username === values.username &&
+        adminCreds.password === values.password
+    ) {
+        createSession({ isAdmin: true }, 'admin');
+        return true;
+    }
+    return false;
+}
+
+export async function handleVoterLogin(values: {voterId: string, password: string}): Promise<boolean> {
+    const voter = await getVoterById(values.voterId);
+    if (voter && voter.password === values.password) {
+        createSession({ voterId: voter.id }, 'voter');
+        return true;
+    }
+    return false;
 }

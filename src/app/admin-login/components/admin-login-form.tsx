@@ -18,8 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAdminCredentials } from '@/lib/data';
-import { createAdminSession } from '@/lib/session';
+import { handleAdminLogin } from '@/lib/session';
 
 const adminLoginSchema = z.object({
   username: z.string().min(1, { message: 'Username is required.' }),
@@ -36,21 +35,17 @@ export function AdminLoginForm() {
     defaultValues: { username: 'admin', password: '' },
   });
 
-  async function handleAdminLogin(values: z.infer<typeof adminLoginSchema>) {
+  async function onSubmit(values: z.infer<typeof adminLoginSchema>) {
     setIsSubmitting(true);
     try {
-        const adminCreds = await getAdminCredentials();
-        if (
-            adminCreds &&
-            adminCreds.username === values.username &&
-            adminCreds.password === values.password
-        ) {
-            await createAdminSession({ isAdmin: true });
+        const loginSuccess = await handleAdminLogin(values);
+        if (loginSuccess) {
             toast({
                 title: 'Login Successful',
                 description: 'Redirecting to your dashboard...',
             });
             router.replace('/admin/dashboard');
+            router.refresh();
         } else {
             throw new Error('Invalid admin credentials.');
         }
@@ -67,7 +62,7 @@ export function AdminLoginForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(handleAdminLogin)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
           name="username"
