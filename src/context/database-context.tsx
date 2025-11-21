@@ -15,23 +15,23 @@ interface DatabaseContextType {
 
 const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined);
 
-// This function robustly handles both array-based (from JSON import) 
-// and object-based (Firebase native) voter data structures.
-const processVoters = (data: any): Voter[] => {
+const processFirebaseData = <T>(data: any, idField: string = 'id'): T[] => {
     if (!data) return [];
-    
-    // Handle array structure, filtering out null/empty entries.
     if (Array.isArray(data)) {
-        return data.filter(v => v).map((voter, index) => {
-            // If ID is missing, create one from NIK or index, but prioritize existing ID.
-            const id = voter.id || voter.nik || String(index);
-            return { id, ...voter };
-        });
+        return data.filter(Boolean).map((item, index) => ({
+            [idField]: item[idField] || String(index),
+            ...item
+        }));
     }
+    if (typeof data === 'object' && data !== null) {
+        return Object.keys(data).map(key => ({
+            [idField]: key,
+            ...data[key]
+        }));
+    }
+    return [];
+};
 
-    // Handle object structure from Firebase
-    return Object.keys(data).map(id => ({ id, ...data[id] }));
-}
 
 export function DatabaseProvider({ children }: { children: ReactNode }) {
   const [elections, setElections] = useState<Election[]>([]);
@@ -56,14 +56,9 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
         
         if (initialFetchCompleted) return;
 
-        const electionsData = electionsSnap.val();
-        setElections(electionsData ? Object.keys(electionsData).map(id => ({ id, ...electionsData[id] })) : []);
-
-        const votersData = votersSnap.val();
-        setVoters(processVoters(votersData));
-
-        const categoriesData = categoriesSnap.val();
-        setCategories(categoriesData ? Object.keys(categoriesData).map(id => ({ id, ...categoriesData[id] })) : []);
+        setElections(processFirebaseData<Election>(electionsSnap.val()));
+        setVoters(processFirebaseData<Voter>(votersSnap.val()));
+        setCategories(processFirebaseData<Category>(categoriesSnap.val()));
 
       } catch (error) {
         console.error("Database-Context: Failed to fetch initial data:", error);
@@ -79,22 +74,19 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
 
     // Set up live listeners for real-time updates
     const unsubscribeElections = onValue(electionsRef, (snapshot) => {
-      const data = snapshot.val();
-      setElections(data ? Object.keys(data).map(id => ({ id, ...data[id] })) : []);
+      setElections(processFirebaseData<Election>(snapshot.val()));
     }, (error) => {
         console.error("Database-Context: elections listener error:", error);
     });
 
     const unsubscribeVoters = onValue(votersRef, (snapshot) => {
-      const data = snapshot.val();
-      setVoters(processVoters(data));
+      setVoters(processFirebaseData<Voter>(snapshot.val(), 'id'));
     }, (error) => {
         console.error("Database-Context: voters listener error:", error);
     });
 
     const unsubscribeCategories = onValue(categoriesRef, (snapshot) => {
-      const data = snapshot.val();
-      setCategories(data ? Object.keys(data).map(id => ({ id, ...data[id] })) : []);
+      setCategories(processFirebaseData<Category>(snapshot.val()));
     }, (error) => {
         console.error("Database-Context: categories listener error:", error);
     });
