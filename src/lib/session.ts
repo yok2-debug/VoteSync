@@ -14,17 +14,19 @@ const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 export async function loginAdmin(values: {username: string, password: string}): Promise<{ error?: string, success?: boolean }> {
   try {
     const adminCreds = await getAdminCredentials();
-    
+
     if (adminCreds && adminCreds.username === values.username && adminCreds.password === values.password) {
       const expires = new Date(Date.now() + SESSION_DURATION);
       const sessionPayload = JSON.stringify({ isAdmin: true });
       cookies().set(ADMIN_SESSION_COOKIE_NAME, sessionPayload, { expires, httpOnly: true });
       return { success: true };
     } else {
-      return { error: 'Invalid admin credentials.' };
+      // Provide a more specific error if creds are loaded but don't match
+      const errorMessage = adminCreds ? 'Invalid username or password.' : 'Could not retrieve admin credentials from the database.';
+      return { error: errorMessage };
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    const errorMessage = error instanceof Error ? error.message : 'An unknown server error occurred.';
     console.error('Admin login error:', errorMessage);
     return { error: errorMessage };
   }

@@ -38,11 +38,16 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     const votersRef = ref(db, 'voters');
     const categoriesRef = ref(db, 'categories');
     
+    // This function correctly handles both array-based (from JSON import) and object-based (Firebase native) voter data structures.
     const processVoters = (data: any): Voter[] => {
         if (!data) return [];
         if (Array.isArray(data)) {
-            // Handle array structure from JSON
-            return data.filter(v => v && v.id).map(v => ({...v}));
+            // Handle array structure from JSON, filtering out null/empty entries
+            // and assigning the array index as a string ID if no ID exists.
+            return data.filter(v => v).map((v, index) => ({
+                id: v.id || String(index), // Use existing id or fallback to index
+                ...v
+            }));
         }
         // Handle object structure from Firebase
         return Object.keys(data).map(id => ({ id, ...data[id] }));
