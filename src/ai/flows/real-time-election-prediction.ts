@@ -1,4 +1,3 @@
-
 /**
  * @fileOverview Predicts the real-time election outcome based on current vote statistics.
  *
