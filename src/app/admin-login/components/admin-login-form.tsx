@@ -44,8 +44,8 @@ export function AdminLoginForm() {
           title: 'Login Successful',
           description: 'Redirecting to your dashboard...',
         });
-        router.push(result.redirectPath);
-        router.refresh();
+        // Replace router.push and router.refresh with a single router.replace
+        router.replace(result.redirectPath);
       } else {
         throw new Error(result.error);
       }
