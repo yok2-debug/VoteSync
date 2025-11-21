@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers';
 import type { AdminSessionPayload, VoterSessionPayload } from './types';
-import { getAdminCredentials } from './data';
+import { getAdminCredentials, getVoterById } from './data';
 import { z } from 'zod';
 
 const ADMIN_SESSION_COOKIE_NAME = 'votesync_admin_session';
@@ -53,6 +53,36 @@ export async function loginAdmin(values: unknown) {
     }
   } catch (error) {
     console.error('Admin login error:', error);
+    return { success: false, error: 'An internal server error occurred.' };
+  }
+}
+
+const voterLoginSchema = z.object({
+  voterId: z.string(),
+  password: z.string(),
+});
+
+export async function loginVoter(values: unknown) {
+  const parsedCredentials = voterLoginSchema.safeParse(values);
+
+  if (!parsedCredentials.success) {
+    return { success: false, error: 'Invalid data format.' };
+  }
+
+  const { voterId, password } = parsedCredentials.data;
+
+  try {
+    const voter = await getVoterById(voterId);
+
+    if (voter && voter.password === password) {
+      const sessionPayload = { voterId: voter.id };
+      await createVoterSession(sessionPayload);
+      return { success: true, voterId: voter.id };
+    } else {
+      return { success: false, error: 'Invalid voter ID or password.' };
+    }
+  } catch (error) {
+    console.error('Voter login error:', error);
     return { success: false, error: 'An internal server error occurred.' };
   }
 }

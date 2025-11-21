@@ -18,8 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createVoterSession } from '@/lib/session';
-import { getVoterById } from '@/lib/data';
+import { loginVoter } from '@/lib/session';
 import { setVoterSession } from '@/lib/session-client';
 
 const voterLoginSchema = z.object({
@@ -40,11 +39,10 @@ export function LoginForm() {
   async function onSubmit(values: z.infer<typeof voterLoginSchema>) {
     setIsSubmitting(true);
     try {
-      const voter = await getVoterById(values.voterId);
-      if (voter && voter.password === values.password) {
-        const sessionPayload = { voterId: voter.id };
-        await createVoterSession(sessionPayload);
-        setVoterSession(sessionPayload);
+      const result = await loginVoter(values);
+      if (result.success && result.voterId) {
+        const sessionPayload = { voterId: result.voterId };
+        setVoterSession(sessionPayload); // Set session in local storage for client-side access
         toast({
           title: 'Login Successful',
           description: 'Redirecting to your dashboard...',
@@ -52,7 +50,7 @@ export function LoginForm() {
         router.push('/vote');
         router.refresh();
       } else {
-        throw new Error('Invalid voter ID or password.');
+        throw new Error(result.error || 'Invalid voter ID or password.');
       }
     } catch (error) {
       toast({
