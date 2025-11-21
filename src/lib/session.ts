@@ -26,19 +26,12 @@ const adminLoginSchema = z.object({
   password: z.string(),
 });
 
-export async function loginAdmin(values: unknown) {
-  const parsedCredentials = adminLoginSchema.safeParse(values);
-
-  if (!parsedCredentials.success) {
-    return { success: false, error: 'Invalid data format.' };
-  }
-  
-  const { username, password } = parsedCredentials.data;
-  
+export async function loginAdmin(values: z.infer<typeof adminLoginSchema>) {
   try {
     const adminCreds = await getAdminCredentials();
-
-    if (adminCreds && adminCreds.username === username && adminCreds.password === password) {
+    
+    // Correctly compare form values with database values
+    if (adminCreds && adminCreds.username === values.username && adminCreds.password === values.password) {
       const sessionPayload = { isAdmin: true };
       await createAdminSession(sessionPayload);
       return { success: true };
@@ -63,27 +56,17 @@ export async function deleteVoterSession() {
     cookies().delete(VOTER_SESSION_COOKIE_NAME);
 }
 
-
 const voterLoginSchema = z.object({
   voterId: z.string(),
   password: z.string(),
 });
 
-export async function loginVoter(values: unknown): Promise<{ success: boolean; error?: string; voterId?: string }> {
-    const parsedCredentials = voterLoginSchema.safeParse(values);
-
-    if (!parsedCredentials.success) {
-        return { success: false, error: 'Invalid data format.' };
-    }
-
-    const { voterId, password } = parsedCredentials.data;
-
+export async function loginVoter(values: z.infer<typeof voterLoginSchema>): Promise<{ success: boolean; error?: string; voterId?: string }> {
     try {
         const allVoters = await getVoters();
+        const voter = allVoters.find(v => v.id === values.voterId);
         
-        const voter = allVoters.find(v => v.id === voterId);
-        
-        if (voter && voter.password === password) {
+        if (voter && voter.password === values.password) {
             const sessionPayload = { voterId: voter.id };
             await createVoterSession(sessionPayload);
             return { success: true, voterId: voter.id };
