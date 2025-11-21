@@ -21,17 +21,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { getElections } from '@/lib/data';
 
-
-export async function generateStaticParams() {
-  const elections = await getElections();
-  return elections.map((election) => ({
-    electionId: election.id,
-  }));
-}
-
-function VotePageContent() {
+export default function VotePage() {
   const { electionId } = useParams() as { electionId: string };
   const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
@@ -193,7 +184,3 @@ function VotePageContent() {
   );
 }
 
-
-export default function VotePage() {
-  return <VotePageContent />;
-}

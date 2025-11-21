@@ -3,27 +3,6 @@ import { redirect, useParams } from 'next/navigation';
 import { useDatabase } from '@/context/database-context';
 import Loading from '@/app/loading';
 import { CandidateForm } from '../components/candidate-form';
-import { getElections } from '@/lib/data';
-
-
-export async function generateStaticParams() {
-  const elections = await getElections();
-  const paths: { slug: string[] }[] = [];
-
-  // Path for creating a new candidate
-  paths.push({ slug: ['new'] });
-
-  // Paths for editing existing candidates
-  elections.forEach(election => {
-    if (election.candidates) {
-      Object.keys(election.candidates).forEach(candidateId => {
-        paths.push({ slug: ['edit', election.id, candidateId] });
-      });
-    }
-  });
-
-  return paths;
-}
 
 
 export default function CandidateActionPage() {

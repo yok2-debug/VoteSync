@@ -4,14 +4,6 @@ import { RecapitulationDisplay } from './components/recapitulation-display';
 import { useDatabase } from '@/context/database-context';
 import Loading from '@/app/loading';
 import { useMemo } from 'react';
-import { getElections } from '@/lib/data';
-
-export async function generateStaticParams() {
-  const elections = await getElections();
-  return elections.map((election) => ({
-    electionId: election.id,
-  }));
-}
 
 export default function RecapitulationPage() {
   const { electionId } = useParams() as { electionId: string };
