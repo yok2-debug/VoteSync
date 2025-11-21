@@ -38,7 +38,7 @@ import { getVoters, getCategories } from '@/lib/data';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { VoterCard } from '../../voters/print/components/voter-card';
 import { db } from '@/lib/firebase';
-import { ref, remove, update } from 'firebase/database';
+import { ref, remove, update, set } from 'firebase/database';
 import * as z from 'zod';
 
 type VoterTableProps = {
@@ -65,6 +65,10 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const categoryMap = new Map(categories.map((c) => [c.id, c.name]));
+
+  useEffect(() => {
+    setVoters(initialVoters);
+  }, [initialVoters]);
 
   const filteredVoters = useMemo(() => voters.filter(
     (voter) =>
@@ -96,6 +100,7 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
     toast({ title: 'Preparing print...', description: 'Fetching latest voter data...' });
 
     try {
+      // We use getVoters to ensure we get the fully enriched data
       const allEnrichedVoters = await getVoters();
       const idsToPrint = new Set(filteredVoters.map(v => v.id));
       const votersToPrint = allEnrichedVoters.filter(v => idsToPrint.has(v.id));
@@ -210,11 +215,10 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
   
   const handleImportSave = async (dataToImport: any[]) => {
     try {
-        const categories = await getCategories();
         const categoryNameMap = new Map(categories.map(c => [c.name.replace(/\s+/g, '').toLowerCase(), c.id]));
-        const allVoters = await getVoters();
-        const existingVoterIds = new Set(allVoters.map(v => v.id));
-        const votersToImport: Record<string, Omit<Voter, 'id' | 'hasVoted'>> = {};
+        
+        const votersToImportForDb: Record<string, Omit<Voter, 'id' | 'hasVoted'>> = {};
+        const votersToAddToState: Voter[] = [];
 
         const importVoterSchema = z.object({
             id: z.string().min(1, 'ID is required'),
@@ -234,28 +238,35 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
                 throw new Error(`Invalid data in CSV: ${JSON.stringify(validation.error.flatten().fieldErrors)}`);
             }
             const { id, category, ...rest } = validation.data;
-            if (existingVoterIds.has(id)) {
-                throw new Error(`Voter with ID "${id}" already exists.`);
-            }
+
             const categoryId = categoryNameMap.get(category.replace(/\s+/g, '').toLowerCase());
             if (!categoryId) {
                 throw new Error(`Category "${category}" not found for voter "${rest.name}".`);
             }
-            votersToImport[`voters/${id}`] = {
+            
+            const voterDataForDb: Omit<Voter, 'id' | 'hasVoted'> = {
                 ...rest,
                 category: categoryId,
                 password: rest.password || Math.random().toString(36).substring(2, 8),
             };
+            votersToImportForDb[`voters/${id}`] = voterDataForDb;
+
+            const voterDataForState: Voter = {
+                id,
+                ...voterDataForDb,
+            };
+            votersToAddToState.push(voterDataForState);
         }
 
-        if (Object.keys(votersToImport).length > 0) {
-            await update(ref(db), votersToImport);
+        if (Object.keys(votersToImportForDb).length > 0) {
+            await update(ref(db), votersToImportForDb);
+            setVoters(prevVoters => [...prevVoters, ...votersToAddToState]);
         }
+
       toast({
         title: 'Import Successful',
-        description: `${Object.keys(votersToImport).length} voters were successfully imported.`,
+        description: `${votersToAddToState.length} voters were successfully imported.`,
       });
-      // The DatabaseProvider will automatically refresh the data
     } catch (error) {
        toast({
         variant: 'destructive',
@@ -309,16 +320,30 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
   
   const onFormSave = async (voterToSave: Voter & { isNew?: boolean }) => {
     try {
-      const isEditing = !voterToSave.isNew;
-      // This is now handled in VoterFormDialog
-      if (isEditing) {
-        setVoters(voters.map(v => v.id === voterToSave.id ? voterToSave : v));
+      const { isNew, ...savedVoterData } = voterToSave;
+      const voterRef = ref(db, `voters/${savedVoterData.id}`);
+
+      if (isNew) {
+        // Create new voter
+        const dataToSet = { ...savedVoterData };
+        delete (dataToSet as any).id; // Don't save ID inside the object itself
+        await set(voterRef, dataToSet);
+        setVoters(prev => [...prev, savedVoterData]);
       } else {
-        setVoters([...voters, voterToSave]);
+        // Update existing voter
+        const updates: { [key: string]: any } = {};
+        Object.keys(savedVoterData).forEach(key => {
+          if (key !== 'id') {
+            updates[`/voters/${savedVoterData.id}/${key}`] = (savedVoterData as any)[key];
+          }
+        });
+        await update(ref(db), updates);
+        setVoters(voters.map(v => v.id === savedVoterData.id ? savedVoterData : v));
       }
+
       toast({
-        title: `Voter ${isEditing ? 'updated' : 'created'}`,
-        description: `"${voterToSave.name}" has been successfully saved.`,
+        title: `Voter ${isNew ? 'created' : 'updated'}`,
+        description: `"${savedVoterData.name}" has been successfully saved.`,
       });
     } catch (error) {
        toast({
