@@ -18,7 +18,6 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import { loginAdmin } from '@/lib/session';
 
 const adminLoginSchema = z.object({
   username: z.string().min(1, { message: 'Username is required.' }),
@@ -38,23 +37,33 @@ export function AdminLoginForm() {
   async function onSubmit(values: z.infer<typeof adminLoginSchema>) {
     setIsSubmitting(true);
     
-    const result = await loginAdmin(values);
-
-    setIsSubmitting(false);
-
-    if (result?.success) {
-      toast({
-        title: 'Login Successful',
-        description: 'Redirecting to your dashboard...',
+    try {
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
       });
-      router.push('/admin/dashboard');
-      router.refresh(); // Ensure the layout re-renders with new session state
-    } else {
+
+      const result = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: 'Login Successful',
+          description: 'Redirecting to your dashboard...',
+        });
+        router.push('/admin/dashboard');
+        router.refresh();
+      } else {
+        throw new Error(result.error || 'An unknown error occurred.');
+      }
+    } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: result?.error || 'An unknown error occurred.',
+        description: error instanceof Error ? error.message : 'An unknown server error occurred.',
       });
+    } finally {
+        setIsSubmitting(false);
     }
   }
 
