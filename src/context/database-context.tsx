@@ -15,20 +15,32 @@ interface DatabaseContextType {
 
 const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined);
 
-const processFirebaseData = <T>(data: any, idField: string = 'id'): T[] => {
+const processFirebaseData = <T extends { id: string }>(data: any, idField: string = 'id'): T[] => {
     if (!data) return [];
-    if (Array.isArray(data)) {
-        return data.filter(Boolean).map((item, index) => ({
-            [idField]: item[idField] || String(index),
-            ...item
-        }));
-    }
-    if (typeof data === 'object' && data !== null) {
+    
+    // If data from Firebase is an object (e.g., { key1: { ... }, key2: { ... } })
+    if (typeof data === 'object' && !Array.isArray(data) && data !== null) {
         return Object.keys(data).map(key => ({
+            ...data[key],
             [idField]: key,
-            ...data[key]
-        }));
+        } as T));
     }
+    
+    // If data from Firebase is already an array, just ensure IDs are consistent.
+    // This handles cases where Firebase returns an array for sequential numeric keys.
+    if (Array.isArray(data)) {
+        // Filter out any potential null/undefined values from Firebase array weirdness
+        return data.filter(Boolean).map((item, index) => {
+            // Ensure the item is an object and has an ID, otherwise, it's invalid data.
+            if (typeof item === 'object' && item !== null && 'id' in item) {
+                return item as T;
+            }
+            // This part is a fallback, but ideally your array data should have IDs.
+            // It avoids crashing if an item is malformed.
+            return null;
+        }).filter(Boolean) as T[];
+    }
+    
     return [];
 };
 

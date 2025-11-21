@@ -21,32 +21,24 @@ export async function getAdminCredentials(): Promise<Admin | null> {
 export async function getVoters(): Promise<Voter[]> {
     try {
         const votersSnapshot = await get(ref(db, 'voters'));
-        if (!votersSnapshot.exists()) {
-            return []; // Return empty array if no voters node
-        }
         const votersData = votersSnapshot.val();
         if (Array.isArray(votersData)) {
-            // Filter out any potential null/undefined values from Firebase array
-            return votersData.filter(v => v).map((voter, index) => ({
-                id: voter.id || voter.nik || String(index),
-                ...voter
-            }));
+            return votersData.filter(Boolean) as Voter[];
         }
-        // Handle cases where data might be an object
         if (typeof votersData === 'object' && votersData !== null) {
             return Object.keys(votersData).map(id => ({ id, ...votersData[id] }));
         }
-        return []; // Return empty array for any other unexpected data type
+        return [];
     } catch (error) {
         console.error("Failed to get voters:", error);
-        return []; // Return empty array on error
+        return [];
     }
 }
+
 
 export async function getVoterById(voterId: string): Promise<Voter | null> {
   try {
     const voters = await getVoters();
-    // Ensure we don't try to find on a non-array
     if (!Array.isArray(voters)) {
         return null;
     }
