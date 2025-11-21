@@ -36,11 +36,8 @@ export function AdminLoginForm() {
   async function onSubmit(values: z.infer<typeof adminLoginSchema>) {
     setIsSubmitting(true);
     try {
-      const result = await loginAdmin(values);
-      if (result?.error) {
-        throw new Error(result.error);
-      }
-      // The redirect will be handled by the server action.
+      await loginAdmin(values);
+      // The redirect is handled by the server action.
       // We can show a toast as a visual feedback before the redirection occurs.
       toast({
         title: 'Login Successful',
