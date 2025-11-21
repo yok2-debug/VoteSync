@@ -4,11 +4,18 @@ import type { Election, Voter, Category, Candidate } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ElectionPieChart } from './election-pie-chart';
+import { Badge } from '@/components/ui/badge';
 
 const getCandidateDisplayName = (candidate: Candidate) => {
     return candidate.viceCandidateName 
         ? `${candidate.name} & ${candidate.viceCandidateName}` 
         : candidate.name;
+}
+
+interface RealCountDisplayProps {
+    election: Election;
+    allVoters: Voter[];
+    allCategories: Category[];
 }
 
 export function RealCountDisplay({ election, allVoters, allCategories }: RealCountDisplayProps) {
@@ -44,12 +51,32 @@ export function RealCountDisplay({ election, allVoters, allCategories }: RealCou
   const candidateColorMap = useMemo(() => {
     return new Map(chartData.map(d => [d.id, d.fill]));
   }, [chartData]);
+  
+  const getScheduleStatusBadge = (election: Election) => {
+    const now = new Date();
+    const startDate = election.startDate ? new Date(election.startDate) : null;
+    const endDate = election.endDate ? new Date(election.endDate) : null;
+
+    if (endDate && now > endDate) {
+      return <Badge variant="destructive">Berakhir</Badge>;
+    }
+    if (startDate && now >= startDate && endDate && now < endDate) {
+      return <Badge className="bg-green-500 text-white hover:bg-green-500/90">Berlangsung</Badge>;
+    }
+    if (startDate && now < startDate) {
+      return <Badge className="bg-blue-500 text-white hover:bg-blue-500/90">Belum Mulai</Badge>;
+    }
+    return <Badge variant="secondary">Jadwal Tidak Diatur</Badge>;
+  };
 
 
   return (
     <Card className="flex flex-col">
       <CardHeader>
-        <CardTitle>{election.name}</CardTitle>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+            <CardTitle>{election.name}</CardTitle>
+            {getScheduleStatusBadge(election)}
+        </div>
         <CardDescription>{election.description}</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow space-y-6">
