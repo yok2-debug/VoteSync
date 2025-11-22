@@ -38,7 +38,6 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { VoterCard } from '../../voters/print/components/voter-card';
 import { db } from '@/lib/firebase';
 import { ref, remove, update, set } from 'firebase/database';
-import * as z from 'zod';
 import { useDatabase } from '@/context/database-context';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BulkUpdateCategoryDialog } from './bulk-update-category-dialog';
@@ -233,26 +232,10 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     try {
         const categoryNameMap = new Map(categories.map(c => [c.name.replace(/\s+/g, '').toLowerCase(), c.id]));
         
-        const votersToImportForDb: Record<string, Omit<Voter, 'id' | 'hasVoted'>> = {};
-
-        const importVoterSchema = z.object({
-            id: z.string().min(1, 'ID is required'),
-            nik: z.string().optional(),
-            name: z.string().min(1, 'Name is required'),
-            birthPlace: z.string().optional(),
-            birthDate: z.string().optional(),
-            gender: z.string().optional(),
-            address: z.string().optional(),
-            category: z.string().min(1, 'Category is required'),
-            password: z.string().optional(),
-        });
+        const updates: Record<string, Omit<Voter, 'id' | 'hasVoted'>> = {};
     
         for (const row of dataToImport) {
-            const validation = importVoterSchema.safeParse(row);
-            if (!validation.success) {
-                throw new Error(`Invalid data in CSV: ${JSON.stringify(validation.error.flatten().fieldErrors)}`);
-            }
-            const { id, category, ...rest } = validation.data;
+            const { id, category, ...rest } = row;
 
             const categoryId = categoryNameMap.get(category.replace(/\s+/g, '').toLowerCase());
             if (!categoryId) {
@@ -269,11 +252,11 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
                 category: categoryId,
                 password: rest.password || Math.random().toString(36).substring(2, 8),
             };
-            votersToImportForDb[`voters/${id}`] = voterDataForDb;
+            updates[`/voters/${id}`] = voterDataForDb;
         }
 
-        if (Object.keys(votersToImportForDb).length > 0) {
-            await update(ref(db), votersToImportForDb);
+        if (Object.keys(updates).length > 0) {
+            await update(ref(db), updates);
         }
 
       toast({
@@ -334,24 +317,10 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   
   const onFormSave = async (voterToSave: Voter & { isNew?: boolean }) => {
     try {
-      const { isNew, ...savedVoterData } = voterToSave;
-      const voterRef = ref(db, `voters/${savedVoterData.id}`);
+      const { isNew, id, ...savedVoterData } = voterToSave;
+      const voterRef = ref(db, `voters/${id}`);
 
-      if (isNew) {
-        // Create new voter
-        const dataToSet = { ...savedVoterData };
-        delete (dataToSet as any).id; // Don't save ID inside the object itself
-        await set(voterRef, dataToSet);
-      } else {
-        // Update existing voter
-        const updates: { [key: string]: any } = {};
-        Object.keys(savedVoterData).forEach(key => {
-          if (key !== 'id') {
-            updates[`/voters/${savedVoterData.id}/${key}`] = (savedVoterData as any)[key];
-          }
-        });
-        await update(ref(db), updates);
-      }
+      await set(voterRef, savedVoterData);
 
       toast({
         title: `Voter ${isNew ? 'created' : 'updated'}`,

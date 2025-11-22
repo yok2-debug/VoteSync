@@ -6,7 +6,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm, Controller, SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useEffect, useState } from 'react';
@@ -97,11 +97,11 @@ export function CandidateForm({
   };
 
 
-  const onSubmit: SubmitHandler<CandidateFormData> = async (data) => {
+  const onSubmit = async (data: CandidateFormData) => {
     setIsSubmitting(true);
     try {
-      if (!data.electionId) {
-        throw new Error("Pemilihan harus dipilih.");
+      if (!data.electionId || !data.voterId) {
+        throw new Error("Pemilihan dan kandidat utama harus dipilih.");
       }
 
       const candidatesRef = ref(db, `elections/${data.electionId}/candidates`);
@@ -137,7 +137,7 @@ export function CandidateForm({
 
       if (finalOrderNumber) {
         const isOrderNumberTaken = candidatesArray.some(
-            (c: Candidate) => c.orderNumber === finalOrderNumber && c.id !== data.id
+            (c: Candidate & {id: string}) => c.orderNumber === finalOrderNumber && c.id !== initialData?.id
         );
         if (isOrderNumberTaken) {
             throw new Error(`Nomor urut ${finalOrderNumber} sudah digunakan dalam pemilihan ini.`);
@@ -149,35 +149,32 @@ export function CandidateForm({
 
       const candidateId = data.voterId;
       
-      const candidateData: Partial<Candidate> = {
+      const candidateData: Candidate = {
         name: data.name,
         viceCandidateId: data.viceCandidateId || "",
         viceCandidateName: data.viceCandidateName || "",
-        vision: data.vision,
-        mission: data.mission,
+        vision: data.vision || "",
+        mission: data.mission || "",
         orderNumber: finalOrderNumber,
-        photo: data.photo,
+        photo: data.photo || "",
         id: candidateId, 
       };
       
-      if (isEditing && initialData?.electionId && initialData.electionId !== data.electionId) {
-          // Remove from old election
-          await set(ref(db, `elections/${initialData.electionId}/candidates/${initialData.id}`), null);
-          // Add to new election
-          await set(ref(db, `elections/${data.electionId}/candidates/${candidateId}`), candidateData);
-      } else if (isEditing && initialData?.id) {
-          if (initialData.id !== candidateId) {
-             // If the main candidate ID changes, remove the old one and add the new one
-             await set(ref(db, `elections/${data.electionId}/candidates/${initialData.id}`), null);
-             await set(ref(db, `elections/${data.electionId}/candidates/${candidateId}`), candidateData);
-          } else {
-            // Standard update
-            await update(ref(db, `elections/${data.electionId}/candidates/${candidateId}`), candidateData);
+      const updates: Record<string, any> = {};
+
+      if (isEditing && initialData?.id) {
+          const oldElectionId = initialData.electionId;
+          const oldCandidateId = initialData.id;
+
+          if (oldElectionId !== data.electionId || oldCandidateId !== candidateId) {
+              // Remove from old path if it's different
+              updates[`/elections/${oldElectionId}/candidates/${oldCandidateId}`] = null;
           }
-      } else {
-        // This is a new candidate, just set the data. The duplicate check is already done above.
-        await set(ref(db, `elections/${data.electionId}/candidates/${candidateId}`), candidateData);
       }
+
+      updates[`/elections/${data.electionId}/candidates/${candidateId}`] = candidateData;
+
+      await update(ref(db), updates);
 
       toast({
         title: `Kandidat ${isEditing ? 'diperbarui' : 'dibuat'}`,

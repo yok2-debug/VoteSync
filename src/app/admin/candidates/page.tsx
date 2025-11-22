@@ -108,16 +108,8 @@ export default function CandidatesPage() {
     try {
       const updates: { [key: string]: null } = {};
       updates[`/elections/${electionId}/candidates/${candidate.id}`] = null;
+      // Also remove any results associated with this candidate
       updates[`/elections/${electionId}/results/${candidate.id}`] = null;
-      
-      const election = elections.find(e => e.id === electionId);
-      if (election?.votes) {
-          Object.entries(election.votes).forEach(([voterId, votedCandidateId]) => {
-              if (votedCandidateId === candidate.id) {
-                  updates[`/elections/${electionId}/votes/${voterId}`] = null;
-              }
-          });
-      }
 
       await update(ref(db), updates);
 
@@ -136,7 +128,7 @@ export default function CandidatesPage() {
   };
 
 
-  const defaultPhoto = PlaceHolderImages.find(p => p.id === 'default-avatar');
+  const defaultPhotoUrl = PlaceHolderImages.find(p => p.id === 'default-avatar')?.imageUrl;
 
 
   if (isLoading) {
@@ -213,12 +205,12 @@ export default function CandidatesPage() {
                     <TableRow key={`${candidate.electionId}-${candidate.id}`}>
                       <TableCell>
                           <img
-                            src={candidate.photo || defaultPhoto?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
+                            src={candidate.photo || defaultPhotoUrl || 'https://picsum.photos/seed/default/400/400'}
                             alt={`Foto ${candidate.name}`}
                             width={40}
                             height={40}
                             className="rounded-full object-cover"
-                            data-ai-hint={defaultPhoto?.imageHint || 'person portrait'}
+                            data-ai-hint={'person portrait'}
                           />
                       </TableCell>
                       <TableCell className="font-medium">
@@ -268,7 +260,7 @@ export default function CandidatesPage() {
               <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
               <AlertDialogDescription>
                 Tindakan ini tidak dapat dibatalkan. Ini akan menghapus kandidat secara permanen
-                "{selectedCandidateInfo?.candidate.name}" dari pemilihan "{elections.find(e => e.id === selectedCandidateInfo?.electionId)?.name}" dan semua suara yang telah mereka terima.
+                "{selectedCandidateInfo?.candidate.name}" dari pemilihan "{elections.find(e => e.id === selectedCandidateInfo?.electionId)?.name}".
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
