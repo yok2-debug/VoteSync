@@ -56,12 +56,14 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
   const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [showBulkUpdateDialog, setShowBulkUpdateDialog] = useState(false);
   const [importedData, setImportedData] = useState<any[]>([]);
   const [selectedVoter, setSelectedVoter] = useState<Voter | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
@@ -290,6 +292,31 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     setShowDeleteDialog(true);
   };
 
+  const handleBulkDelete = async () => {
+    setIsBulkDeleting(true);
+    try {
+        const updates: Record<string, null> = {};
+        selectedVoterIds.forEach(id => {
+            updates[`/voters/${id}`] = null;
+        });
+
+        await update(ref(db), updates);
+
+        toast({ title: `${numSelected} pemilih berhasil dihapus.` });
+        setRowSelection({});
+    } catch (error) {
+        toast({
+            variant: 'destructive',
+            title: 'Gagal menghapus pemilih',
+            description: error instanceof Error ? error.message : 'Terjadi kesalahan tidak diketahui.',
+        });
+    } finally {
+        setIsBulkDeleting(false);
+        setShowBulkDeleteDialog(false);
+    }
+};
+
+
   const handleResetPassword = (voter: Voter) => {
     setSelectedVoter(voter);
     setShowResetPasswordDialog(true);
@@ -315,24 +342,9 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     }
   };
   
-  const onFormSave = async (voterToSave: Voter & { isNew?: boolean }) => {
-    try {
-      const { isNew, id, ...savedVoterData } = voterToSave;
-      const voterRef = ref(db, `voters/${id}`);
-
-      await set(voterRef, savedVoterData);
-
-      toast({
-        title: `Voter ${isNew ? 'created' : 'updated'}`,
-        description: `"${savedVoterData.name}" has been successfully saved.`,
-      });
-    } catch (error) {
-       toast({
-        variant: 'destructive',
-        title: 'Error saving voter',
-        description: error instanceof Error ? error.message : 'An unknown error occurred.',
-      });
-    }
+  const onFormSave = async (voterToSave: Voter) => {
+    const { id, ...data } = voterToSave;
+    await set(ref(db, `voters/${id}`), data);
   };
 
 
@@ -388,10 +400,13 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
       </div>
 
        {numSelected > 0 && (
-        <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+        <div className="flex items-center gap-2 p-2 bg-muted rounded-md border">
           <p className="text-sm font-medium">{numSelected} voter(s) selected.</p>
           <Button size="sm" onClick={() => setShowBulkUpdateDialog(true)}>
-            Ubah Kategori untuk {numSelected} pemilih
+            Ubah Kategori
+          </Button>
+           <Button size="sm" variant="destructive" onClick={() => setShowBulkDeleteDialog(true)}>
+            Hapus {numSelected} Pemilih
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setRowSelection({})}>
             Batalkan Pilihan
@@ -550,6 +565,25 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+       <AlertDialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Apakah Anda benar-benar yakin?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tindakan ini tidak dapat dibatalkan. Ini akan menghapus secara permanen {numSelected} pemilih yang dipilih.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Batal</AlertDialogCancel>
+              <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive hover:bg-destructive/90" disabled={isBulkDeleting}>
+                {isBulkDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Ya, Hapus {numSelected} Pemilih
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
     </div>
   );
 }
