@@ -7,6 +7,44 @@ import { get, ref, update, set } from 'firebase/database';
 export async function getAdminUsers(): Promise<AdminUser[]> {
   try {
     const snapshot = await get(ref(db, 'users'));
+    if (!snapshot.exists()) {
+        // If no users node, create the default admin
+        const superAdminRoleSnapshot = await get(ref(db, 'roles'));
+        let superAdminRoleId = null;
+        if (superAdminRoleSnapshot.exists()) {
+            const roles = superAdminRoleSnapshot.val();
+            for (const id in roles) {
+                if (roles[id].name === 'Super Admin') {
+                    superAdminRoleId = id;
+                    break;
+                }
+            }
+        }
+        
+        if (!superAdminRoleId) {
+             const rolesRef = ref(db, 'roles');
+             const newRoleRef = push(rolesRef);
+             const superAdminRole: Omit<Role, 'id'> = {
+                name: 'Super Admin',
+                permissions: ['dashboard', 'elections', 'candidates', 'voters', 'categories', 'recapitulation', 'settings', 'users']
+             };
+             await set(newRoleRef, superAdminRole);
+             superAdminRoleId = newRoleRef.key;
+        }
+
+        if(superAdminRoleId) {
+            const usersRef = ref(db, 'users');
+            const adminUserRef = push(usersRef);
+            const defaultAdmin: Omit<AdminUser, 'id'> = {
+                username: 'admin',
+                password: 'admin',
+                roleId: superAdminRoleId
+            };
+            await set(adminUserRef, defaultAdmin);
+            return [{ ...defaultAdmin, id: adminUserRef.key! }];
+        }
+        return [];
+    }
     const data = snapshot.val();
     return data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
   } catch (error) {
