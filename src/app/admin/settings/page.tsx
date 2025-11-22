@@ -19,7 +19,7 @@ export default function SettingsPage() {
     {
       action: 'reset_all_elections',
       title: 'Reset Semua Pemilihan',
-      description: 'Menghapus semua pemilihan, kandidat, dan data terkait. Sistem akan menjadi kosong.',
+      description: 'Menghapus semua pemilihan dan kandidat. Ini juga akan mereset status memilih semua pemilih dan menghapus koneksi pemilihan dari semua kategori.',
     },
   ];
 

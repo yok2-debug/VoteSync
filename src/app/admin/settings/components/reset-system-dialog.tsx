@@ -31,8 +31,21 @@ const CONFIRMATION_TEXT = 'RESET';
 async function performResetAction(action: string) {
     const dbRef = ref(db);
     
-    const resetVotesAndStatus = async () => {
-        // Reset election results first
+    const resetVoterStatus = async () => {
+        const votersSnapshot = await get(child(dbRef, 'voters'));
+        if (votersSnapshot.exists()) {
+          const voterUpdates: { [key: string]: any } = {};
+          const votersData = votersSnapshot.val();
+          Object.keys(votersData).forEach(key => {
+             voterUpdates[`/voters/${key}/hasVoted`] = null;
+          });
+          if (Object.keys(voterUpdates).length > 0) {
+            await update(dbRef, voterUpdates);
+          }
+        }
+    };
+
+    const resetVotesAndResults = async () => {
         const electionsSnapshotResults = await get(child(dbRef, 'elections'));
         if (electionsSnapshotResults.exists()) {
           const electionUpdates: { [key: string]: null } = {};
@@ -44,38 +57,22 @@ async function performResetAction(action: string) {
             await update(dbRef, electionUpdates);
           }
         }
-        
-        // Then reset voter status
-        const votersSnapshot = await get(child(dbRef, 'voters'));
-        if (votersSnapshot.exists()) {
-          const voterUpdates: { [key: string]: any } = {};
-          const votersData = votersSnapshot.val();
-          if (Array.isArray(votersData)) {
-            votersData.forEach((voter, index) => {
-              if (voter && voter.id) {
-                voterUpdates[`/voters/${voter.id}/hasVoted`] = null;
-              }
-            });
-          } else {
-             Object.keys(votersData).forEach(key => {
-                voterUpdates[`/voters/${key}/hasVoted`] = null;
-             });
-          }
-          if (Object.keys(voterUpdates).length > 0) {
-            await update(dbRef, voterUpdates);
-          }
-        }
     };
 
     switch (action) {
       case 'reset_votes_and_status':
-        await resetVotesAndStatus();
+        await resetVotesAndResults();
+        await resetVoterStatus();
         break;
       case 'delete_all_voters':
         await remove(child(dbRef, 'voters'));
         break;
       case 'reset_all_elections':
-        // 1. Clean up category references first
+        // 1. Delete all elections
+        await remove(child(dbRef, 'elections'));
+        // 2. Reset hasVoted status on all voters
+        await resetVoterStatus();
+        // 3. Clean up category references
         const categoriesSnapshot = await get(child(dbRef, 'categories'));
         if (categoriesSnapshot.exists()) {
             const updates: { [key: string]: null } = {};
@@ -84,8 +81,6 @@ async function performResetAction(action: string) {
             });
             await update(dbRef, updates);
         }
-        // 2. Then, delete all elections
-        await remove(child(dbRef, 'elections'));
         break;
       default:
         throw new Error('Invalid reset action');
