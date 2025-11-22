@@ -160,6 +160,8 @@ export function RecapitulationDisplay({ election }: RecapitulationDisplayProps) 
                 position: absolute;
                 bottom: 0;
             }
+            .print-signature-table .candidate-col { width: 30%; text-align: left;}
+            .print-signature-table .witness-name-col { width: 35%; text-align: left;}
           }
         `}
       </style>
@@ -300,6 +302,37 @@ export function RecapitulationDisplay({ election }: RecapitulationDisplayProps) 
                      </table>
                   </div>
                 )}
+                
+                {candidates && candidates.length > 0 && (
+                  <div className="print-signature-container" style={{ paddingTop: '2rem' }}>
+                     <h3 className="text-lg font-semibold mb-4 text-center">Nama dan Tanda Tangan Saksi Pasangan Calon</h3>
+                     <table className="print-signature-table">
+                        <thead>
+                            <tr>
+                                <th className="no-col">No.</th>
+                                <th className="witness-name-col">Nama Saksi</th>
+                                <th className="candidate-col">Pasangan Calon</th>
+                                <th className="signature-col">Tanda Tangan</th>
+                            </tr>
+                        </thead>
+                         <tbody>
+                            {candidates.map((candidate, index) => (
+                                <tr key={`witness-${candidate.id}`}>
+                                    <td className="text-center">{index + 1}</td>
+                                    <td>...................................</td>
+                                    <td>{candidate.name}{candidate.viceCandidateName ? ` & ${candidate.viceCandidateName}` : ''}</td>
+                                    <td>
+                                      <div className="signature-box">
+                                        <div className="signature-dots"></div>
+                                      </div>
+                                    </td>
+                                </tr>
+                            ))}
+                         </tbody>
+                     </table>
+                  </div>
+                )}
+
             </CardContent>
         </Card>
       </div>
