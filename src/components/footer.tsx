@@ -8,7 +8,7 @@ export function Footer() {
       <div className="container flex flex-col items-center justify-center gap-2 md:h-24 md:flex-row">
         <div className="text-balance text-center text-sm leading-loose text-muted-foreground">
           <p>
-            © 2024 VoteSync. All rights reserved. · Created by Waluyo
+            © 2024 VoteSync. All rights reserved. Created by Waluyo
           </p>
         </div>
       </div>
