@@ -47,7 +47,7 @@ interface VoterFormDialogProps {
   onOpenChange: (open: boolean) => void;
   voter: Voter | null;
   categories: Category[];
-  onSave: (voter: Voter & { isNew?: boolean }) => Promise<void>;
+  onSave: (voter: Voter) => Promise<void>;
 }
 
 export function VoterFormDialog({
@@ -75,15 +75,8 @@ export function VoterFormDialog({
     if (open) {
       if (voter) {
         reset({
-          id: voter.id,
-          name: voter.name,
-          category: voter.category,
+          ...voter,
           password: '', // Always start with empty password field for editing
-          nik: voter.nik || '',
-          birthPlace: voter.birthPlace || '',
-          birthDate: voter.birthDate || '',
-          gender: voter.gender,
-          address: voter.address || '',
         });
       } else {
         reset({ 
@@ -104,42 +97,31 @@ export function VoterFormDialog({
   const onSubmit: SubmitHandler<VoterFormData> = async (data) => {
     setIsSubmitting(true);
     try {
-      const { id } = data;
-
+      const voterRef = ref(db, `voters/${data.id}`);
+  
       if (!isEditing) {
-          const existingVoterSnapshot = await get(ref(db, `voters/${id}`));
-          if (existingVoterSnapshot.exists()) {
-              throw new Error(`Voter with ID "${id}" already exists.`);
-          }
+        const existingVoterSnapshot = await get(voterRef);
+        if (existingVoterSnapshot.exists()) {
+          throw new Error(`Voter with ID "${data.id}" already exists.`);
+        }
       }
       
-      const voterRef = ref(db, `voters/${id}`);
       let passwordToSave = data.password;
-
-      if (isEditing) {
-        if (!passwordToSave) {
+      if (!passwordToSave) {
+        if (isEditing) {
           const snapshot = await get(voterRef);
           passwordToSave = snapshot.val()?.password;
-        }
-      } else {
-        if (!passwordToSave) {
+        } else {
           passwordToSave = Math.random().toString(36).substring(2, 8);
         }
       }
 
       const savedVoter: Voter = {
-        id: id,
-        name: data.name,
-        category: data.category,
+        ...data,
         password: passwordToSave,
-        nik: data.nik,
-        birthPlace: data.birthPlace,
-        birthDate: data.birthDate,
-        gender: data.gender,
-        address: data.address,
       };
       
-      await onSave({ ...savedVoter, isNew: !isEditing });
+      await onSave(savedVoter);
       
       toast({
         title: `Voter ${isEditing ? 'updated' : 'created'}`,

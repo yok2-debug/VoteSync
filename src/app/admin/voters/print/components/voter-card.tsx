@@ -1,6 +1,5 @@
 
 'use client';
-import { Logo } from '@/components/logo';
 import type { Voter } from '@/lib/types';
 
 interface VoterCardProps {

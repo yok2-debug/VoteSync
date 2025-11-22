@@ -77,7 +77,6 @@ export function CandidateForm({
     if (initialData) {
       reset({
         ...initialData,
-        electionId: initialData.electionId || '',
         voterId: initialData.voterId || initialData.id,
       });
     } else {
@@ -132,17 +131,14 @@ export function CandidateForm({
       }
 
       let finalOrderNumber = data.orderNumber;
-
-      if (finalOrderNumber) {
-        const isOrderNumberTaken = candidatesArray.some(
-            (c: Candidate & {id: string}) => c.orderNumber === finalOrderNumber && c.id !== initialData?.id
-        );
-        if (isOrderNumberTaken) {
-            throw new Error(`Nomor urut ${finalOrderNumber} sudah digunakan dalam pemilihan ini.`);
-        }
-      } else {
+      if (!finalOrderNumber) {
         const maxOrderNumber = Math.max(0, ...candidatesArray.map(c => c.orderNumber || 0));
         finalOrderNumber = maxOrderNumber + 1;
+      } else {
+        const isOrderNumberTaken = otherCandidates.some(c => c.orderNumber === finalOrderNumber);
+        if (isOrderNumberTaken) {
+          throw new Error(`Nomor urut ${finalOrderNumber} sudah digunakan dalam pemilihan ini.`);
+        }
       }
 
       const candidateId = data.voterId;
@@ -164,6 +160,7 @@ export function CandidateForm({
           // If election or main voter ID changes, remove the old entry
           if (initialData.electionId !== data.electionId || initialData.id !== candidateId) {
               updates[`/elections/${initialData.electionId}/candidates/${initialData.id}`] = null;
+              updates[`/elections/${initialData.electionId}/results/${initialData.id}`] = null;
           }
       }
 
