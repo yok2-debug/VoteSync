@@ -16,7 +16,7 @@ import { Loader2, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { MarkdownEditor } from '@/components/ui/markdown-editor';
 import { db } from '@/lib/firebase';
-import { ref, set, get, update } from 'firebase/database';
+import { ref, get, update } from 'firebase/database';
 import { VoterSearchDialog } from './voter-search-dialog';
 import { useDatabase } from '@/context/database-context';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -110,13 +110,12 @@ export function CandidateForm({
       
       const candidatesArray: (Candidate & { id: string })[] = Object.keys(existingCandidates).map(id => ({ ...existingCandidates[id], id }));
       
-      // --- Strict Duplicate Validation ---
       const otherCandidates = isEditing ? candidatesArray.filter(c => c.id !== initialData?.id) : candidatesArray;
       const allOtherParticipantIds = new Set<string>();
       otherCandidates.forEach(c => {
-        allOtherParticipantIds.add(c.id); // Add main candidate ID
+        allOtherParticipantIds.add(c.id);
         if (c.viceCandidateId) {
-          allOtherParticipantIds.add(c.viceCandidateId); // Add vice candidate ID
+          allOtherParticipantIds.add(c.viceCandidateId);
         }
       });
 
@@ -131,7 +130,6 @@ export function CandidateForm({
            throw new Error(`Pemilih "${viceCandidateVoter?.name || data.viceCandidateId}" sudah terdaftar sebagai kandidat atau wakil dalam pemilihan ini.`);
         }
       }
-      // --- End of Strict Duplicate Validation ---
 
       let finalOrderNumber = data.orderNumber;
 
@@ -150,6 +148,7 @@ export function CandidateForm({
       const candidateId = data.voterId;
       
       const candidateData: Candidate = {
+        id: candidateId, 
         name: data.name,
         viceCandidateId: data.viceCandidateId || "",
         viceCandidateName: data.viceCandidateName || "",
@@ -157,18 +156,14 @@ export function CandidateForm({
         mission: data.mission || "",
         orderNumber: finalOrderNumber,
         photo: data.photo || "",
-        id: candidateId, 
       };
       
       const updates: Record<string, any> = {};
 
-      if (isEditing && initialData?.id) {
-          const oldElectionId = initialData.electionId;
-          const oldCandidateId = initialData.id;
-
-          if (oldElectionId !== data.electionId || oldCandidateId !== candidateId) {
-              // Remove from old path if it's different
-              updates[`/elections/${oldElectionId}/candidates/${oldCandidateId}`] = null;
+      if (isEditing && initialData?.id && initialData.electionId) {
+          // If election or main voter ID changes, remove the old entry
+          if (initialData.electionId !== data.electionId || initialData.id !== candidateId) {
+              updates[`/elections/${initialData.electionId}/candidates/${initialData.id}`] = null;
           }
       }
 

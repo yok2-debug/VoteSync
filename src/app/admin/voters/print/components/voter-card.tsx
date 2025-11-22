@@ -18,10 +18,10 @@ const formatBirthDate = (dateString?: string): string => {
     // Guess format based on parts
     if (parts.length === 3) {
       if (parts[0].length === 4) { // YYYY-MM-DD
-        date = new Date(`${parts[0]}-${parts[1]}-${parts[2]}`);
+        date = new Date(`${parts[0]}-${parts[1]}-${parts[2]}T00:00:00Z`);
       } else if (parts[2].length === 4) { // DD-MM-YYYY or MM-DD-YYYY
          // Assuming DD-MM-YYYY as it's a common local format
-        date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+        date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z`);
       }
     }
     
@@ -35,9 +35,9 @@ const formatBirthDate = (dateString?: string): string => {
       return dateString;
     }
 
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const year = date.getUTCFullYear();
     return `${day}-${month}-${year}`;
   } catch (error) {
     // If any error occurs, return the original string.

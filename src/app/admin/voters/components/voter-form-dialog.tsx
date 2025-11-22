@@ -104,7 +104,7 @@ export function VoterFormDialog({
   const onSubmit: SubmitHandler<VoterFormData> = async (data) => {
     setIsSubmitting(true);
     try {
-      const { id, ...voterData } = data;
+      const { id } = data;
 
       if (!isEditing) {
           const existingVoterSnapshot = await get(ref(db, `voters/${id}`));
@@ -114,16 +114,14 @@ export function VoterFormDialog({
       }
       
       const voterRef = ref(db, `voters/${id}`);
-      let passwordToSave = voterData.password;
+      let passwordToSave = data.password;
 
       if (isEditing) {
         if (!passwordToSave) {
-          // If password field is blank during edit, keep the existing one
           const snapshot = await get(voterRef);
           passwordToSave = snapshot.val()?.password;
         }
       } else {
-        // If it's a new voter and password is blank, generate one
         if (!passwordToSave) {
           passwordToSave = Math.random().toString(36).substring(2, 8);
         }
@@ -131,17 +129,17 @@ export function VoterFormDialog({
 
       const savedVoter: Voter = {
         id: id,
-        name: voterData.name,
-        category: voterData.category,
+        name: data.name,
+        category: data.category,
         password: passwordToSave,
-        nik: voterData.nik,
-        birthPlace: voterData.birthPlace,
-        birthDate: voterData.birthDate,
-        gender: voterData.gender,
-        address: voterData.address,
+        nik: data.nik,
+        birthPlace: data.birthPlace,
+        birthDate: data.birthDate,
+        gender: data.gender,
+        address: data.address,
       };
       
-      onSave({ ...savedVoter, isNew: !isEditing });
+      await onSave({ ...savedVoter, isNew: !isEditing });
       onOpenChange(false);
     } catch (error) {
        toast({

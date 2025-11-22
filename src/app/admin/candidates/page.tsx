@@ -108,7 +108,6 @@ export default function CandidatesPage() {
     try {
       const updates: { [key: string]: null } = {};
       updates[`/elections/${electionId}/candidates/${candidate.id}`] = null;
-      // Also remove any results associated with this candidate
       updates[`/elections/${electionId}/results/${candidate.id}`] = null;
 
       await update(ref(db), updates);
