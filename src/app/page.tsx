@@ -71,24 +71,18 @@ export default function LoginPage() {
   return (
     <>
       <PublicNavbar />
-      <div className="relative pt-16 pb-24 bg-gradient-to-br from-primary via-primary/90 to-accent">
-        <div className="container mx-auto px-4 text-center">
-            <h1 className="text-4xl font-extrabold tracking-tight text-primary-foreground sm:text-5xl md:text-6xl">
-                Selamat Datang di VoteSync
-            </h1>
-            <p className="mt-6 max-w-2xl mx-auto text-lg text-primary-foreground/90">
-                Sistem e-voting yang aman, transparan, dan mudah digunakan. Berikan suara Anda untuk masa depan yang lebih baik.
-            </p>
-        </div>
-      </div>
-      <main className="-mt-16">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-12">
+      <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4 pt-20">
+        <div className="mx-auto flex w-full max-w-6xl flex-col justify-center space-y-6">
+          <div className="flex flex-col space-y-2 text-center">
+            <h1 className="text-3xl font-semibold tracking-tight">Portal Pemilihan</h1>
+            <p className="text-sm text-muted-foreground">Silakan masuk untuk menggunakan hak pilih Anda atau lihat pemilihan yang sedang berlangsung.</p>
+          </div>
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
             {/* Elections List */}
             <div className="space-y-6 lg:col-span-2">
               <h2 className="text-2xl font-bold tracking-tight text-center lg:text-left">Pemilihan Aktif</h2>
               {isLoading ? (
-                <div className="flex justify-center items-center h-64 bg-card rounded-lg shadow-lg">
+                 <div className="flex justify-center items-center h-64 bg-card rounded-lg shadow-lg">
                   <p className="text-muted-foreground">Memuat data pemilihan...</p>
                 </div>
               ) : activeElections.length > 0 ? (
