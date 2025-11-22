@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { Election, Voter, Category } from '@/lib/types';
@@ -42,12 +43,6 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
     return voters.filter(v => allowedCategoryIds.has(v.category));
   }, [voters, categories, election.id]);
   
-  const votersWhoVotedIds = useMemo(() => new Set(Object.keys(election.votes || {})), [election.votes]);
-  
-  const DPT_male = useMemo(() => votersForThisElection.filter(v => v.gender === 'Laki-laki').length, [votersForThisElection]);
-  const DPT_female = useMemo(() => votersForThisElection.filter(v => v.gender === 'Perempuan').length, [votersForThisElection]);
-  const DPT_total = votersForThisElection.length;
-  
   // Recalculate results from `votes` to ensure consistency. This is the single source of truth.
   const recalculatedResults = useMemo(() => {
     const results: Record<string, number> = {};
@@ -67,9 +62,14 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
   }, [recalculatedResults]);
 
 
+  const votersWhoVotedIds = useMemo(() => new Set(Object.keys(election.votes || {})), [election.votes]);
   const votersWhoVoted = useMemo(() => votersForThisElection.filter(v => votersWhoVotedIds.has(v.id)), [votersForThisElection, votersWhoVotedIds]);
   const votersWhoVoted_male = useMemo(() => votersWhoVoted.filter(v => v.gender === 'Laki-laki').length, [votersWhoVoted]);
   const votersWhoVoted_female = useMemo(() => votersWhoVoted.filter(v => v.gender === 'Perempuan').length, [votersWhoVoted]);
+  
+  const DPT_male = useMemo(() => votersForThisElection.filter(v => v.gender === 'Laki-laki').length, [votersForThisElection]);
+  const DPT_female = useMemo(() => votersForThisElection.filter(v => v.gender === 'Perempuan').length, [votersForThisElection]);
+  const DPT_total = votersForThisElection.length;
   
   const votersDidNotVote_total = DPT_total - totalValidVotes;
   const votersDidNotVote_male = DPT_male - votersWhoVoted_male;
@@ -174,10 +174,6 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
             .print-signature-table tr {
                 border: none !important;
             }
-            .print-signature-table .no-col { width: 5%; }
-            .print-signature-table .name-col { width: 30%; text-align: left;}
-            .print-signature-table .role-col { width: 25%; text-align: left;}
-            .print-signature-table .signature-col { width: 40%; }
             .print-signature-table .signature-box {
                 height: 50px;
                 position: relative;
@@ -188,6 +184,10 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
                 position: absolute;
                 bottom: 0;
             }
+            .print-signature-table .no-col { width: 5%; }
+            .print-signature-table .name-col { width: 30%; text-align: left;}
+            .print-signature-table .role-col { width: 25%; text-align: left;}
+            .print-signature-table .signature-col { width: 40%; }
             .print-signature-table .candidate-col { width: 30%; text-align: left;}
             .print-signature-table .witness-name-col { width: 35%; text-align: left;}
           }
@@ -347,7 +347,11 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
                             {candidates.map((candidate, index) => (
                                 <tr key={`witness-${candidate.id}`}>
                                     <td className="text-center">{index + 1}</td>
-                                    <td>...................................</td>
+                                    <td>
+                                       <div className="signature-box">
+                                        <div className="signature-dots"></div>
+                                      </div>
+                                    </td>
                                     <td>{candidate.name}{candidate.viceCandidateName ? ` & ${candidate.viceCandidateName}` : ''}</td>
                                     <td>
                                       <div className="signature-box">
@@ -367,3 +371,5 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
     </div>
   );
 }
+
+    
