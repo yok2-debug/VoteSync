@@ -37,7 +37,7 @@ import { VoterImportDialog } from './voter-import-dialog';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { VoterCard } from '../../voters/print/components/voter-card';
 import { db } from '@/lib/firebase';
-import { ref, update, set, get, runTransaction } from 'firebase/database';
+import { ref, update, set, runTransaction } from 'firebase/database';
 import { useDatabase } from '@/context/database-context';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BulkUpdateCategoryDialog } from './bulk-update-category-dialog';
@@ -51,7 +51,7 @@ const ITEMS_PER_PAGE = 100;
 
 
 export function VoterTable({ voters, categories }: VoterTableProps) {
-  const { voters: allEnrichedVoters, elections } = useDatabase();
+  const { elections } = useDatabase();
   const [filter, setFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -105,24 +105,21 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   };
   
   const handlePrint = async () => {
-    const votersToPrintIds = numSelected > 0 ? selectedVoterIds : filteredVoters.map(v => v.id);
+    const votersToPrint = numSelected > 0 ? paginatedVoters.filter(v => rowSelection[v.id]) : paginatedVoters;
     
-    if (votersToPrintIds.length === 0) {
+    if (votersToPrint.length === 0) {
       toast({
         variant: 'destructive',
-        title: 'No voters to print',
-        description: 'There are no voters in the current list or selection.',
+        title: 'Tidak ada pemilih untuk dicetak',
+        description: 'Tidak ada pemilih dalam daftar atau pilihan saat ini.',
       });
       return;
     }
 
     setIsPrinting(true);
-    toast({ title: 'Preparing print...', description: `Printing ${votersToPrintIds.length} voter cards...` });
+    toast({ title: 'Menyiapkan cetak...', description: `Mencetak ${votersToPrint.length} kartu pemilih...` });
 
     try {
-      const idsToPrint = new Set(votersToPrintIds);
-      const votersToPrint = allEnrichedVoters.filter(v => idsToPrint.has(v.id));
-
       const printContent = renderToStaticMarkup(
         <div className="grid grid-cols-4 gap-2">
           {votersToPrint.map(voter => <VoterCard key={voter.id} voter={voter} />)}
@@ -139,14 +136,14 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
 
       const doc = iframe.contentWindow?.document;
       if (!doc) {
-        throw new Error('Could not access iframe document.');
+        throw new Error('Tidak dapat mengakses dokumen iframe.');
       }
 
       doc.open();
       doc.write(`
         <html>
           <head>
-            <title>Print Voter Cards</title>
+            <title>Cetak Kartu Pemilih</title>
             <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
             <style>
               @page {
@@ -181,7 +178,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
       }, 500);
 
     } catch (e) {
-      toast({ variant: 'destructive', title: 'Print failed', description: e instanceof Error ? e.message : 'Could not generate print content.'});
+      toast({ variant: 'destructive', title: 'Cetak gagal', description: e instanceof Error ? e.message : 'Tidak dapat menghasilkan konten cetak.'});
       setIsPrinting(false);
     }
   };
@@ -199,7 +196,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast({ title: "Template exported." });
+    toast({ title: "Template berhasil diekspor." });
   };
   
   const handleImportClick = () => {
@@ -219,7 +216,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
         error: (error: any) => {
            toast({
             variant: 'destructive',
-            title: 'Error parsing CSV',
+            title: 'Error mem-parsing CSV',
             description: error.message,
           });
         }
@@ -242,7 +239,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
 
             const categoryId = categoryNameMap.get(category.replace(/\s+/g, '').toLowerCase());
             if (!categoryId) {
-                throw new Error(`Category "${category}" not found for voter "${rest.name}".`);
+                throw new Error(`Kategori "${category}" tidak ditemukan untuk pemilih "${rest.name}".`);
             }
             
             const voterDataForDb: Omit<Voter, 'id' | 'hasVoted'> = {
@@ -263,14 +260,14 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
         }
 
       toast({
-        title: 'Import Successful',
-        description: `${dataToImport.length} voters were successfully imported. The table will update shortly.`,
+        title: 'Impor Berhasil',
+        description: `${dataToImport.length} pemilih berhasil diimpor. Tabel akan segera diperbarui.`,
       });
     } catch (error) {
        toast({
         variant: 'destructive',
-        title: 'Import Failed',
-        description: error instanceof Error ? error.message : 'An unknown error occurred during import.',
+        title: 'Impor Gagal',
+        description: error instanceof Error ? error.message : 'Terjadi kesalahan tidak diketahui saat impor.',
       });
     } finally {
         setShowImportDialog(false);
@@ -334,7 +331,9 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     }
     
     // 4. Apply all nullification updates in one go
-    await update(ref(db), updates);
+    if (Object.keys(updates).length > 0) {
+      await update(ref(db), updates);
+    }
   };
 
   const confirmDelete = async () => {
@@ -342,11 +341,11 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     setIsDeleting(true);
     try {
       await processVoterDeletion([selectedVoter.id]);
-      toast({ title: 'Voter deleted successfully.' });
+      toast({ title: 'Pemilih berhasil dihapus.' });
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Error deleting voter',
+        title: 'Error menghapus pemilih',
         description: error instanceof Error ? error.message : String(error),
       });
     } finally {
@@ -360,13 +359,13 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     setIsBulkDeleting(true);
     try {
         await processVoterDeletion(selectedVoterIds);
-        toast({ title: `${numSelected} voter(s) successfully deleted.` });
+        toast({ title: `${numSelected} pemilih berhasil dihapus.` });
         setRowSelection({});
     } catch (error) {
         toast({
             variant: 'destructive',
-            title: 'Error deleting voters',
-            description: error instanceof Error ? error.message : 'An unknown error occurred.',
+            title: 'Error menghapus pemilih',
+            description: error instanceof Error ? error.message : 'Terjadi kesalahan tidak diketahui.',
         });
     } finally {
         setIsBulkDeleting(false);
@@ -398,17 +397,17 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
       <div className="flex justify-between items-center gap-2 flex-wrap">
         <form className="flex gap-2">
            <Input
-            placeholder="Filter by name, ID, or NIK..."
+            placeholder="Saring berdasarkan nama, ID, atau NIK..."
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
             className="max-w-sm"
           />
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filter by category" />
+              <SelectValue placeholder="Saring berdasarkan kategori" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="all">Semua Kategori</SelectItem>
               {categories.map((category) => (
                 <SelectItem key={category.id} value={category.id}>
                   {category.name}
@@ -420,26 +419,26 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
         <div className="flex gap-2 flex-wrap">
            <Button variant="outline" onClick={handlePrint} type="button" disabled={isPrinting}>
               {isPrinting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
-              Print Cards
+              Cetak Kartu
             </Button>
            <Button variant="outline" onClick={handleExportTemplate}>
               <Download className="mr-2 h-4 w-4" />
-              Export Template
+              Ekspor Template
             </Button>
             <Button variant="outline" onClick={handleImportClick}>
               <Upload className="mr-2 h-4 w-4" />
-              Import CSV
+              Impor CSV
             </Button>
             <Button onClick={handleAdd}>
               <PlusCircle className="mr-2 h-4 w-4" />
-              Add Voter
+              Tambah Pemilih
             </Button>
         </div>
       </div>
 
        {numSelected > 0 && (
         <div className="flex items-center gap-2 p-2 bg-muted rounded-md border">
-          <p className="text-sm font-medium">{numSelected} voter(s) selected.</p>
+          <p className="text-sm font-medium">{numSelected} pemilih dipilih.</p>
           <Button size="sm" onClick={() => setShowBulkUpdateDialog(true)}>
             Ubah Kategori
           </Button>
@@ -463,12 +462,12 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
                     aria-label="Select all"
                   />
                 </TableHead>
-              <TableHead>Voter ID</TableHead>
+              <TableHead>ID Pemilih</TableHead>
               <TableHead>NIK</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Has Voted</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Nama</TableHead>
+              <TableHead>Kategori</TableHead>
+              <TableHead>Telah Memilih</TableHead>
+              <TableHead className="text-right">Tindakan</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -486,19 +485,19 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
                   <TableCell className="font-mono">{voter.nik || 'N/A'}</TableCell>
                   <TableCell className="font-medium">{voter.name}</TableCell>
                   <TableCell>{categoryMap.get(voter.category) || 'N/A'}</TableCell>
-                  <TableCell>{voter.hasVoted && Object.keys(voter.hasVoted).length > 0 ? 'Yes' : 'No'}</TableCell>
+                  <TableCell>{voter.hasVoted && Object.keys(voter.hasVoted).length > 0 ? 'Ya' : 'Tidak'}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
+                          <span className="sr-only">Buka menu</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleEdit(voter)}>
                           <Edit className="mr-2 h-4 w-4" />
-                          Edit
+                          Ubah
                         </DropdownMenuItem>
                          <DropdownMenuItem onClick={() => handleResetPassword(voter)}>
                           <KeyRound className="mr-2 h-4 w-4" />
@@ -506,7 +505,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
                          </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleDelete(voter)}>
                           <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-                          <span className="text-destructive">Delete</span>
+                          <span className="text-destructive">Hapus</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -516,7 +515,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
             ) : (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center">
-                  No voters found.
+                  Tidak ada pemilih ditemukan.
                 </TableCell>
               </TableRow>
             )}
@@ -526,7 +525,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
 
        <div className="flex items-center justify-between py-4">
           <div className="text-sm text-muted-foreground">
-            Showing {paginatedVoters.length} of {filteredVoters.length} voters.
+            Menampilkan {paginatedVoters.length} dari {filteredVoters.length} pemilih.
           </div>
           <div className="flex items-center gap-2">
               <Button
@@ -535,10 +534,10 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
               >
-                  Previous
+                  Sebelumnya
               </Button>
               <span className="text-sm">
-                  Page {currentPage} of {totalPages}
+                  Halaman {currentPage} dari {totalPages}
               </span>
               <Button
                   variant="outline"
@@ -546,7 +545,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
               >
-                  Next
+                  Berikutnya
               </Button>
           </div>
       </div>
@@ -588,16 +587,16 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the voter "{selectedVoter?.name}" ({selectedVoter?.id}) and all associated data like votes and candidate status.
+              Tindakan ini tidak dapat dibatalkan. Ini akan menghapus pemilih "{selectedVoter?.name}" ({selectedVoter?.id}) secara permanen beserta semua data terkait seperti suara dan status kandidat.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
               {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Delete
+              Hapus
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

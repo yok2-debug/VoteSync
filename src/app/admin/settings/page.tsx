@@ -8,18 +8,18 @@ export default function SettingsPage() {
   const resetOptions = [
     {
       action: 'reset_votes_and_status',
-      title: 'Reset Suara & Status Pemilih',
-      description: 'Menghapus semua suara yang masuk, mereset hasil pemilihan menjadi nol, dan mereset status "telah memilih" untuk semua pemilih. Ini memungkinkan pemungutan suara diulang.',
+      title: 'Atur Ulang Suara & Status Pemilih',
+      description: 'Menghapus semua data suara yang masuk dan mengatur ulang status "telah memilih" untuk semua pemilih. Ini berguna jika Anda ingin melakukan simulasi atau mengulang pemungutan suara.',
     },
     {
       action: 'delete_all_voters',
-      title: 'Hapus Semua Pemilih',
-      description: 'Secara permanen menghapus semua data pemilih dari sistem. Tindakan ini tidak dapat diurungkan.',
+      title: 'Hapus Semua Data Pemilih',
+      description: 'Secara permanen menghapus semua data pemilih dari sistem. Tindakan ini tidak dapat diurungkan dan semua pemilih harus diimpor atau ditambahkan kembali.',
     },
     {
       action: 'reset_all_elections',
-      title: 'Reset Semua Pemilihan',
-      description: 'Menghapus semua pemilihan dan kandidat. Ini juga akan mereset status memilih semua pemilih dan menghapus koneksi pemilihan dari semua kategori.',
+      title: 'Atur Ulang Semua Pemilihan',
+      description: 'Menghapus semua pemilihan, kandidat, dan data terkait. Ini juga akan mengatur ulang status memilih semua pemilih dan menghapus koneksi pemilihan dari kategori.',
     },
   ];
 
@@ -27,7 +27,7 @@ export default function SettingsPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Pengaturan Sistem</h1>
-        <p className="text-muted-foreground">Kelola pengaturan seluruh sistem dan lakukan operasi reset.</p>
+        <p className="text-muted-foreground">Kelola pengaturan seluruh sistem dan lakukan operasi reset data.</p>
       </div>
 
       <Card className="border-destructive">
@@ -36,7 +36,7 @@ export default function SettingsPage() {
             <AlertTriangle className="h-6 w-6 text-destructive" />
             <CardTitle>Zona Berbahaya</CardTitle>
           </div>
-          <CardDescription>Tindakan ini tidak dapat diurungkan dan dapat menyebabkan kehilangan data permanen. Lanjutkan dengan sangat hati-hati.</CardDescription>
+          <CardDescription>Tindakan di bawah ini bersifat merusak dan tidak dapat diurungkan. Lanjutkan dengan sangat hati-hati.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {resetOptions.map((option) => (

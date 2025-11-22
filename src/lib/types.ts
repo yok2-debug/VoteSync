@@ -65,12 +65,6 @@ export interface AdminUser {
   role?: Role; // Populated client-side
 }
 
-export type AppSettings = {
-  app_name: string;
-  vote_name: string;
-  periode: string;
-};
-
 export interface AdminSessionPayload {
   userId: string;
   username: string;
@@ -81,12 +75,4 @@ export interface AdminSessionPayload {
 export interface VoterSessionPayload {
     voterId: string;
     expires?: number;
-}
-
-export interface Vote {
-  id: string;
-  electionId: string;
-  candidateId: string;
-  voterId: string;
-  createdAt: string;
 }

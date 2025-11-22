@@ -21,10 +21,10 @@ import { db } from '@/lib/firebase';
 import { ref, update } from 'firebase/database';
 
 const passwordSchema = z.object({
-  password: z.string().min(6, { message: 'New password must be at least 6 characters.' }),
+  password: z.string().min(6, { message: 'Kata sandi baru minimal 6 karakter.' }),
   confirmPassword: z.string()
 }).refine(data => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
+  message: "Kata sandi tidak cocok.",
   path: ["confirmPassword"],
 });
 
@@ -67,15 +67,15 @@ export function ResetPasswordDialog({
         password: data.password
       });
       toast({
-        title: 'Password Reset Successful',
-        description: `Password for ${voter.name} has been updated.`,
+        title: 'Reset Kata Sandi Berhasil',
+        description: `Kata sandi untuk ${voter.name} telah diperbarui.`,
       });
       onOpenChange(false);
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Error Resetting Password',
-        description: error instanceof Error ? error.message : 'An unknown error occurred.',
+        title: 'Error Mereset Kata Sandi',
+        description: error instanceof Error ? error.message : 'Terjadi kesalahan tidak diketahui.',
       });
     } finally {
       setIsSubmitting(false);
@@ -86,15 +86,15 @@ export function ResetPasswordDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Reset Password</DialogTitle>
+          <DialogTitle>Reset Kata Sandi</DialogTitle>
           <DialogDescription>
-            Enter a new password for <span className="font-semibold">{voter.name}</span> ({voter.id}).
+            Masukkan kata sandi baru untuk <span className="font-semibold">{voter.name}</span> ({voter.id}).
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} id="reset-password-form" className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="password-reset" className="text-right">
-              New Password
+              Kata Sandi Baru
             </Label>
             <div className="col-span-3">
               <Input id="password-reset" type="password" {...register('password')} className="w-full" />
@@ -105,7 +105,7 @@ export function ResetPasswordDialog({
           </div>
            <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="confirmPassword" className="text-right">
-              Confirm
+              Konfirmasi
             </Label>
             <div className="col-span-3">
               <Input id="confirmPassword" type="password" {...register('confirmPassword')} className="w-full" />
@@ -117,11 +117,11 @@ export function ResetPasswordDialog({
         </form>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-            Cancel
+            Batal
           </Button>
           <Button type="submit" form="reset-password-form" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Saving...' : 'Set New Password'}
+            {isSubmitting ? 'Menyimpan...' : 'Atur Kata Sandi Baru'}
           </Button>
         </DialogFooter>
       </DialogContent>

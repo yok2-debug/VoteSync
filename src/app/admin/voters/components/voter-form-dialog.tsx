@@ -29,9 +29,9 @@ import { db } from '@/lib/firebase';
 import { ref, get, set } from 'firebase/database';
 
 const voterSchema = z.object({
-  id: z.string().min(1, { message: 'Voter ID is required.' }),
-  name: z.string().min(3, { message: 'Name must be at least 3 characters.' }),
-  category: z.string().min(1, { message: 'Category is required.' }),
+  id: z.string().min(1, { message: 'ID Pemilih wajib diisi.' }),
+  name: z.string().min(3, { message: 'Nama minimal 3 karakter.' }),
+  category: z.string().min(1, { message: 'Kategori wajib dipilih.' }),
   password: z.string().optional(),
   nik: z.string().optional(),
   birthPlace: z.string().optional(),
@@ -102,7 +102,7 @@ export function VoterFormDialog({
       if (!isEditing) {
         const existingVoterSnapshot = await get(voterRef);
         if (existingVoterSnapshot.exists()) {
-          throw new Error(`Voter with ID "${data.id}" already exists.`);
+          throw new Error(`Pemilih dengan ID "${data.id}" sudah ada.`);
         }
       }
       
@@ -124,16 +124,16 @@ export function VoterFormDialog({
       await onSave(savedVoter);
       
       toast({
-        title: `Voter ${isEditing ? 'updated' : 'created'}`,
-        description: `"${savedVoter.name}" has been successfully saved.`,
+        title: `Pemilih ${isEditing ? 'diperbarui' : 'dibuat'}`,
+        description: `"${savedVoter.name}" telah berhasil disimpan.`,
       });
 
       onOpenChange(false);
     } catch (error) {
        toast({
         variant: 'destructive',
-        title: 'Error saving voter',
-        description: error instanceof Error ? error.message : 'An unknown error occurred.',
+        title: 'Error menyimpan pemilih',
+        description: error instanceof Error ? error.message : 'Terjadi kesalahan tidak diketahui.',
       });
     } finally {
       setIsSubmitting(false);
@@ -144,14 +144,14 @@ export function VoterFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Voter' : 'Add New Voter'}</DialogTitle>
+          <DialogTitle>{isEditing ? 'Ubah Pemilih' : 'Tambah Pemilih Baru'}</DialogTitle>
           <DialogDescription>
-            {isEditing ? 'Update the details for this voter.' : 'Enter the details for the new voter.'}
+            {isEditing ? 'Perbarui detail untuk pemilih ini.' : 'Masukkan detail untuk pemilih baru.'}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} id="voter-form" className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-1">
           <div className="space-y-2">
-            <Label htmlFor="id">Voter ID</Label>
+            <Label htmlFor="id">ID Pemilih</Label>
             <Input id="id" {...register('id')} className="w-full font-mono" disabled={isEditing} />
             {errors.id && <p className="text-sm text-destructive mt-1">{errors.id.message}</p>}
           </div>
@@ -161,7 +161,7 @@ export function VoterFormDialog({
             {errors.nik && <p className="text-sm text-destructive mt-1">{errors.nik.message}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">Nama</Label>
             <Input id="name" {...register('name')} className="w-full" />
             {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
           </div>
@@ -200,14 +200,14 @@ export function VoterFormDialog({
                 {errors.address && <p className="text-sm text-destructive mt-1">{errors.address.message}</p>}
             </div>
           <div className="space-y-2">
-            <Label>Category</Label>
+            <Label>Kategori</Label>
             <Controller
               control={control}
               name="category"
               render={({ field }) => (
                 <Select onValueChange={field.onChange} value={field.value}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
+                    <SelectValue placeholder="Pilih sebuah kategori" />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((cat) => (
@@ -222,24 +222,24 @@ export function VoterFormDialog({
             {errors.category && <p className="text-sm text-destructive mt-1">{errors.category.message}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Kata Sandi</Label>
             <Input 
               id="password" 
               type="password" 
               {...register('password')} 
               className="w-full" 
-              placeholder={isEditing ? "Leave blank to keep current" : "Leave blank for auto-generation"}
+              placeholder={isEditing ? "Kosongkan untuk tidak mengubah" : "Kosongkan untuk generate otomatis"}
             />
             {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
           </div>
         </form>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-            Cancel
+            Batal
           </Button>
           <Button type="submit" form="voter-form" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Saving...' : 'Save'}
+            {isSubmitting ? 'Menyimpan...' : 'Simpan'}
           </Button>
         </DialogFooter>
       </DialogContent>

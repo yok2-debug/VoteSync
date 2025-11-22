@@ -26,7 +26,7 @@ import { db } from '@/lib/firebase';
 import { ref, update } from 'firebase/database';
 
 const bulkUpdateSchema = z.object({
-  categoryId: z.string().min(1, { message: 'A category must be selected.' }),
+  categoryId: z.string().min(1, { message: 'Kategori harus dipilih.' }),
 });
 
 type BulkUpdateFormData = z.infer<typeof bulkUpdateSchema>;
@@ -69,16 +69,16 @@ export function BulkUpdateCategoryDialog({
       await update(ref(db), updates);
 
       toast({
-        title: 'Update Successful',
-        description: `${numSelected} voter(s) have been moved to the new category.`,
+        title: 'Pembaruan Berhasil',
+        description: `${numSelected} pemilih telah dipindahkan ke kategori baru.`,
       });
       onSuccess();
       onOpenChange(false);
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Error Updating Voters',
-        description: error instanceof Error ? error.message : 'An unknown error occurred.',
+        title: 'Error Memperbarui Pemilih',
+        description: error instanceof Error ? error.message : 'Terjadi kesalahan tidak diketahui.',
       });
     } finally {
       setIsSubmitting(false);
@@ -89,9 +89,9 @@ export function BulkUpdateCategoryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Bulk Update Voter Category</DialogTitle>
+          <DialogTitle>Perbarui Kategori Pemilih Massal</DialogTitle>
           <DialogDescription>
-            Change the category for the {numSelected} selected voter(s).
+            Ubah kategori untuk {numSelected} pemilih yang dipilih.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} id="bulk-update-form" className="space-y-4 py-4">
@@ -101,7 +101,7 @@ export function BulkUpdateCategoryDialog({
             render={({ field }) => (
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a new category" />
+                  <SelectValue placeholder="Pilih kategori baru" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
@@ -117,11 +117,11 @@ export function BulkUpdateCategoryDialog({
         </form>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-            Cancel
+            Batal
           </Button>
           <Button type="submit" form="bulk-update-form" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Updating...' : `Update ${numSelected} Voters`}
+            {isSubmitting ? 'Memperbarui...' : `Perbarui ${numSelected} Pemilih`}
           </Button>
         </DialogFooter>
       </DialogContent>
