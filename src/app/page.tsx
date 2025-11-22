@@ -14,7 +14,7 @@ import Loading from './loading';
 import { useMemo } from 'react';
 import type { Candidate, Election } from '@/lib/types';
 import { format } from 'date-fns';
-import { Calendar, Users } from 'lucide-react';
+import { Calendar, Users, ArrowRight } from 'lucide-react';
 import {
   Dialog,
   DialogClose,
@@ -71,44 +71,63 @@ export default function LoginPage() {
   return (
     <>
       <PublicNavbar />
-      <main className="flex flex-1 flex-col items-center justify-center bg-background p-4 pt-20">
-        <div className="w-full max-w-6xl mx-auto space-y-10">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12 items-start">
-            <div className="space-y-6 md:col-span-2">
-               <div className="flex flex-col space-y-2 text-center md:text-left">
-                  <h2 className="text-2xl font-semibold tracking-tight">Pemilihan Aktif</h2>
+      <main className="flex-1 bg-background">
+        {/* Hero Section */}
+        <section className="relative bg-gradient-to-br from-primary via-primary/80 to-accent text-primary-foreground py-20 px-4 text-center">
+            <div className="absolute inset-0 bg-black/30"></div>
+            <div className="relative container mx-auto">
+                <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">Selamat Datang di VoteSync</h1>
+                <p className="text-lg md:text-xl text-primary-foreground/90 max-w-3xl mx-auto">
+                    Platform e-voting yang aman, transparan, dan mudah digunakan untuk menyalurkan suara Anda.
+                </p>
+            </div>
+        </section>
+
+        {/* Content Section */}
+        <div className="container mx-auto py-12 px-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
+            
+            {/* Elections List */}
+            <div className="lg:col-span-2 space-y-8">
+               <div className="flex flex-col space-y-2">
+                  <h2 className="text-3xl font-bold tracking-tight text-foreground">Pemilihan Aktif</h2>
+                  <p className="text-muted-foreground">Lihat daftar pemilihan yang sedang berlangsung atau akan datang.</p>
                </div>
+
                {isLoading ? (
-                <div className="flex justify-center items-center h-64">
+                <div className="flex justify-center items-center h-64 bg-muted/50 rounded-lg">
                   <p className="text-muted-foreground">Memuat data pemilihan...</p>
                 </div>
               ) : activeElections.length > 0 ? (
-                <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {activeElections.map((election: Election) => {
                     const candidates = election.candidates ? Object.values(election.candidates).sort((a,b) => (a.orderNumber || 999) - (b.orderNumber || 999)) : [];
                     return (
-                    <Card key={election.id} className="flex flex-col">
+                    <Card key={election.id} className="flex flex-col group hover:shadow-lg transition-shadow duration-300">
                       <CardHeader>
-                        <div className="flex justify-between items-start">
-                           <CardTitle>{election.name}</CardTitle>
+                        <div className="flex justify-between items-start mb-2">
+                           <CardTitle className="text-xl group-hover:text-primary transition-colors">{election.name}</CardTitle>
                            {getStatus(election)}
                         </div>
-                        <CardDescription>{election.description}</CardDescription>
-                         <div className="flex items-center pt-2 text-sm text-muted-foreground gap-2">
+                         <div className="flex items-center text-sm text-muted-foreground gap-2">
                            <Calendar className="h-4 w-4" />
                            <span>{formatSchedule(election.startDate, election.endDate)}</span>
                         </div>
                       </CardHeader>
-                       <CardContent className="flex-grow flex items-end justify-between">
-                        <p className="text-sm text-muted-foreground">
-                            Jumlah Kandidat: {candidates.length}
-                        </p>
+                       <CardContent className="flex-grow space-y-4">
+                        <p className="text-muted-foreground text-sm line-clamp-2">{election.description}</p>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                            <Users className="mr-2 h-4 w-4" />
+                            <span>{candidates.length} Kandidat Berpartisipasi</span>
+                        </div>
+                       </CardContent>
+                       <CardContent>
                         {candidates.length > 0 && (
                           <Dialog>
                             <DialogTrigger asChild>
-                               <Button variant="secondary">
-                                <Users className="mr-2 h-4 w-4" />
-                                Lihat Kandidat
+                               <Button variant="outline" className="w-full">
+                                Lihat Detail Kandidat
+                                <ArrowRight className="ml-2 h-4 w-4" />
                               </Button>
                             </DialogTrigger>
                             <DialogContent className="sm:max-w-3xl pb-2">
@@ -183,18 +202,19 @@ export default function LoginPage() {
                   )})}
                 </div>
               ) : (
-                <p className="text-center md:text-left text-muted-foreground py-10">Tidak ada pemilihan yang sedang aktif saat ini.</p>
+                <div className="text-center text-muted-foreground py-16 bg-muted/50 rounded-lg">
+                    <p>Tidak ada pemilihan yang sedang aktif saat ini.</p>
+                </div>
               )}
             </div>
 
-            <div className="space-y-6 md:col-span-1">
-               <div className="flex flex-col space-y-2 text-center md:text-left">
-                 <h2 className="text-2xl font-semibold tracking-tight">Login Pemilih</h2>
-               </div>
-              <Card>
+            {/* Login Form */}
+            <div className="lg:col-span-1 lg:sticky lg:top-24">
+              <Card className="shadow-lg">
                 <CardHeader className="text-center">
+                    <CardTitle className="text-2xl">Login Pemilih</CardTitle>
                     <CardDescription>
-                    Silakan masuk menggunakan ID Pemilih dan Kata Sandi Anda untuk memberikan suara.
+                    Masukkan ID Pemilih dan Kata Sandi Anda untuk memberikan suara.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
