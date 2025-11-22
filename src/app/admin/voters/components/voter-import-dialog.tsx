@@ -17,7 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import type { Category, Voter } from '@/lib/types';
-import { getVoters } from '@/lib/data';
+import { useDatabase } from '@/context/database-context';
 
 interface VoterImportDialogProps {
   open: boolean;
@@ -40,26 +40,16 @@ const normalizeCategory = (name: string) => name ? name.replace(/\s+/g, '').toLo
 export function VoterImportDialog({ open, onOpenChange, data, categories, onSave }: VoterImportDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [validatedData, setValidatedData] = useState<ValidatedRow[]>([]);
-  const [existingVoters, setExistingVoters] = useState<Voter[]>([]);
+  const { voters: existingVoters } = useDatabase();
   const { toast } = useToast();
-
-  useEffect(() => {
-    async function fetchVoters() {
-      const voters = await getVoters();
-      setExistingVoters(voters);
-    }
-    if (open) {
-      fetchVoters();
-    }
-  }, [open]);
 
   const categoryNameMap = useMemo(() => new Map(categories.map(c => [normalizeCategory(c.name), c.id])), [categories]);
   
   useEffect(() => {
-    async function validateData() {
+    function validateData() {
         const filteredData = data.filter(row => row && typeof row === 'object' && Object.values(row).some(val => val !== null && val !== ''));
 
-        if (!open || filteredData.length === 0 || existingVoters.length === 0) {
+        if (!open || filteredData.length === 0) {
             setValidatedData([]);
             return;
         }

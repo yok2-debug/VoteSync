@@ -13,7 +13,7 @@ import type { VoterSessionPayload, Election, Voter, Category } from '@/lib/types
 
 export default function VoterDashboardPage() {
   const router = useRouter();
-  const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
+  const { elections, voters, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
 
@@ -29,16 +29,8 @@ export default function VoterDashboardPage() {
 
   const voter: Voter | undefined = useMemo(() => {
     if (!session?.voterId) return undefined;
-    const foundVoter = voters.find(v => v.id === session.voterId);
-    if (!foundVoter) return undefined;
-    
-    // Enrich voter with followedElections
-    const voterCategory = categories.find(c => c.id === foundVoter.category);
-    const followedElections = elections.filter(e => voterCategory?.allowedElections?.includes(e.id));
-    
-    return {...foundVoter, followedElections: followedElections};
-    
-  }, [voters, session, elections, categories]);
+    return voters.find(v => v.id === session.voterId);
+  }, [voters, session]);
   
   const availableElections = useMemo(() => {
     if (!voter || !voter.followedElections) return [];

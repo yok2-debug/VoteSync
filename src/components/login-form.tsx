@@ -18,8 +18,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getVoters } from '@/lib/data';
 import { setVoterSession } from '@/lib/session-client';
+import { useDatabase } from '@/context/database-context';
 
 const voterLoginSchema = z.object({
   voterId: z.string().min(1, { message: 'Voter ID is required.' }),
@@ -30,6 +30,7 @@ export function LoginForm() {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { voters } = useDatabase();
 
   const form = useForm<z.infer<typeof voterLoginSchema>>({
     resolver: zodResolver(voterLoginSchema),
@@ -39,8 +40,7 @@ export function LoginForm() {
   async function handleVoterLogin(values: z.infer<typeof voterLoginSchema>) {
     setIsSubmitting(true);
     try {
-      const allVoters = await getVoters();
-      const voter = allVoters.find(v => v.id === values.voterId);
+      const voter = voters.find(v => v.id === values.voterId);
 
       if (voter && voter.password === values.password) {
         setVoterSession({ voterId: voter.id });

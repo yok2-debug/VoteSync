@@ -34,12 +34,12 @@ import { ResetPasswordDialog } from './reset-password-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Papa from 'papaparse';
 import { VoterImportDialog } from './voter-import-dialog';
-import { getVoters } from '@/lib/data';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { VoterCard } from '../../voters/print/components/voter-card';
 import { db } from '@/lib/firebase';
 import { ref, remove, update, set } from 'firebase/database';
 import * as z from 'zod';
+import { useDatabase } from '@/context/database-context';
 
 type VoterTableProps = {
   voters: Voter[];
@@ -49,6 +49,7 @@ type VoterTableProps = {
 const ITEMS_PER_PAGE = 100;
 
 export function VoterTable({ voters, categories }: VoterTableProps) {
+  const { voters: allEnrichedVoters } = useDatabase();
   const [filter, setFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -92,11 +93,9 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     }
 
     setIsPrinting(true);
-    toast({ title: 'Preparing print...', description: 'Fetching latest voter data...' });
+    toast({ title: 'Preparing print...', description: 'Using latest available voter data...' });
 
     try {
-      // We use getVoters to ensure we get the fully enriched data
-      const allEnrichedVoters = await getVoters();
       const idsToPrint = new Set(filteredVoters.map(v => v.id));
       const votersToPrint = allEnrichedVoters.filter(v => idsToPrint.has(v.id));
 
