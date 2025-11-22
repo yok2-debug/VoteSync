@@ -46,7 +46,7 @@ export default function VoterDashboardPage() {
   const now = new Date();
 
   return (
-    <main className="flex min-h-screen flex-col items-center bg-background p-4 sm:p-8">
+    <main className="flex min-h-screen flex-col items-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4 sm:p-8">
       <div className="w-full max-w-4xl space-y-8">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="text-center sm:text-left">

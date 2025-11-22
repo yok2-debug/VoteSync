@@ -93,7 +93,7 @@ export function VoteClientPage() {
   const defaultAvatar = PlaceHolderImages.find(p => p.id === 'default-avatar');
   
   return (
-    <main className="flex min-h-screen flex-col items-center bg-background p-4 sm:p-8">
+    <main className="flex min-h-screen flex-col items-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4 sm:p-8">
       <div className="w-full max-w-7xl space-y-8">
         <header className="flex w-full items-center justify-between">
           <Button asChild variant="outline">
