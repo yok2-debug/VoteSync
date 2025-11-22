@@ -1,27 +1,106 @@
 'use client';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { CandidateTable } from './components/candidate-table';
+import { useRouter } from 'next/navigation';
 import { useDatabase } from '@/context/database-context';
 import Loading from '@/app/loading';
-import { useMemo } from 'react';
-import Link from 'next/link';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
+import { useMemo, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { MoreHorizontal, Edit, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import type { Candidate, Election } from '@/lib/types';
+import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { db } from '@/lib/firebase';
+import { ref, remove } from 'firebase/database';
 
 export default function CandidatesPage() {
-  const searchParams = useSearchParams();
   const router = useRouter();
   const { elections, isLoading } = useDatabase();
+  const [filter, setFilter] = useState('');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedCandidateInfo, setSelectedCandidateInfo] = useState<{electionId: string, candidate: Candidate} | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { toast } = useToast();
+
+  const allCandidates = useMemo(() => {
+    if (isLoading) return [];
+    
+    const candidatesWithElectionInfo = elections.flatMap(election => 
+        election.candidates 
+            ? Object.values(election.candidates).map(candidate => ({
+                ...candidate,
+                electionId: election.id,
+                electionName: election.name,
+              }))
+            : []
+    );
+
+    return candidatesWithElectionInfo.filter(c => c.name.toLowerCase().includes(filter.toLowerCase()));
+
+  }, [elections, isLoading, filter]);
   
-  const selectedElectionId = searchParams.get('electionId');
-
-  const selectedElection = useMemo(() => {
-    return elections.find(e => e.id === selectedElectionId);
-  }, [elections, selectedElectionId]);
-
-  const handleElectionChange = (electionId: string) => {
-    router.push(`/admin/candidates?electionId=${electionId}`);
+  const handleAdd = () => {
+    router.push(`/admin/candidates/new`);
   };
+  
+  const handleEdit = (electionId: string, candidateId: string) => {
+    router.push(`/admin/candidates/edit/${electionId}/${candidateId}`);
+  };
+
+  const handleDelete = (electionId: string, candidate: Candidate) => {
+    setSelectedCandidateInfo({ electionId, candidate });
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedCandidateInfo) return;
+    const { electionId, candidate } = selectedCandidateInfo;
+    setIsDeleting(true);
+    try {
+      await remove(ref(db, `elections/${electionId}/candidates/${candidate.id}`));
+      await remove(ref(db, `elections/${electionId}/results/${candidate.id}`));
+      toast({ title: 'Kandidat berhasil dihapus.' });
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'Error menghapus kandidat',
+        description: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+      setSelectedCandidateInfo(null);
+    }
+  };
+
+
+  const defaultPhoto = PlaceHolderImages.find(p => p.id === 'default-avatar');
+
 
   if (isLoading) {
     return <Loading />;
@@ -32,37 +111,108 @@ export default function CandidatesPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Manajemen Kandidat</h1>
         <p className="text-muted-foreground">
-          Pilih pemilihan untuk mengelola kandidat yang berpartisipasi.
+          Kelola semua kandidat yang berpartisipasi dalam semua pemilihan.
         </p>
       </div>
 
-      <div className="max-w-sm space-y-2">
-          <Label htmlFor="election-select">Pilih Pemilihan</Label>
-          <Select onValueChange={handleElectionChange} value={selectedElectionId || ''}>
-              <SelectTrigger id="election-select">
-                  <SelectValue placeholder="Pilih pemilihan..." />
-              </SelectTrigger>
-              <SelectContent>
-                  {elections.length > 0 ? (
-                    elections.map((election) => (
-                      <SelectItem key={election.id} value={election.id}>
-                          {election.name}
-                      </SelectItem>
-                    ))
-                  ) : (
-                    <div className="p-2 text-sm text-muted-foreground">Belum ada pemilihan.</div>
-                  )}
-              </SelectContent>
-          </Select>
+       <div className="flex justify-between items-center">
+        <Input
+          placeholder="Saring berdasarkan nama kandidat..."
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="max-w-sm"
+        />
+        <Button onClick={handleAdd}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Tambah Kandidat
+        </Button>
       </div>
 
-      {selectedElection ? (
-        <CandidateTable election={selectedElection} />
-      ) : (
-        <div className="flex flex-col items-center justify-center h-64 border rounded-md bg-muted/20">
-          <p className="text-muted-foreground mb-4">Silakan pilih pemilihan untuk melihat kandidat.</p>
-        </div>
-      )}
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[80px]">Foto</TableHead>
+              <TableHead>Nama Kandidat</TableHead>
+              <TableHead>Pemilihan</TableHead>
+              <TableHead className="w-[50px]">No. Urut</TableHead>
+              <TableHead className="w-[100px] text-right">Tindakan</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {allCandidates.length > 0 ? (
+                allCandidates.map((candidate) => (
+                  <TableRow key={`${candidate.electionId}-${candidate.id}`}>
+                    <TableCell>
+                        <img
+                          src={candidate.photo || defaultPhoto?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
+                          alt={`Foto ${candidate.name}`}
+                          width={40}
+                          height={40}
+                          className="rounded-full object-cover"
+                          data-ai-hint={defaultPhoto?.imageHint || 'person portrait'}
+                        />
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {candidate.name}
+                      {candidate.viceCandidateName && <span className="block text-xs text-muted-foreground">{candidate.viceCandidateName}</span>}
+                    </TableCell>
+                    <TableCell>
+                        <Badge variant="secondary">{candidate.electionName}</Badge>
+                    </TableCell>
+                    <TableCell className="font-bold text-center">{candidate.orderNumber}</TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Buka menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEdit(candidate.electionId, candidate.id)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Ubah
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDelete(candidate.electionId, candidate)}>
+                             <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                            <span className="text-destructive">Hapus</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} className="h-24 text-center">
+                  Tidak ada kandidat ditemukan.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini tidak dapat dibatalkan. Ini akan menghapus kandidat secara permanen
+              "{selectedCandidateInfo?.candidate.name}" dari pemilihan "{elections.find(e => e.id === selectedCandidateInfo?.electionId)?.name}" dan semua suara yang telah mereka terima.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
+              {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Hapus
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }

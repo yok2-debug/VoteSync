@@ -10,34 +10,43 @@ export default function CandidateActionPage() {
   const { elections, isLoading } = useDatabase();
   
   const { slug } = params as { slug: string[] };
-  const electionId = slug ? slug[0] : null;
-  const action = slug && slug.length > 1 ? slug[1] : 'new';
-  const candidateId = slug && slug.length > 2 ? slug[2] : undefined;
+
+  // For /new -> slug = ['new']
+  // For /edit/{electionId}/{candidateId} -> slug = ['edit', electionId, candidateId]
+  const action = slug ? slug[0] : 'new';
+  const isNew = action === 'new';
+  
+  const electionId = !isNew ? slug[1] : null;
+  const candidateId = !isNew ? slug[2] : null;
 
   const election = useMemo(() => {
-    if (isLoading || !electionId || electionId === 'new') return undefined;
-    return elections.find(e => e.id === electionId) || 'redirect';
+    if (isLoading || !electionId) return undefined;
+    return elections.find(e => e.id === electionId);
   }, [isLoading, electionId, elections]);
 
-  if (isLoading || election === undefined) {
+  const candidate = useMemo(() => {
+    if (isNew || !election || !candidateId) return null;
+    const cand = election.candidates?.[candidateId];
+    if (!cand) return 'redirect';
+    return { ...cand, id: candidateId, voterId: candidateId, electionId: election.id };
+  }, [isNew, election, candidateId]);
+
+  if (isLoading) {
     return <Loading />;
   }
   
-  if (election === 'redirect') {
-    redirect('/admin/candidates');
-    return <Loading />;
+  if (!isNew && !election) {
+      // If we are editing but the election isn't found, redirect.
+      redirect('/admin/candidates');
+      return <Loading />;
   }
 
-  const isNew = action === 'new';
-  const candidate = !isNew && candidateId ? (election.candidates?.[candidateId] ? { id: candidateId, ...election.candidates[candidateId] } : null) : null;
-  
-  if (!isNew && !candidate) {
-    redirect(`/admin/candidates?electionId=${electionId}`);
+  if (candidate === 'redirect') {
+    redirect(`/admin/candidates`);
     return <Loading />;
   }
   
   const candidateName = !isNew && candidate ? `"${candidate.name}"` : '';
-  const initialDataWithVoterId = candidate ? { ...candidate, voterId: candidate.id } : null;
 
   return (
     <div className="flex flex-col gap-6">
@@ -46,12 +55,12 @@ export default function CandidateActionPage() {
             {isNew ? 'Buat Kandidat Baru' : 'Ubah Kandidat'}
         </h1>
         <p className="text-muted-foreground">
-            {isNew ? `Tambah kandidat baru untuk pemilihan "${election.name}" dengan memilih dari pemilih yang ada.` : `Perbarui detail untuk ${candidateName} dalam pemilihan "${election.name}".`}
+            {isNew ? `Pilih pemilihan dan cari pemilih untuk membuat kandidat baru.` : `Perbarui detail untuk ${candidateName}.`}
         </p>
       </div>
       <CandidateForm
-        electionId={election.id}
-        initialData={initialDataWithVoterId}
+        initialData={candidate}
+        allElections={elections}
       />
     </div>
   );

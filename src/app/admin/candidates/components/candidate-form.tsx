@@ -2,9 +2,6 @@
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,7 +10,7 @@ import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useEffect, useState } from 'react';
-import type { Candidate, Voter } from '@/lib/types';
+import type { Candidate, Voter, Election } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -22,9 +19,11 @@ import { db } from '@/lib/firebase';
 import { ref, set, get, update } from 'firebase/database';
 import { VoterSearchDialog } from './voter-search-dialog';
 import { useDatabase } from '@/context/database-context';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const candidateSchema = z.object({
   id: z.string().optional(),
+  electionId: z.string().min(1, { message: 'Pemilihan harus dipilih.' }),
   voterId: z.string().min(1, { message: 'Kandidat utama harus dipilih dari pemilih.' }),
   name: z.string().min(1, { message: 'Nama kandidat utama wajib diisi.' }),
   viceCandidateId: z.string().optional(),
@@ -42,13 +41,13 @@ const candidateSchema = z.object({
 type CandidateFormData = z.infer<typeof candidateSchema>;
 
 interface CandidateFormProps {
-  initialData: (Candidate & { voterId?: string }) | null;
-  electionId: string;
+  initialData: (Candidate & { voterId?: string, electionId?: string }) | null;
+  allElections: Election[];
 }
 
 export function CandidateForm({
   initialData,
-  electionId,
+  allElections,
 }: CandidateFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -69,7 +68,7 @@ export function CandidateForm({
     resolver: zodResolver(candidateSchema),
   });
 
-  const selectedVoterId = watch('voterId');
+  const selectedElectionId = watch('electionId');
 
   useEffect(() => {
     if (initialData) {
@@ -78,7 +77,7 @@ export function CandidateForm({
         voterId: initialData.voterId || initialData.id,
       });
     } else {
-      reset({ name: '', voterId: '', viceCandidateName: '', viceCandidateId: '', vision: '', mission: '', orderNumber: 1, photo: '' });
+      reset({ electionId: '', name: '', voterId: '', viceCandidateName: '', viceCandidateId: '', vision: '', mission: '', orderNumber: 1, photo: '' });
     }
   }, [initialData, reset]);
 
@@ -97,7 +96,11 @@ export function CandidateForm({
   const onSubmit: SubmitHandler<CandidateFormData> = async (data) => {
     setIsSubmitting(true);
     try {
-      const candidatesRef = ref(db, `elections/${electionId}/candidates`);
+      if (!data.electionId) {
+        throw new Error("Election must be selected.");
+      }
+
+      const candidatesRef = ref(db, `elections/${data.electionId}/candidates`);
       const snapshot = await get(candidatesRef);
       const existingCandidates = snapshot.val() || {};
 
@@ -109,7 +112,6 @@ export function CandidateForm({
         throw new Error(`Nomor urut ${data.orderNumber} sudah digunakan dalam pemilihan ini.`);
       }
 
-      // ID kandidat adalah ID pemilih utama
       const candidateId = data.voterId;
 
       const candidateData: Partial<Candidate> = {
@@ -122,22 +124,28 @@ export function CandidateForm({
         photo: data.photo,
         id: candidateId, 
       };
-
-      if (isEditing && initialData?.id) {
+      
+      // If the election ID has changed during edit
+      if (isEditing && initialData?.electionId && initialData.electionId !== data.electionId) {
+          // Remove from old election
+          await set(ref(db, `elections/${initialData.electionId}/candidates/${initialData.id}`), null);
+          // Add to new election
+          await set(ref(db, `elections/${data.electionId}/candidates/${candidateId}`), candidateData);
+      } else if (isEditing && initialData?.id) {
           if (initialData.id !== candidateId) {
-             // Jika ID berubah, ini kompleks. Anggap saja seperti membuat baru dan menghapus yang lama.
-             // Untuk saat ini, kita akan memperbarui di bawah ID baru dan menghapus yang lama.
-             await set(ref(db, `elections/${electionId}/candidates/${candidateId}`), candidateData);
-             await set(ref(db, `elections/${electionId}/candidates/${initialData.id}`), null);
+             // If the main candidate ID changes, remove the old one and add the new one
+             await set(ref(db, `elections/${data.electionId}/candidates/${initialData.id}`), null);
+             await set(ref(db, `elections/${data.electionId}/candidates/${candidateId}`), candidateData);
           } else {
-            await update(ref(db, `elections/${electionId}/candidates/${candidateId}`), candidateData);
+            // Standard update
+            await update(ref(db, `elections/${data.electionId}/candidates/${candidateId}`), candidateData);
           }
       } else {
-        // Mencegah penambahan pemilih yang sama sebagai kandidat dua kali
+        // Prevent adding the same voter as a candidate twice in the same election
         if (existingCandidates[candidateId]) {
             throw new Error(`Pemilih "${data.name}" sudah menjadi kandidat dalam pemilihan ini.`);
         }
-        await set(ref(db, `elections/${electionId}/candidates/${candidateId}`), candidateData);
+        await set(ref(db, `elections/${data.electionId}/candidates/${candidateId}`), candidateData);
       }
 
       toast({
@@ -145,7 +153,7 @@ export function CandidateForm({
         description: `"${data.name}" telah berhasil disimpan.`,
       });
       
-      router.push(`/admin/candidates?electionId=${electionId}`);
+      router.push(`/admin/candidates`);
       router.refresh();
 
     } catch (error) {
@@ -164,6 +172,33 @@ export function CandidateForm({
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <Card>
           <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2 col-span-full">
+                <Label htmlFor="electionId">Pemilihan</Label>
+                 <Controller
+                    control={control}
+                    name="electionId"
+                    render={({ field }) => (
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        disabled={isEditing && !!initialData?.electionId} // Disable if editing an existing record
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Pilih pemilihan untuk kandidat..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {allElections.map((election) => (
+                            <SelectItem key={election.id} value={election.id}>
+                              {election.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.electionId && <p className="text-sm text-destructive mt-1">{errors.electionId.message}</p>}
+            </div>
+
             <div className="space-y-2 col-span-1">
               <Label htmlFor="name">Nama Kandidat Utama</Label>
               <div className="flex gap-2">
@@ -172,8 +207,9 @@ export function CandidateForm({
                   {...register('name')}
                   readOnly
                   placeholder="Pilih pemilih..."
+                  disabled={!selectedElectionId}
                 />
-                <Button type="button" variant="outline" onClick={() => setSearchDialog({ open: true, target: 'main' })}>
+                <Button type="button" variant="outline" onClick={() => setSearchDialog({ open: true, target: 'main' })} disabled={!selectedElectionId}>
                   <Search className="mr-2 h-4 w-4" />
                   Cari
                 </Button>
@@ -193,8 +229,9 @@ export function CandidateForm({
                   {...register('viceCandidateName')}
                   readOnly
                   placeholder="Pilih pemilih..."
+                   disabled={!selectedElectionId}
                 />
-                <Button type="button" variant="outline" onClick={() => setSearchDialog({ open: true, target: 'vice' })}>
+                <Button type="button" variant="outline" onClick={() => setSearchDialog({ open: true, target: 'vice' })} disabled={!selectedElectionId}>
                   <Search className="mr-2 h-4 w-4" />
                   Cari
                 </Button>
@@ -205,24 +242,16 @@ export function CandidateForm({
             </div>
             <div className="space-y-2">
               <Label htmlFor="orderNumber">Nomor Urut</Label>
-              <Input id="orderNumber" type="number" {...register('orderNumber')} />
+              <Input id="orderNumber" type="number" {...register('orderNumber')} disabled={!selectedElectionId} />
               {errors.orderNumber && (
                 <p className="text-sm text-destructive mt-1">{errors.orderNumber.message}</p>
               )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="photo">URL Foto (Opsional)</Label>
-              <Input id="photo" {...register('photo')} placeholder="https://example.com/photo.jpg" />
+              <Input id="photo" {...register('photo')} placeholder="https://example.com/photo.jpg" disabled={!selectedElectionId} />
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Visi & Misi</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-2">
+             <div className="space-y-2 col-span-full">
                 <Label htmlFor="vision">Visi</Label>
                 <Controller
                   name="vision"
@@ -230,7 +259,7 @@ export function CandidateForm({
                   render={({ field }) => <MarkdownEditor {...field} />}
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 col-span-full">
                 <Label htmlFor="mission">Misi</Label>
                 <Controller
                   name="mission"
@@ -241,9 +270,8 @@ export function CandidateForm({
           </CardContent>
         </Card>
 
-
         <div className="flex justify-end gap-2">
-            <Button variant="outline" type="button" onClick={() => router.push(`/admin/candidates?electionId=${electionId}`)} disabled={isSubmitting}>
+            <Button variant="outline" type="button" onClick={() => router.push(`/admin/candidates`)} disabled={isSubmitting}>
               Batal
             </Button>
             <Button type="submit" disabled={isSubmitting}>
