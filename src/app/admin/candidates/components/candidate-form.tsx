@@ -19,20 +19,25 @@ import { Loader2, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { MarkdownEditor } from '@/components/ui/markdown-editor';
 import { db } from '@/lib/firebase';
-import { ref, set, get, push, update } from 'firebase/database';
+import { ref, set, get, update } from 'firebase/database';
 import { VoterSearchDialog } from './voter-search-dialog';
 import { useDatabase } from '@/context/database-context';
 
 const candidateSchema = z.object({
   id: z.string().optional(),
-  voterId: z.string().min(1, { message: 'Candidate must be selected from a voter.' }),
-  name: z.string().min(1, { message: 'Candidate name is required.' }),
+  voterId: z.string().min(1, { message: 'Kandidat utama harus dipilih dari pemilih.' }),
+  name: z.string().min(1, { message: 'Nama kandidat utama wajib diisi.' }),
+  viceCandidateId: z.string().optional(),
   viceCandidateName: z.string().optional(),
   vision: z.string().optional(),
   mission: z.string().optional(),
-  orderNumber: z.coerce.number().min(1, 'Order number is required'),
+  orderNumber: z.coerce.number().min(1, 'Nomor urut wajib diisi'),
   photo: z.string().optional(),
+}).refine(data => data.voterId !== data.viceCandidateId || !data.viceCandidateId, {
+    message: "Kandidat utama dan wakil tidak boleh orang yang sama.",
+    path: ["viceCandidateId"],
 });
+
 
 type CandidateFormData = z.infer<typeof candidateSchema>;
 
@@ -48,7 +53,7 @@ export function CandidateForm({
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
+  const [searchDialog, setSearchDialog] = useState<{ open: boolean, target: 'main' | 'vice' | null }>({ open: false, target: null });
   const { voters, categories } = useDatabase();
   const isEditing = !!initialData;
 
@@ -73,14 +78,19 @@ export function CandidateForm({
         voterId: initialData.voterId || initialData.id,
       });
     } else {
-      reset({ name: '', voterId: '', viceCandidateName: '', vision: '', mission: '', orderNumber: 1, photo: '' });
+      reset({ name: '', voterId: '', viceCandidateName: '', viceCandidateId: '', vision: '', mission: '', orderNumber: 1, photo: '' });
     }
   }, [initialData, reset]);
 
   const handleVoterSelect = (voter: Voter) => {
-    setValue('voterId', voter.id, { shouldValidate: true });
-    setValue('name', voter.name, { shouldValidate: true });
-    setIsSearchDialogOpen(false);
+    if (searchDialog.target === 'main') {
+        setValue('voterId', voter.id, { shouldValidate: true });
+        setValue('name', voter.name, { shouldValidate: true });
+    } else if (searchDialog.target === 'vice') {
+        setValue('viceCandidateId', voter.id, { shouldValidate: true });
+        setValue('viceCandidateName', voter.name, { shouldValidate: true });
+    }
+    setSearchDialog({ open: false, target: null });
   };
 
 
@@ -96,39 +106,36 @@ export function CandidateForm({
       );
 
       if (isOrderNumberTaken) {
-        throw new Error(`Order number ${data.orderNumber} is already taken in this election.`);
+        throw new Error(`Nomor urut ${data.orderNumber} sudah digunakan dalam pemilihan ini.`);
       }
 
-      // In the new model, candidate ID is the voter ID.
+      // ID kandidat adalah ID pemilih utama
       const candidateId = data.voterId;
 
-      const candidateData = {
+      const candidateData: Partial<Candidate> = {
         name: data.name,
+        viceCandidateId: data.viceCandidateId,
         viceCandidateName: data.viceCandidateName,
         vision: data.vision,
         mission: data.mission,
         orderNumber: data.orderNumber,
         photo: data.photo,
-        id: candidateId, // Ensure ID is consistent
+        id: candidateId, 
       };
 
       if (isEditing && initialData?.id) {
           if (initialData.id !== candidateId) {
-             // ID has changed, this is complex. Let's treat it as creating a new one and deleting the old one.
-             // For simplicity now, we can just update under the new ID.
-             // A more robust solution might involve deleting the old record.
+             // Jika ID berubah, ini kompleks. Anggap saja seperti membuat baru dan menghapus yang lama.
+             // Untuk saat ini, kita akan memperbarui di bawah ID baru dan menghapus yang lama.
              await set(ref(db, `elections/${electionId}/candidates/${candidateId}`), candidateData);
-             // Optionally remove the old one if it's not the same as new id
-             if(initialData.id !== candidateId) {
-                await set(ref(db, `elections/${electionId}/candidates/${initialData.id}`), null);
-             }
+             await set(ref(db, `elections/${electionId}/candidates/${initialData.id}`), null);
           } else {
             await update(ref(db, `elections/${electionId}/candidates/${candidateId}`), candidateData);
           }
       } else {
-        // Prevent adding the same voter as a candidate twice in the same election
+        // Mencegah penambahan pemilih yang sama sebagai kandidat dua kali
         if (existingCandidates[candidateId]) {
-            throw new Error(`Voter "${data.name}" is already a candidate in this election.`);
+            throw new Error(`Pemilih "${data.name}" sudah menjadi kandidat dalam pemilihan ini.`);
         }
         await set(ref(db, `elections/${electionId}/candidates/${candidateId}`), candidateData);
       }
@@ -157,18 +164,18 @@ export function CandidateForm({
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <Card>
           <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2 col-span-1 md:col-span-2">
-              <Label htmlFor="name">Nama Kandidat (dipilih dari pemilih)</Label>
+            <div className="space-y-2 col-span-1">
+              <Label htmlFor="name">Nama Kandidat Utama</Label>
               <div className="flex gap-2">
                 <Input
                   id="name"
                   {...register('name')}
                   readOnly
-                  placeholder="Pilih pemilih untuk menjadi kandidat..."
+                  placeholder="Pilih pemilih..."
                 />
-                <Button type="button" variant="outline" onClick={() => setIsSearchDialogOpen(true)}>
+                <Button type="button" variant="outline" onClick={() => setSearchDialog({ open: true, target: 'main' })}>
                   <Search className="mr-2 h-4 w-4" />
-                  Cari Pemilih
+                  Cari
                 </Button>
               </div>
               {errors.voterId && (
@@ -178,9 +185,23 @@ export function CandidateForm({
                 <p className="text-sm text-destructive mt-1">{errors.name.message}</p>
               )}
             </div>
-            <div className="space-y-2">
+            <div className="space-y-2 col-span-1">
               <Label htmlFor="viceCandidateName">Nama Calon Wakil (Opsional)</Label>
-              <Input id="viceCandidateName" {...register('viceCandidateName')} />
+               <div className="flex gap-2">
+                <Input
+                  id="viceCandidateName"
+                  {...register('viceCandidateName')}
+                  readOnly
+                  placeholder="Pilih pemilih..."
+                />
+                <Button type="button" variant="outline" onClick={() => setSearchDialog({ open: true, target: 'vice' })}>
+                  <Search className="mr-2 h-4 w-4" />
+                  Cari
+                </Button>
+              </div>
+               {errors.viceCandidateId && (
+                <p className="text-sm text-destructive mt-1">{errors.viceCandidateId.message}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="orderNumber">Nomor Urut</Label>
@@ -233,8 +254,8 @@ export function CandidateForm({
       </form>
 
       <VoterSearchDialog
-        open={isSearchDialogOpen}
-        onOpenChange={setIsSearchDialogOpen}
+        open={searchDialog.open}
+        onOpenChange={(isOpen) => setSearchDialog({ open: isOpen, target: null })}
         onVoterSelect={handleVoterSelect}
         voters={voters}
         categories={categories}

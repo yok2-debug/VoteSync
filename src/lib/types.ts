@@ -16,6 +16,7 @@ export interface Candidate {
   id: string;
   name: string;
   orderNumber?: number;
+  viceCandidateId?: string;
   viceCandidateName?: string;
   photo?: string;
   vision?: string;
