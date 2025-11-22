@@ -85,11 +85,11 @@ export function VoteClientPage() {
   }, [isDbLoading, isSessionLoading, election, voter, electionId, router]);
 
 
-  if (!isValid) {
+  if (!isValid || !election || !voter) {
     return <Loading />; 
   }
   
-  const candidates = Object.values(election?.candidates || {}).sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999));
+  const candidates = Object.values(election.candidates || {}).sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999));
   const defaultAvatar = PlaceHolderImages.find(p => p.id === 'default-avatar');
   
   return (
