@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -44,8 +45,8 @@ export function AdminLoginForm() {
         
         if (user && user.password === values.password) {
             const role = roles.find(r => r.id === user.roleId);
-            if (!role) {
-                throw new Error('Konfigurasi peran pengguna tidak valid.');
+            if (!role || !role.permissions) {
+                throw new Error('Konfigurasi peran pengguna tidak valid atau tidak memiliki hak akses.');
             }
 
             await createAdminSession({

@@ -32,7 +32,7 @@ function getAdminSessionFromCookie(request: NextRequest): AdminSessionPayload | 
 }
 
 function hasPermission(session: AdminSessionPayload | null, path: string): boolean {
-    if (!session) return false;
+    if (!session || !session.permissions) return false;
 
     for (const route in routePermissions) {
         if (path.startsWith(route)) {
