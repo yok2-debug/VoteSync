@@ -163,6 +163,9 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
               box-shadow: none !important;
               text-shadow: none !important;
             }
+            #print-section * {
+                font-size: 12px !important;
+            }
             b, strong {
                 font-weight: bold !important;
             }
@@ -175,7 +178,6 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
               top: 0;
               width: 100%;
               padding: 0 1rem;
-              font-size: 12px;
             }
             .no-print {
                 display: none;
