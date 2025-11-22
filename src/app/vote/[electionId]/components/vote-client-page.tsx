@@ -31,16 +31,6 @@ export function VoteClientPage() {
   const [isValid, setIsValid] = useState(false);
   const router = useRouter();
 
-  const voter = useMemo(() => {
-    if (!session?.voterId || isDbLoading) return undefined;
-    return voters.find(v => v.id === session.voterId);
-  }, [voters, session, isDbLoading]);
-
-  const election = useMemo(() => {
-    if (isDbLoading) return undefined;
-    return elections.find(e => e.id === electionId);
-  }, [elections, electionId, isDbLoading]);
-  
   useEffect(() => {
     const voterSession = getVoterSession();
     if (!voterSession?.voterId) {
@@ -51,19 +41,29 @@ export function VoteClientPage() {
     setIsSessionLoading(false);
   }, [router]);
 
+  const election = useMemo(() => {
+    if (isDbLoading) return undefined;
+    return elections.find(e => e.id === electionId);
+  }, [elections, electionId, isDbLoading]);
+  
+  const voter = useMemo(() => {
+    if (!session?.voterId || isDbLoading) return undefined;
+    return voters.find(v => v.id === session.voterId);
+  }, [voters, session, isDbLoading]);
+
   useEffect(() => {
     if (isDbLoading || isSessionLoading) {
       return; // Wait for all data to be loaded
     }
     
+    // Stricter check: ensure election and voter are loaded before validation
     if (!election || !voter) {
-       if (!isDbLoading) {
+       if (!isDbLoading && !isSessionLoading) {
          // If DB is not loading and we still can't find them, redirect.
          router.replace('/vote');
        }
        return;
     }
-
 
     const now = new Date();
     const electionStarted = election.startDate ? new Date(election.startDate) <= now : true;
