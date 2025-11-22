@@ -98,13 +98,13 @@ export function RealCountDisplay({ election, categories }: RealCountDisplayProps
             </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+        <div className="space-y-6">
             <div className="w-full">
                 <ElectionPieChart data={chartData} />
             </div>
              <div className="space-y-3">
-                <h4 className="font-semibold text-center md:text-left">Perolehan Suara</h4>
-                <ul className="space-y-2 text-sm">
+                <h4 className="font-semibold text-center">Perolehan Suara</h4>
+                <ul className="space-y-2 text-sm max-w-md mx-auto">
                 {candidates.map(candidate => (
                     <li key={candidate.id} className="flex items-start justify-between gap-4">
                       <div className="flex items-center gap-2 flex-1 min-w-0">
