@@ -30,7 +30,10 @@ const candidateSchema = z.object({
   viceCandidateName: z.string().optional(),
   vision: z.string().optional(),
   mission: z.string().optional(),
-  orderNumber: z.coerce.number().positive('Nomor urut harus angka positif').optional(),
+  orderNumber: z.preprocess(
+    (val) => (val === '' ? undefined : val),
+    z.coerce.number({ invalid_type_error: 'Nomor urut harus berupa angka' }).positive('Nomor urut harus angka positif').optional()
+  ),
   photo: z.string().optional(),
 }).refine(data => data.voterId !== data.viceCandidateId || !data.viceCandidateId, {
     message: "Kandidat utama dan wakil tidak boleh orang yang sama.",
