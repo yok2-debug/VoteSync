@@ -6,11 +6,11 @@ import type { AdminSessionPayload } from './types';
 const ADMIN_SESSION_COOKIE_NAME = 'votesync_admin_session';
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-async function createSession(payload: AdminSessionPayload) {
+export async function createAdminSession(payload: Omit<AdminSessionPayload, 'expires'>) {
   const expires = new Date(Date.now() + SESSION_DURATION);
-  const session = JSON.stringify({ ...payload, expires: expires.getTime() });
+  const session = { ...payload, expires: expires.getTime() };
 
-  cookies().set(ADMIN_SESSION_COOKIE_NAME, session, {
+  cookies().set(ADMIN_SESSION_COOKIE_NAME, JSON.stringify(session), {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     expires: expires.getTime(),
@@ -19,12 +19,9 @@ async function createSession(payload: AdminSessionPayload) {
   });
 }
 
-export async function createAdminSession(payload: Omit<AdminSessionPayload, 'expires'>) {
-    await createSession(payload);
-}
 
-async function getSession<T>(cookieName: string): Promise<T | null> {
-    const sessionCookie = cookies().get(cookieName)?.value;
+export async function getAdminSession(): Promise<AdminSessionPayload | null> {
+    const sessionCookie = cookies().get(ADMIN_SESSION_COOKIE_NAME)?.value;
 
     if (!sessionCookie) {
         return null;
@@ -33,7 +30,7 @@ async function getSession<T>(cookieName: string): Promise<T | null> {
     try {
         const parsed = JSON.parse(sessionCookie);
         if (parsed.expires && parsed.expires < Date.now()) {
-            await deleteSession(cookieName);
+            await deleteAdminSession();
             return null;
         }
         return parsed;
@@ -42,14 +39,7 @@ async function getSession<T>(cookieName: string): Promise<T | null> {
     }
 }
 
-export async function getAdminSession(): Promise<AdminSessionPayload | null> {
-    return await getSession<AdminSessionPayload>(ADMIN_SESSION_COOKIE_NAME);
-}
-
-async function deleteSession(cookieName: string) {
-  cookies().delete(cookieName);
-}
 
 export async function deleteAdminSession() {
-    await deleteSession(ADMIN_SESSION_COOKIE_NAME);
+  cookies().delete(ADMIN_SESSION_COOKIE_NAME);
 }

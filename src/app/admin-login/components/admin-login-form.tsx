@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,7 +19,7 @@ import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAdminUsers, getRoles } from '@/lib/data';
-import { createAdminSession } from '@/lib/session';
+import { createAdminSession, setAdminSession } from '@/lib/session-client';
 
 const adminLoginSchema = z.object({
   username: z.string().min(1, { message: 'Username is required.' }),
@@ -43,25 +42,31 @@ export function AdminLoginForm() {
         const [users, roles] = await Promise.all([getAdminUsers(), getRoles()]);
         const user = users.find(u => u.username === values.username);
         
-        if (user && user.password === values.password) {
-            const role = roles.find(r => r.id === user.roleId);
-            if (!role || !role.permissions) {
-                throw new Error('Konfigurasi peran pengguna tidak valid atau tidak memiliki hak akses.');
-            }
-
-            await createAdminSession({
-                userId: user.id,
-                username: user.username,
-                permissions: role.permissions,
-            });
-            toast({
-                title: 'Login Berhasil',
-                description: 'Mengarahkan ke dasbor Anda...',
-            });
-            router.replace('/admin/dashboard');
-        } else {
-            throw new Error('Nama pengguna atau kata sandi tidak valid.');
+        if (!user || user.password !== values.password) {
+          throw new Error('Nama pengguna atau kata sandi tidak valid.');
         }
+
+        const role = roles.find(r => r.id === user.roleId);
+        if (!role || !role.permissions) {
+            throw new Error('Konfigurasi peran pengguna tidak valid atau tidak memiliki hak akses.');
+        }
+
+        const sessionPayload = {
+            userId: user.id,
+            username: user.username,
+            permissions: role.permissions,
+        };
+
+        await createAdminSession(sessionPayload);
+        // Also save a copy to localStorage for client-side access
+        setAdminSession(sessionPayload);
+        
+        toast({
+            title: 'Login Berhasil',
+            description: 'Mengarahkan ke dasbor Anda...',
+        });
+        router.push('/admin/dashboard');
+        router.refresh();
     } catch (error) {
       toast({
         variant: 'destructive',
