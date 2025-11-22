@@ -30,7 +30,7 @@ const candidateSchema = z.object({
   viceCandidateName: z.string().optional(),
   vision: z.string().optional(),
   mission: z.string().optional(),
-  orderNumber: z.coerce.number().min(1, 'Nomor urut wajib diisi'),
+  orderNumber: z.coerce.number().positive('Nomor urut harus angka positif').optional(),
   photo: z.string().optional(),
 }).refine(data => data.voterId !== data.viceCandidateId || !data.viceCandidateId, {
     message: "Kandidat utama dan wakil tidak boleh orang yang sama.",
@@ -77,7 +77,7 @@ export function CandidateForm({
         voterId: initialData.voterId || initialData.id,
       });
     } else {
-      reset({ electionId: '', name: '', voterId: '', viceCandidateName: '', viceCandidateId: '', vision: '', mission: '', orderNumber: 1, photo: '' });
+      reset({ electionId: '', name: '', voterId: '', viceCandidateName: '', viceCandidateId: '', vision: '', mission: '', orderNumber: undefined, photo: '' });
     }
   }, [initialData, reset]);
 
@@ -103,14 +103,22 @@ export function CandidateForm({
       const candidatesRef = ref(db, `elections/${data.electionId}/candidates`);
       const snapshot = await get(candidatesRef);
       const existingCandidates = snapshot.val() || {};
+      const candidatesArray: Candidate[] = Object.values(existingCandidates);
+      
+      let finalOrderNumber = data.orderNumber;
 
-      const isOrderNumberTaken = Object.entries(existingCandidates).some(
-        ([key, c]: [string, any]) => c.orderNumber === data.orderNumber && key !== data.id
-      );
-
-      if (isOrderNumberTaken) {
-        throw new Error(`Nomor urut ${data.orderNumber} sudah digunakan dalam pemilihan ini.`);
+      if (finalOrderNumber) {
+        const isOrderNumberTaken = candidatesArray.some(
+            (c: Candidate) => c.orderNumber === finalOrderNumber && c.id !== data.id
+        );
+        if (isOrderNumberTaken) {
+            throw new Error(`Nomor urut ${finalOrderNumber} sudah digunakan dalam pemilihan ini.`);
+        }
+      } else {
+        const maxOrderNumber = candidatesArray.reduce((max, c) => Math.max(max, c.orderNumber || 0), 0);
+        finalOrderNumber = maxOrderNumber + 1;
       }
+
 
       const candidateId = data.voterId;
 
@@ -120,7 +128,7 @@ export function CandidateForm({
         viceCandidateName: data.viceCandidateName,
         vision: data.vision,
         mission: data.mission,
-        orderNumber: data.orderNumber,
+        orderNumber: finalOrderNumber,
         photo: data.photo,
         id: candidateId, 
       };
@@ -181,7 +189,7 @@ export function CandidateForm({
                       <Select 
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
-                        disabled={isEditing && !!initialData?.electionId} // Disable if editing an existing record
+                        value={field.value}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Pilih pemilihan untuk kandidat..." />
@@ -241,8 +249,8 @@ export function CandidateForm({
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="orderNumber">Nomor Urut</Label>
-              <Input id="orderNumber" type="number" {...register('orderNumber')} disabled={!selectedElectionId} />
+              <Label htmlFor="orderNumber">Nomor Urut (Opsional)</Label>
+              <Input id="orderNumber" type="number" {...register('orderNumber')} disabled={!selectedElectionId} placeholder="Otomatis jika kosong" />
               {errors.orderNumber && (
                 <p className="text-sm text-destructive mt-1">{errors.orderNumber.message}</p>
               )}
