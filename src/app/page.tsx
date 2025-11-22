@@ -71,7 +71,7 @@ export default function LoginPage() {
   return (
     <>
       <PublicNavbar />
-      <div className="relative pt-16 pb-16 bg-gradient-to-br from-primary via-primary/90 to-accent">
+      <div className="relative pt-16 pb-12 bg-gradient-to-br from-primary via-primary/90 to-accent">
         <div className="container mx-auto px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight text-primary-foreground sm:text-5xl md:text-6xl">
                 Selamat Datang di VoteSync
