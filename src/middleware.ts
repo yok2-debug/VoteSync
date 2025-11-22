@@ -43,22 +43,32 @@ export async function middleware(request: NextRequest) {
   if (isApiRoute) {
     return NextResponse.next();
   }
+  
+  const isPublicAdminPage = pathname.startsWith('/admin-login');
 
-  // Protect /admin routes
-  if (pathname.startsWith('/admin') && !pathname.startsWith('/admin-login')) {
-    if (!session) {
-      return NextResponse.redirect(new URL('/admin-login', request.url));
+  // If user is logged in
+  if (session) {
+    // If they are on a public admin page (like login), redirect them to the dashboard
+    if (isPublicAdminPage) {
+        return NextResponse.redirect(new URL('/admin/dashboard', request.url));
     }
+    
+    // For all other admin pages, check for permissions
     const userHasPermission = await hasPermission(session, pathname);
     if (!userHasPermission) {
+        // Redirect to dashboard with an error if they lack permissions
         return NextResponse.redirect(new URL('/admin/dashboard?error=permission_denied', request.url));
     }
+  } 
+  // If user is NOT logged in
+  else {
+    // And they are trying to access a protected admin page
+    if (pathname.startsWith('/admin') && !isPublicAdminPage) {
+        // Redirect them to the login page
+        return NextResponse.redirect(new URL('/admin-login', request.url));
+    }
   }
-  
-  // Redirect logged-in admin from admin-login page
-  if (pathname === '/admin-login' && session) {
-    return NextResponse.redirect(new URL('/admin/dashboard', request.url));
-  }
+
 
   return NextResponse.next();
 }
