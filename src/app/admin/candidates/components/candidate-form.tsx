@@ -211,7 +211,6 @@ export function CandidateForm({
                     render={({ field }) => (
                       <Select 
                         onValueChange={field.onChange} 
-                        defaultValue={field.value}
                         value={field.value}
                       >
                         <SelectTrigger>
