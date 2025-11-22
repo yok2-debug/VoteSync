@@ -7,7 +7,7 @@ import { useMemo } from 'react';
 
 export default function RecapitulationPage() {
   const { electionId } = useParams() as { electionId: string };
-  const { elections, isLoading } = useDatabase();
+  const { elections, categories, isLoading } = useDatabase();
 
   const election = useMemo(() => {
     if (isLoading) return undefined;
@@ -33,7 +33,8 @@ export default function RecapitulationPage() {
         </p>
       </div>
       <RecapitulationDisplay 
-        election={election} 
+        election={election}
+        categories={categories}
       />
     </div>
   );

@@ -13,6 +13,7 @@ import { useDatabase } from '@/context/database-context';
 
 type RecapitulationDisplayProps = {
   election: Election;
+  categories: Category[];
 };
 
 const formatDateToWords = (date: Date) => {
@@ -25,7 +26,7 @@ const formatDateToWords = (date: Date) => {
 };
 
 
-export function RecapitulationDisplay({ election }: RecapitulationDisplayProps) {
+export function RecapitulationDisplay({ election, categories }: RecapitulationDisplayProps) {
   const { voters } = useDatabase();
 
   const candidates = useMemo(() => 
@@ -33,16 +34,24 @@ export function RecapitulationDisplay({ election }: RecapitulationDisplayProps) 
         .sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999)), 
       [election.candidates]
   );
+
+  const votersForThisElection = useMemo(() => {
+    const allowedCategoryIds = new Set(
+        categories.filter(c => c.allowedElections?.includes(election.id)).map(c => c.id)
+    );
+    return voters.filter(v => allowedCategoryIds.has(v.category));
+  }, [voters, categories, election.id]);
   
   const votersWhoVotedIds = useMemo(() => new Set(Object.keys(election.votes || {})), [election.votes]);
   
-  const DPT_male = useMemo(() => voters.filter(v => v.gender === 'Laki-laki').length, [voters]);
-  const DPT_female = useMemo(() => voters.filter(v => v.gender === 'Perempuan').length, [voters]);
-  const DPT_total = voters.length;
+  const DPT_male = useMemo(() => votersForThisElection.filter(v => v.gender === 'Laki-laki').length, [votersForThisElection]);
+  const DPT_female = useMemo(() => votersForThisElection.filter(v => v.gender === 'Perempuan').length, [votersForThisElection]);
+  const DPT_total = votersForThisElection.length;
 
-  const votersWhoVoted_male = useMemo(() => voters.filter(v => v.gender === 'Laki-laki' && votersWhoVotedIds.has(v.id)).length, [voters, votersWhoVotedIds]);
-  const votersWhoVoted_female = useMemo(() => voters.filter(v => v.gender === 'Perempuan' && votersWhoVotedIds.has(v.id)).length, [voters, votersWhoVotedIds]);
-  const votersWhoVoted_total = votersWhoVotedIds.size;
+  const votersWhoVoted = useMemo(() => votersForThisElection.filter(v => votersWhoVotedIds.has(v.id)), [votersForThisElection, votersWhoVotedIds]);
+  const votersWhoVoted_male = useMemo(() => votersWhoVoted.filter(v => v.gender === 'Laki-laki').length, [votersWhoVoted]);
+  const votersWhoVoted_female = useMemo(() => votersWhoVoted.filter(v => v.gender === 'Perempuan').length, [votersWhoVoted]);
+  const votersWhoVoted_total = votersWhoVoted.length;
 
   const votersDidNotVote_male = DPT_male - votersWhoVoted_male;
   const votersDidNotVote_female = DPT_female - votersWhoVoted_female;

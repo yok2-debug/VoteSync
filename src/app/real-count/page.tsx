@@ -6,7 +6,7 @@ import Loading from '../loading';
 import { cn } from '@/lib/utils';
 
 export default function RealCountPage() {
-  const { elections, isLoading } = useDatabase();
+  const { elections, categories, isLoading } = useDatabase();
   
   if (isLoading) {
     return <Loading />;
@@ -33,6 +33,7 @@ export default function RealCountPage() {
                 <div key={election.id} className={cn(activeElections.length === 1 && "max-w-2xl mx-auto w-full")}>
                   <RealCountDisplay
                     election={election}
+                    categories={categories}
                   />
                 </div>
               ))

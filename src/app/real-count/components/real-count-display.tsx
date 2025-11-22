@@ -1,6 +1,6 @@
 'use client';
 import { useMemo, useState, useEffect } from 'react';
-import type { Election, Voter, Candidate } from '@/lib/types';
+import type { Election, Voter, Candidate, Category } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ElectionPieChart } from './election-pie-chart';
@@ -15,9 +15,10 @@ const getCandidateDisplayName = (candidate: Candidate) => {
 
 interface RealCountDisplayProps {
     election: Election;
+    categories: Category[];
 }
 
-export function RealCountDisplay({ election }: RealCountDisplayProps) {
+export function RealCountDisplay({ election, categories }: RealCountDisplayProps) {
   const [now, setNow] = useState(new Date());
   const { voters } = useDatabase();
 
@@ -32,7 +33,12 @@ export function RealCountDisplay({ election }: RealCountDisplayProps) {
   const liveResults = election.results || {};
   const liveTotalVotes = Object.keys(election.votes || {}).length;
 
-  const DPT = voters.length;
+  const DPT = useMemo(() => {
+    const allowedCategoryIds = new Set(
+        categories.filter(c => c.allowedElections?.includes(election.id)).map(c => c.id)
+    );
+    return voters.filter(v => allowedCategoryIds.has(v.category)).length;
+  }, [voters, categories, election.id]);
   
   const candidates = useMemo(() => 
     Object.values(election.candidates || {})
