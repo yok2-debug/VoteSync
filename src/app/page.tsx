@@ -71,7 +71,7 @@ export default function LoginPage() {
   return (
     <>
       <PublicNavbar />
-      <div className="relative pt-16 pb-24 bg-gradient-to-br from-primary via-primary/90 to-accent">
+      <div className="relative pt-16 pb-16 bg-gradient-to-br from-primary via-primary/90 to-accent">
         <div className="container mx-auto px-4 text-center">
             <h1 className="text-4xl font-extrabold tracking-tight text-primary-foreground sm:text-5xl md:text-6xl">
                 Selamat Datang di VoteSync
@@ -81,7 +81,7 @@ export default function LoginPage() {
             </p>
         </div>
       </div>
-      <main className="flex flex-1 flex-col items-center bg-background p-4 -mt-16">
+      <main className="flex flex-1 flex-col items-center bg-background p-4 -mt-12">
         <div className="w-full max-w-6xl mx-auto space-y-10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12 items-start">
             <div className="space-y-6 md:col-span-2">
