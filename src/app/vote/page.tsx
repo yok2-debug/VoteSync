@@ -33,8 +33,8 @@ export default function VoterDashboardPage() {
   }, [voters, session]);
   
   const availableElections = useMemo(() => {
-    if (!voter || !voter.followedElections) return [];
-    return voter.followedElections.filter(e => e.status === 'active');
+    if (!voter) return [];
+    return voter.followedElections?.filter(e => e.status === 'active') || [];
   }, [voter]);
   
   const isLoading = isDbLoading || isSessionLoading;

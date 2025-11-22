@@ -177,7 +177,7 @@ export function VoteClientPage() {
                     </Dialog>
                 </CardContent>
                 <div className="p-6 pt-2">
-                    {election && <CandidateVoteForm electionId={election.id} candidate={candidate} voterId={voter.id} />}
+                    {election && voter && <CandidateVoteForm electionId={election.id} candidate={candidate} voterId={voter.id} />}
                 </div>
                 </Card>
             ))}
