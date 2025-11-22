@@ -38,10 +38,11 @@ const nextConfig: NextConfig = {
     ],
   },
   experimental: {
-    allowedDevOrigins: [
+    // Kosongkan blok ini jika tidak ada opsi eksperimental lain
+  },
+  allowedDevOrigins: [
       'https://*.cloudworkstations.dev',
-    ]
-  }
+  ]
 };
 
 export default nextConfig;
