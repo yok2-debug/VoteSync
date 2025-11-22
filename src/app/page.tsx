@@ -1,3 +1,4 @@
+
 'use client';
 import { LoginForm } from '@/components/login-form';
 import {
@@ -71,16 +72,16 @@ export default function LoginPage() {
   return (
     <>
       <PublicNavbar />
-        <div className="relative pt-16 pb-24 bg-gradient-to-br from-primary via-primary/90 to-accent">
-            <div className="container mx-auto px-4 text-center">
-                <h1 className="text-4xl font-extrabold tracking-tight text-primary-foreground sm:text-5xl md:text-6xl">
-                    Selamat Datang di VoteSync
-                </h1>
-                <p className="mt-6 max-w-2xl mx-auto text-lg text-primary-foreground/90">
-                    Sistem e-voting yang aman, transparan, dan mudah digunakan. Berikan suara Anda untuk masa depan yang lebih baik.
-                </p>
-            </div>
+      <div className="relative pt-16 pb-24 bg-gradient-to-br from-primary via-primary/90 to-accent">
+        <div className="container mx-auto px-4 text-center">
+            <h1 className="text-4xl font-extrabold tracking-tight text-primary-foreground sm:text-5xl md:text-6xl">
+                Selamat Datang di VoteSync
+            </h1>
+            <p className="mt-6 max-w-2xl mx-auto text-lg text-primary-foreground/90">
+                Sistem e-voting yang aman, transparan, dan mudah digunakan. Berikan suara Anda untuk masa depan yang lebih baik.
+            </p>
         </div>
+      </div>
       <main className="-mt-16">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-12">
