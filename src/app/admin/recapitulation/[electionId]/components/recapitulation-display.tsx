@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { Election, Voter, Category } from '@/lib/types';
@@ -150,7 +151,7 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
             margin: 1.5cm 1.5cm 2cm 1.5cm; /* bottom margin increased for footer */
             
             @bottom-center {
-              content: "Halaman " counter(page);
+              content: "Halaman " counter(page) " dari " counter(pages);
               font-size: 10px;
               color: #666;
             }
@@ -447,6 +448,8 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
     </div>
   );
 }
+
+    
 
     
 
