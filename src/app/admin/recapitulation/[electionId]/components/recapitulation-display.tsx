@@ -47,19 +47,31 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
   const DPT_male = useMemo(() => votersForThisElection.filter(v => v.gender === 'Laki-laki').length, [votersForThisElection]);
   const DPT_female = useMemo(() => votersForThisElection.filter(v => v.gender === 'Perempuan').length, [votersForThisElection]);
   const DPT_total = votersForThisElection.length;
-
-  const totalValidVotesFromResults = useMemo(() => {
-    if (!election.results) return 0;
-    // Summing up the vote counts for each candidate from the `results` object.
-    // This is the single source of truth for total valid votes.
-    return Object.values(election.results).reduce((sum, count) => sum + count, 0);
-  }, [election.results]);
   
+  // Recalculate results from `votes` to ensure consistency. This is the single source of truth.
+  const recalculatedResults = useMemo(() => {
+    const results: Record<string, number> = {};
+    const allVotes = Object.values(election.votes || {});
+    for (const candidateId of allVotes) {
+      if (results[candidateId]) {
+        results[candidateId]++;
+      } else {
+        results[candidateId] = 1;
+      }
+    }
+    return results;
+  }, [election.votes]);
+  
+  const totalValidVotes = useMemo(() => {
+    return Object.values(recalculatedResults).reduce((sum, count) => sum + count, 0);
+  }, [recalculatedResults]);
+
+
   const votersWhoVoted = useMemo(() => votersForThisElection.filter(v => votersWhoVotedIds.has(v.id)), [votersForThisElection, votersWhoVotedIds]);
   const votersWhoVoted_male = useMemo(() => votersWhoVoted.filter(v => v.gender === 'Laki-laki').length, [votersWhoVoted]);
   const votersWhoVoted_female = useMemo(() => votersWhoVoted.filter(v => v.gender === 'Perempuan').length, [votersWhoVoted]);
   
-  const votersDidNotVote_total = DPT_total - totalValidVotesFromResults;
+  const votersDidNotVote_total = DPT_total - totalValidVotes;
   const votersDidNotVote_male = DPT_male - votersWhoVoted_male;
   const votersDidNotVote_female = DPT_female - votersWhoVoted_female;
 
@@ -239,7 +251,7 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
                                     <TableCell>Jumlah Pemilih yang Menggunakan Hak Pilih</TableCell>
                                     <TableCell className="text-center font-bold">{votersWhoVoted_male}</TableCell>
                                     <TableCell className="text-center font-bold">{votersWhoVoted_female}</TableCell>
-                                    <TableCell className="text-center font-bold">{totalValidVotesFromResults}</TableCell>
+                                    <TableCell className="text-center font-bold">{totalValidVotes}</TableCell>
                                 </TableRow>
                                  <TableRow>
                                     <TableCell>Jumlah Pemilih yang Tidak Menggunakan Hak Pilih</TableCell>
@@ -269,7 +281,7 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
                                     <TableRow key={candidate.id}>
                                         <TableCell className="text-center">{candidate.orderNumber}</TableCell>
                                         <TableCell className="font-medium">{candidate.name}{candidate.viceCandidateName ? ` & ${candidate.viceCandidateName}`: ''}</TableCell>
-                                        <TableCell className="text-right font-bold">{election.results?.[candidate.id] || 0}</TableCell>
+                                        <TableCell className="text-right font-bold">{recalculatedResults[candidate.id] || 0}</TableCell>
                                     </TableRow>
                                 )) : (
                                   <TableRow>
@@ -278,7 +290,7 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
                                 )}
                                 <TableRow className="font-bold bg-muted/50 print-table">
                                     <TableCell colSpan={2}>Total Seluruh Suara Sah</TableCell>
-                                    <TableCell className="text-right">{totalValidVotesFromResults}</TableCell>
+                                    <TableCell className="text-right">{totalValidVotes}</TableCell>
                                 </TableRow>
                             </TableBody>
                         </Table>
