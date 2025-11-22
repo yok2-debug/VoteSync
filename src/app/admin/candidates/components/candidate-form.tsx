@@ -6,7 +6,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useForm, SubmitHandler, Controller } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useEffect, useState } from 'react';
@@ -101,7 +101,7 @@ export function CandidateForm({
     setIsSubmitting(true);
     try {
       if (!data.electionId) {
-        throw new Error("Election must be selected.");
+        throw new Error("Pemilihan harus dipilih.");
       }
 
       const candidatesRef = ref(db, `elections/${data.electionId}/candidates`);

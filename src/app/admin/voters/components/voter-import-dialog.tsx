@@ -60,23 +60,23 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
         const validated = filteredData.map(row => {
             const errors: string[] = [];
             
-            let gender = typeof row.gender === 'string' ? row.gender.trim().toUpperCase() : '';
-            if (gender === 'L') {
+            let gender = typeof row.gender === 'string' ? row.gender.trim() : '';
+            if (gender.toUpperCase() === 'L') {
               gender = 'Laki-laki';
-            } else if (gender === 'P') {
+            } else if (gender.toUpperCase() === 'P') {
               gender = 'Perempuan';
             }
 
             const cleanRow = {
-                id: typeof row.id === 'string' ? row.id.trim() : row.id,
+                id: row.id ? String(row.id).trim() : '',
                 nik: row.nik ? String(row.nik).trim() : '',
                 name: typeof row.name === 'string' ? row.name.trim() : '',
                 birthPlace: typeof row.birthPlace === 'string' ? row.birthPlace.trim() : '',
                 birthDate: typeof row.birthDate === 'string' ? row.birthDate.trim() : '',
                 gender: gender,
                 address: typeof row.address === 'string' ? row.address.trim() : '',
-                category: typeof row.category === 'string' ? row.category.trim() : row.category,
-                password: row.password
+                category: typeof row.category === 'string' ? row.category.trim() : '',
+                password: row.password ? String(row.password).trim() : ''
             };
             
             if (!cleanRow.id) {
@@ -210,5 +210,3 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
     </Dialog>
   );
 }
-
-    

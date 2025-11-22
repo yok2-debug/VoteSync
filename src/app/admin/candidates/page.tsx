@@ -24,7 +24,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import type { Candidate, Election } from '@/lib/types';
+import type { Candidate } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -38,7 +38,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { db } from '@/lib/firebase';
-import { ref, remove } from 'firebase/database';
+import { ref, update } from 'firebase/database';
 import { ReorderCandidatesDialog } from './components/reorder-candidates-dialog';
 
 export default function CandidatesPage() {
@@ -78,12 +78,12 @@ export default function CandidatesPage() {
     );
 
     return filtered.sort((a, b) => {
+        if (a.electionName !== b.electionName) {
+            return a.electionName.localeCompare(b.electionName);
+        }
         const orderA = a.orderNumber ?? Infinity;
         const orderB = b.orderNumber ?? Infinity;
-        if (a.electionId === b.electionId) {
-            return orderA - orderB;
-        }
-        return a.electionName.localeCompare(b.electionName) || orderA - orderB;
+        return orderA - orderB;
     });
 
   }, [elections, isLoading, filter, electionFilter]);
@@ -106,8 +106,21 @@ export default function CandidatesPage() {
     const { electionId, candidate } = selectedCandidateInfo;
     setIsDeleting(true);
     try {
-      await remove(ref(db, `elections/${electionId}/candidates/${candidate.id}`));
-      await remove(ref(db, `elections/${electionId}/results/${candidate.id}`));
+      const updates: { [key: string]: null } = {};
+      updates[`/elections/${electionId}/candidates/${candidate.id}`] = null;
+      updates[`/elections/${electionId}/results/${candidate.id}`] = null;
+      
+      const election = elections.find(e => e.id === electionId);
+      if (election?.votes) {
+          Object.entries(election.votes).forEach(([voterId, votedCandidateId]) => {
+              if (votedCandidateId === candidate.id) {
+                  updates[`/elections/${electionId}/votes/${voterId}`] = null;
+              }
+          });
+      }
+
+      await update(ref(db), updates);
+
       toast({ title: 'Kandidat berhasil dihapus.' });
     } catch (error) {
        toast({

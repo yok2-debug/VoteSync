@@ -260,7 +260,12 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
             }
             
             const voterDataForDb: Omit<Voter, 'id' | 'hasVoted'> = {
-                ...rest,
+                nik: rest.nik,
+                name: rest.name,
+                birthPlace: rest.birthPlace,
+                birthDate: rest.birthDate,
+                gender: rest.gender as 'Laki-laki' | 'Perempuan' | undefined,
+                address: rest.address,
                 category: categoryId,
                 password: rest.password || Math.random().toString(36).substring(2, 8),
             };

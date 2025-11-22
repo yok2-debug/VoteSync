@@ -9,11 +9,11 @@ import { useDatabase } from '@/context/database-context';
 import { getVoterSession } from '@/lib/session-client';
 import { useEffect, useState, useMemo } from 'react';
 import Loading from '../loading';
-import type { VoterSessionPayload, Election, Voter, Category } from '@/lib/types';
+import type { VoterSessionPayload, Election, Voter } from '@/lib/types';
 
 export default function VoterDashboardPage() {
   const router = useRouter();
-  const { elections, voters, isLoading: isDbLoading } = useDatabase();
+  const { voters, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
 
