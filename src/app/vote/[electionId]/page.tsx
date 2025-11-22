@@ -25,7 +25,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 
 export default function VotePage() {
   const { electionId } = useParams() as { electionId: string };
-  const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
+  const { elections, voters, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
   const [isValid, setIsValid] = useState(false);
@@ -56,25 +56,15 @@ export default function VotePage() {
       return; // Wait for all data to be loaded
     }
 
-    const voterCategory = categories.find(c => c.id === voter.category);
-    
-    // If any data is missing or invalid, redirect.
-    if (!voterCategory) {
-      router.replace('/vote');
-      return;
-    }
-
     const now = new Date();
     const electionStarted = election.startDate ? new Date(election.startDate) <= now : true;
     const electionEnded = election.endDate ? new Date(election.endDate) < now : false;
-    const isVoterAllowed = voterCategory.allowedElections?.includes(electionId);
     const hasVoted = voter.hasVoted?.[electionId];
 
     if (
       election.status !== 'active' || 
       !electionStarted || 
       electionEnded || 
-      !isVoterAllowed || 
       hasVoted
     ) {
       router.replace('/vote');
@@ -84,7 +74,7 @@ export default function VotePage() {
     // All checks passed, the page is valid to be displayed.
     setIsValid(true);
 
-  }, [isDbLoading, isSessionLoading, election, voter, categories, electionId, router]);
+  }, [isDbLoading, isSessionLoading, election, voter, electionId, router]);
 
 
   if (isDbLoading || isSessionLoading || !isValid || !election || !voter) {

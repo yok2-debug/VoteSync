@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import type { Category, Election } from '@/lib/types';
+import type { Category, Election, Voter } from '@/lib/types';
 import {
   Table,
   TableBody,
@@ -33,19 +33,20 @@ import { useToast } from '@/hooks/use-toast';
 import { getVoters } from '@/lib/data';
 import { db } from '@/lib/firebase';
 import { ref, remove } from 'firebase/database';
+import { useDatabase } from '@/context/database-context';
 
 type CategoryTableProps = {
   categories: Category[];
-  allElections: Election[];
 };
 
-export function CategoryTable({ categories, allElections }: CategoryTableProps) {
+export function CategoryTable({ categories }: CategoryTableProps) {
   const [filter, setFilter] = useState('');
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
+  const { voters } = useDatabase();
 
   const filteredCategories = categories.filter((category) =>
     category.name.toLowerCase().includes(filter.toLowerCase())
@@ -70,19 +71,18 @@ export function CategoryTable({ categories, allElections }: CategoryTableProps) 
     if (!selectedCategory) return;
     setIsDeleting(true);
     try {
-      const allVoters = await getVoters();
-      const isCategoryInUse = allVoters.some(voter => voter.category === selectedCategory.id);
+      const isCategoryInUse = voters.some(voter => voter.category === selectedCategory.id);
   
       if (isCategoryInUse) {
-        throw new Error('Cannot delete category. It is currently assigned to one or more voters.');
+        throw new Error('Tidak dapat menghapus kategori. Kategori ini sedang digunakan oleh satu atau lebih pemilih.');
       }
   
       await remove(ref(db, `categories/${selectedCategory.id}`));
-      toast({ title: 'Category deleted successfully.' });
+      toast({ title: 'Kategori berhasil dihapus.' });
     } catch (error) {
        toast({
         variant: 'destructive',
-        title: 'Error deleting category',
+        title: 'Gagal menghapus kategori',
         description: error instanceof Error ? error.message : String(error),
       });
     } finally {
@@ -103,23 +103,22 @@ export function CategoryTable({ categories, allElections }: CategoryTableProps) 
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <Input
-          placeholder="Filter categories..."
+          placeholder="Saring kategori..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           className="max-w-sm"
         />
         <Button onClick={handleAdd}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Add Category
+          Tambah Kategori
         </Button>
       </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Category Name</TableHead>
-              <TableHead>Allowed Elections</TableHead>
-              <TableHead className="w-[100px] text-right">Actions</TableHead>
+              <TableHead>Nama Kategori</TableHead>
+              <TableHead className="w-[100px] text-right">Tindakan</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -127,25 +126,22 @@ export function CategoryTable({ categories, allElections }: CategoryTableProps) 
               filteredCategories.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell className="font-medium">{category.name}</TableCell>
-                  <TableCell>
-                    {category.allowedElections?.length || 0} election(s)
-                  </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
+                          <span className="sr-only">Buka menu</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleEdit(category)}>
                           <Edit className="mr-2 h-4 w-4" />
-                          Edit
+                          Ubah
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleDelete(category)}>
                            <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-                          <span className="text-destructive">Delete</span>
+                          <span className="text-destructive">Hapus</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -154,8 +150,8 @@ export function CategoryTable({ categories, allElections }: CategoryTableProps) 
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={3} className="h-24 text-center">
-                  No categories found.
+                <TableCell colSpan={2} className="h-24 text-center">
+                  Tidak ada kategori ditemukan.
                 </TableCell>
               </TableRow>
             )}
@@ -168,24 +164,23 @@ export function CategoryTable({ categories, allElections }: CategoryTableProps) 
         onOpenChange={setShowFormDialog}
         category={selectedCategory}
         onSave={onFormSave}
-        allElections={allElections}
       />
 
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the category
+              Tindakan ini tidak dapat dibatalkan. Ini akan menghapus kategori secara permanen
               "{selectedCategory?.name}".
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
               {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Delete
+              Hapus
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

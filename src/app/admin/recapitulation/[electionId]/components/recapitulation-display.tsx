@@ -9,11 +9,10 @@ import { format } from 'date-fns';
 import { id as localeID } from 'date-fns/locale';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
+import { useDatabase } from '@/context/database-context';
 
 type RecapitulationDisplayProps = {
   election: Election;
-  allVoters: Voter[];
-  allCategories: Category[];
 };
 
 const formatDateToWords = (date: Date) => {
@@ -26,7 +25,9 @@ const formatDateToWords = (date: Date) => {
 };
 
 
-export function RecapitulationDisplay({ election, allVoters, allCategories }: RecapitulationDisplayProps) {
+export function RecapitulationDisplay({ election }: RecapitulationDisplayProps) {
+  const { voters } = useDatabase();
+
   const candidates = useMemo(() => 
       Object.values(election.candidates || {})
         .sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999)), 
@@ -34,13 +35,7 @@ export function RecapitulationDisplay({ election, allVoters, allCategories }: Re
   );
   const totalVotesCast = useMemo(() => Object.keys(election.votes || {}).length, [election.votes]);
 
-  const DPT = useMemo(() => {
-    const allowedCategoryIds = allCategories
-      .filter(cat => cat.allowedElections?.includes(election.id))
-      .map(cat => cat.id);
-    
-    return allVoters.filter(voter => allowedCategoryIds.includes(voter.category)).length;
-  }, [election.id, allVoters, allCategories]);
+  const DPT = voters.length;
 
   const votersWhoDidNotVote = DPT - totalVotesCast;
   

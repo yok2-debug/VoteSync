@@ -6,7 +6,7 @@ import Loading from '../loading';
 import { cn } from '@/lib/utils';
 
 export default function RealCountPage() {
-  const { elections, voters, categories, isLoading } = useDatabase();
+  const { elections, isLoading } = useDatabase();
   
   if (isLoading) {
     return <Loading />;
@@ -21,7 +21,7 @@ export default function RealCountPage() {
         <div className="w-full max-w-7xl mx-auto">
            <div className="flex flex-col space-y-2 text-center mb-10">
             <h1 className="text-3xl font-bold tracking-tight">Real Count Pemilihan</h1>
-            <p className="text-sm text-muted-foreground">Pantuan hasil perolehan suara secara real-time.</p>
+            <p className="text-sm text-muted-foreground">Pantauan hasil perolehan suara secara real-time.</p>
           </div>
           
           <div className={cn(
@@ -33,8 +33,6 @@ export default function RealCountPage() {
                 <div key={election.id} className={cn(activeElections.length === 1 && "max-w-2xl mx-auto w-full")}>
                   <RealCountDisplay
                     election={election}
-                    allVoters={voters}
-                    allCategories={categories}
                   />
                 </div>
               ))

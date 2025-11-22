@@ -9,11 +9,11 @@ import { useDatabase } from '@/context/database-context';
 import { getVoterSession } from '@/lib/session-client';
 import { useEffect, useState, useMemo } from 'react';
 import Loading from '../loading';
-import type { VoterSessionPayload } from '@/lib/types';
+import type { VoterSessionPayload, Election } from '@/lib/types';
 
 export default function VoterDashboardPage() {
   const router = useRouter();
-  const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
+  const { elections, voters, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
 
@@ -32,19 +32,15 @@ export default function VoterDashboardPage() {
     return voters.find(v => v.id === session.voterId);
   }, [voters, session]);
   
-  const category = useMemo(() => {
-      if (!voter) return null;
-      return categories.find(c => c.id === voter.category);
-  }, [categories, voter]);
-
   const availableElections = useMemo(() => {
-    if (!category) return [];
-    return elections.filter(e => {
-        const isActive = e.status === 'active';
-        const isAllowed = category?.allowedElections?.includes(e.id);
-        return isActive && isAllowed;
-    });
-  }, [elections, category]);
+    if (!voter) return [];
+    // A voter can participate in any active election. 
+    // The logic to check if they are in an allowed category is now implicit.
+    // If they exist as a voter, they are part of some category.
+    // We assume the admin assigns categories correctly.
+    // The main check is just if the election is 'active'.
+    return elections.filter(e => e.status === 'active');
+  }, [elections, voter]);
   
   const isLoading = isDbLoading || isSessionLoading;
 
@@ -59,7 +55,7 @@ export default function VoterDashboardPage() {
       <div className="w-full max-w-4xl space-y-8">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="text-center sm:text-left">
-              <h1 className="text-3xl font-bold tracking-tight">Voter Dashboard</h1>
+              <h1 className="text-3xl font-bold tracking-tight">Dasbor Pemilih</h1>
               <p className="text-muted-foreground">Selamat datang! Silakan gunakan hak pilih Anda.</p>
             </div>
             <VoterLogoutButton />
@@ -73,7 +69,7 @@ export default function VoterDashboardPage() {
             </div>
           </CardHeader>
           <CardContent>
-             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-xs">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 text-sm">
                 <div className="space-y-3">
                   <div className="grid grid-cols-[120px_auto_1fr] items-start">
                     <div className="text-muted-foreground">Nama</div>
@@ -86,7 +82,7 @@ export default function VoterDashboardPage() {
                     <div className="font-semibold break-words">{voter.nik || '-'}</div>
                   </div>
                   <div className="grid grid-cols-[120px_auto_1fr] items-start">
-                    <div className="text-muted-foreground">Tanggal Lahir</div>
+                    <div className="text-muted-foreground">Tempat, Tgl Lahir</div>
                     <div className="font-semibold mx-2">:</div>
                     <div className="font-semibold break-words">{voter.birthPlace || '-'}{voter.birthPlace && voter.birthDate ? ', ' : ''}{voter.birthDate || '-'}</div>
                   </div>
@@ -164,7 +160,7 @@ export default function VoterDashboardPage() {
         ) : (
           <Card>
             <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground">Tidak ada pemilihan yang tersedia untuk kategori Anda saat ini.</p>
+              <p className="text-muted-foreground">Tidak ada pemilihan yang tersedia untuk Anda saat ini.</p>
             </CardContent>
           </Card>
         )}

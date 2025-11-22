@@ -1,10 +1,11 @@
 'use client';
 import { useMemo, useState, useEffect } from 'react';
-import type { Election, Voter, Category, Candidate } from '@/lib/types';
+import type { Election, Voter, Candidate } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ElectionPieChart } from './election-pie-chart';
 import { Badge } from '@/components/ui/badge';
+import { useDatabase } from '@/context/database-context';
 
 const getCandidateDisplayName = (candidate: Candidate) => {
     return candidate.viceCandidateName 
@@ -14,12 +15,11 @@ const getCandidateDisplayName = (candidate: Candidate) => {
 
 interface RealCountDisplayProps {
     election: Election;
-    allVoters: Voter[];
-    allCategories: Category[];
 }
 
-export function RealCountDisplay({ election, allVoters, allCategories }: RealCountDisplayProps) {
+export function RealCountDisplay({ election }: RealCountDisplayProps) {
   const [now, setNow] = useState(new Date());
+  const { voters } = useDatabase();
 
   useEffect(() => {
     // Update the 'now' state every 10 seconds to re-evaluate time-sensitive UI
@@ -32,14 +32,7 @@ export function RealCountDisplay({ election, allVoters, allCategories }: RealCou
   const liveResults = election.results || {};
   const liveTotalVotes = Object.keys(election.votes || {}).length;
 
-  const DPT = useMemo(() => {
-    const allowedCategoryIds = allCategories
-      .filter(cat => cat.allowedElections?.includes(election.id))
-      .map(cat => cat.id);
-    
-    return allVoters.filter(voter => allowedCategoryIds.includes(voter.category)).length;
-  }, [election.id, allVoters, allCategories]);
-
+  const DPT = voters.length;
   
   const candidates = useMemo(() => 
     Object.values(election.candidates || {})

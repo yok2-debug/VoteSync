@@ -7,7 +7,7 @@ import { useMemo } from 'react';
 
 export default function RecapitulationPage() {
   const { electionId } = useParams() as { electionId: string };
-  const { elections, voters, categories, isLoading } = useDatabase();
+  const { elections, isLoading } = useDatabase();
 
   const election = useMemo(() => {
     if (isLoading) return undefined;
@@ -27,15 +27,13 @@ export default function RecapitulationPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Recapitulation: {election.name}</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Rekapitulasi: {election.name}</h1>
         <p className="text-muted-foreground">
-          Detailed report of election results and voter participation.
+          Laporan rinci hasil pemilihan dan partisipasi pemilih.
         </p>
       </div>
       <RecapitulationDisplay 
         election={election} 
-        allVoters={voters}
-        allCategories={categories}
       />
     </div>
   );
