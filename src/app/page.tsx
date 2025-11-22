@@ -71,13 +71,21 @@ export default function LoginPage() {
   return (
     <>
       <PublicNavbar />
-      <main className="flex flex-1 flex-col items-center justify-center bg-background p-4 pt-20">
+      <div className="relative pt-16 pb-24 bg-gradient-to-br from-primary via-primary/90 to-accent">
+        <div className="container mx-auto px-4 text-center">
+            <h1 className="text-4xl font-extrabold tracking-tight text-primary-foreground sm:text-5xl md:text-6xl">
+                Selamat Datang di VoteSync
+            </h1>
+            <p className="mt-6 max-w-2xl mx-auto text-lg text-primary-foreground/80">
+                Platform e-voting yang aman, transparan, dan mudah digunakan untuk menyukseskan pemilihan Anda.
+            </p>
+        </div>
+      </div>
+      <main className="flex flex-1 flex-col items-center bg-background p-4 -mt-16">
         <div className="w-full max-w-6xl mx-auto space-y-10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12 items-start">
             <div className="space-y-6 md:col-span-2">
-               <div className="flex flex-col space-y-2 text-center md:text-left">
-                  <h2 className="text-2xl font-semibold tracking-tight">Pemilihan Aktif</h2>
-               </div>
+               <h2 className="text-2xl font-semibold tracking-tight text-center md:text-left">Pemilihan Aktif</h2>
                {isLoading ? (
                 <div className="flex justify-center items-center h-64">
                   <p className="text-muted-foreground">Memuat data pemilihan...</p>
@@ -87,7 +95,7 @@ export default function LoginPage() {
                   {activeElections.map((election: Election) => {
                     const candidates = election.candidates ? Object.values(election.candidates).sort((a,b) => (a.orderNumber || 999) - (b.orderNumber || 999)) : [];
                     return (
-                    <Card key={election.id} className="flex flex-col">
+                    <Card key={election.id} className="flex flex-col shadow-lg hover:shadow-xl transition-shadow duration-300">
                       <CardHeader>
                         <div className="flex justify-between items-start">
                            <CardTitle>{election.name}</CardTitle>
@@ -168,10 +176,10 @@ export default function LoginPage() {
                                   </Card>
                                 ))}
                               </div>
-                               <DialogFooter className="sm:justify-end">
+                               <DialogFooter className="sm:justify-end pt-4">
                                 <DialogClose asChild>
                                   <Button type="button" variant="secondary">
-                                    Close
+                                    Tutup
                                   </Button>
                                 </DialogClose>
                               </DialogFooter>
@@ -183,15 +191,17 @@ export default function LoginPage() {
                   )})}
                 </div>
               ) : (
-                <p className="text-center md:text-left text-muted-foreground py-10">Tidak ada pemilihan yang sedang aktif saat ini.</p>
+                 <Card className="shadow-lg">
+                    <CardContent className="p-10 text-center text-muted-foreground">
+                        Tidak ada pemilihan yang sedang aktif saat ini.
+                    </CardContent>
+                </Card>
               )}
             </div>
 
             <div className="space-y-6 md:col-span-1">
-               <div className="flex flex-col space-y-2 text-center md:text-left">
-                 <h2 className="text-2xl font-semibold tracking-tight">Login Pemilih</h2>
-               </div>
-              <Card>
+               <h2 className="text-2xl font-semibold tracking-tight text-center md:text-left">Login Pemilih</h2>
+              <Card className="shadow-lg">
                 <CardHeader className="text-center">
                     <CardDescription>
                     Silakan masuk menggunakan ID Pemilih dan Kata Sandi Anda untuk memberikan suara.
