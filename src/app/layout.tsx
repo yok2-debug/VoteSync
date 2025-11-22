@@ -4,7 +4,6 @@ import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import { DatabaseProvider } from '@/context/database-context';
 import { Footer } from '@/components/footer';
-import { LanguageProvider } from '@/context/language-context';
 
 export const metadata: Metadata = {
   title: 'VoteSync - E-Voting System',
@@ -25,11 +24,9 @@ export default function RootLayout({
       </head>
       <body className={cn('min-h-screen bg-background font-body antialiased flex flex-col')}>
         <DatabaseProvider>
-          <LanguageProvider>
             <div className="flex-grow">
               {children}
             </div>
-          </LanguageProvider>
         </DatabaseProvider>
         <Toaster />
         <Footer />
