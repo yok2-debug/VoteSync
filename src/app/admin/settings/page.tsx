@@ -7,14 +7,9 @@ export default function SettingsPage() {
 
   const resetOptions = [
     {
-      action: 'reset_voter_status',
-      title: 'Reset Status Pemilih',
-      description: 'Mereset status "telah memilih" untuk semua pemilih, memungkinkan mereka memilih lagi. Jumlah suara tidak dihapus.',
-    },
-    {
-      action: 'reset_election_results',
-      title: 'Reset Hasil Pemilihan',
-      description: 'Menghapus semua suara yang telah masuk dan mereset jumlah suara menjadi nol untuk semua pemilihan.',
+      action: 'reset_votes_and_status',
+      title: 'Reset Suara & Status Pemilih',
+      description: 'Menghapus semua suara yang masuk, mereset hasil pemilihan menjadi nol, dan mereset status "telah memilih" untuk semua pemilih. Ini memungkinkan pemungutan suara diulang.',
     },
     {
       action: 'delete_all_voters',

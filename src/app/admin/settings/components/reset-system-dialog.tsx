@@ -30,38 +30,46 @@ const CONFIRMATION_TEXT = 'RESET';
 
 async function performResetAction(action: string) {
     const dbRef = ref(db);
-    switch (action) {
-      case 'reset_voter_status':
+    
+    const resetVotesAndStatus = async () => {
+        // Reset election results first
+        const electionsSnapshotResults = await get(child(dbRef, 'elections'));
+        if (electionsSnapshotResults.exists()) {
+          const electionUpdates: { [key: string]: null } = {};
+          electionsSnapshotResults.forEach((election) => {
+            electionUpdates[`/elections/${election.key}/votes`] = null;
+            electionUpdates[`/elections/${election.key}/results`] = null;
+          });
+          if (Object.keys(electionUpdates).length > 0) {
+            await update(dbRef, electionUpdates);
+          }
+        }
+        
+        // Then reset voter status
         const votersSnapshot = await get(child(dbRef, 'voters'));
         if (votersSnapshot.exists()) {
-          const updates: { [key: string]: any } = {};
+          const voterUpdates: { [key: string]: any } = {};
           const votersData = votersSnapshot.val();
           if (Array.isArray(votersData)) {
             votersData.forEach((voter, index) => {
               if (voter && voter.id) {
-                updates[`/voters/${voter.id}/hasVoted`] = null;
+                voterUpdates[`/voters/${voter.id}/hasVoted`] = null;
               }
             });
           } else {
              Object.keys(votersData).forEach(key => {
-                updates[`/voters/${key}/hasVoted`] = null;
+                voterUpdates[`/voters/${key}/hasVoted`] = null;
              });
           }
-          if (Object.keys(updates).length > 0) {
-            await update(dbRef, updates);
+          if (Object.keys(voterUpdates).length > 0) {
+            await update(dbRef, voterUpdates);
           }
         }
-        break;
-      case 'reset_election_results':
-        const electionsSnapshotResults = await get(child(dbRef, 'elections'));
-        if (electionsSnapshotResults.exists()) {
-          const updates: { [key: string]: null } = {};
-          electionsSnapshotResults.forEach((election) => {
-            updates[`/elections/${election.key}/votes`] = null;
-            updates[`/elections/${election.key}/results`] = null;
-          });
-          await update(dbRef, updates);
-        }
+    };
+
+    switch (action) {
+      case 'reset_votes_and_status':
+        await resetVotesAndStatus();
         break;
       case 'delete_all_voters':
         await remove(child(dbRef, 'voters'));
