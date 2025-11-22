@@ -38,8 +38,8 @@ import {
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { deleteAdminSession, getAdminSession } from '@/lib/session-client';
-import { useEffect, useState } from 'react';
+import { getAdminSession, deleteAdminSession as deleteClientSession } from '@/lib/session-client';
+import { useEffect, useState, useTransition } from 'react';
 import type { AdminSessionPayload } from '@/lib/types';
 import { logoutAdmin } from '@/lib/session';
 
@@ -49,6 +49,7 @@ export function AdminSidebar() {
   const { toast } = useToast();
   const avatar = PlaceHolderImages.find(p => p.id === 'default-avatar');
   const [session, setSession] = useState<AdminSessionPayload | null>(null);
+  const [isPending, startTransition] = useTransition();
   
   useEffect(() => {
     setSession(getAdminSession());
@@ -56,19 +57,23 @@ export function AdminSidebar() {
 
 
   const handleLogout = async () => {
-    try {
-      await logoutAdmin();
-      toast({
-        title: 'Logged Out',
-        description: 'You have been successfully logged out.',
-      });
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Logout Failed',
-        description: 'An error occurred while logging out.',
-      });
-    }
+    startTransition(async () => {
+      try {
+        // Clear client-side session immediately for faster UI feedback
+        deleteClientSession();
+        await logoutAdmin();
+        toast({
+          title: 'Logged Out',
+          description: 'You have been successfully logged out.',
+        });
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Logout Failed',
+          description: 'An error occurred while logging out.',
+        });
+      }
+    });
   };
 
   const menuItems = [
@@ -167,7 +172,7 @@ export function AdminSidebar() {
               <span>Ubah Kata Sandi</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500 focus:bg-red-500/10">
+            <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500 focus:bg-red-500/10" disabled={isPending}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Keluar</span>
             </DropdownMenuItem>
