@@ -10,18 +10,21 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useEffect, useState } from 'react';
-import type { Category } from '@/lib/types';
+import type { Category, Election } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { ref, push, set } from 'firebase/database';
+import { useDatabase } from '@/context/database-context';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const categorySchema = z.object({
   name: z.string().min(3, { message: 'Nama kategori minimal 3 karakter.' }),
+  allowedElections: z.array(z.string()).optional(),
 });
 
 type CategoryFormData = z.infer<typeof categorySchema>;
@@ -41,38 +44,38 @@ export function CategoryFormDialog({
 }: CategoryFormDialogProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { elections } = useDatabase();
   
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
   });
 
   useEffect(() => {
-    if (category) {
-      form.reset({ name: category.name });
-    } else {
-      form.reset({ name: '' });
+    if (open) {
+        if (category) {
+            form.reset({ name: category.name, allowedElections: category.allowedElections || [] });
+        } else {
+            form.reset({ name: '', allowedElections: [] });
+        }
     }
   }, [category, form, open]);
 
   const onSubmit: SubmitHandler<CategoryFormData> = async (data) => {
     setIsSubmitting(true);
     try {
-      const categoryToSave = {
-        id: category?.id,
-        name: data.name,
-      };
-
-      const dataToSave = {
-        name: categoryToSave.name,
-      };
-      let categoryId = categoryToSave.id;
+      let categoryId = category?.id;
       if (!categoryId) {
         categoryId = push(ref(db, 'categories')).key!;
       }
+
+      const dataToSave: Partial<Category> = {
+          name: data.name,
+          allowedElections: data.allowedElections || []
+      };
+
       await set(ref(db, `categories/${categoryId}`), dataToSave);
       
-      const saved = { ...dataToSave, id: categoryId };
-
+      const saved = { ...dataToSave, id: categoryId, name: data.name };
 
       toast({
         title: `Kategori ${category ? 'diperbarui' : 'dibuat'}`,
@@ -104,7 +107,7 @@ export function CategoryFormDialog({
             {category ? 'Perbarui detail untuk kategori ini.' : 'Masukkan detail untuk kategori baru.'}
           </DialogDescription>
         </DialogHeader>
-          <form onSubmit={form.handleSubmit(onSubmit)} id="category-form" className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} id="category-form" className="space-y-4 py-4 max-h-[70vh] overflow-y-auto px-1">
             <div className="space-y-2">
               <Label htmlFor="name">
                 Nama Kategori
@@ -114,6 +117,39 @@ export function CategoryFormDialog({
                 <p className="text-sm text-destructive mt-1">{form.formState.errors.name.message}</p>
               )}
             </div>
+            
+            <div className="space-y-3">
+              <Label>Pemilihan yang Diikuti</Label>
+              <div className="space-y-2 p-3 border rounded-md max-h-48 overflow-y-auto">
+                 <Controller
+                    name="allowedElections"
+                    control={form.control}
+                    render={({ field }) => (
+                      <>
+                        {elections.map((election) => (
+                          <div key={election.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`election-${election.id}`}
+                              checked={field.value?.includes(election.id)}
+                              onCheckedChange={(checked) => {
+                                const newValue = checked
+                                  ? [...(field.value || []), election.id]
+                                  : (field.value || []).filter((id) => id !== election.id);
+                                field.onChange(newValue);
+                              }}
+                            />
+                            <Label htmlFor={`election-${election.id}`} className="font-normal">{election.name}</Label>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  />
+                  {elections.length === 0 && (
+                    <p className="text-xs text-muted-foreground">Belum ada pemilihan yang dibuat.</p>
+                  )}
+              </div>
+            </div>
+
           </form>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>

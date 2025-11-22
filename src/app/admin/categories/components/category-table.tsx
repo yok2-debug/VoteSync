@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { Category, Election, Voter } from '@/lib/types';
 import {
   Table,
@@ -30,14 +30,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import { CategoryFormDialog } from './category-form-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { getVoters } from '@/lib/data';
 import { db } from '@/lib/firebase';
 import { ref, remove } from 'firebase/database';
 import { useDatabase } from '@/context/database-context';
-
-type CategoryTableProps = {
-  categories: Category[];
-};
+import { Badge } from '@/components/ui/badge';
 
 export function CategoryTable({ categories }: CategoryTableProps) {
   const [filter, setFilter] = useState('');
@@ -46,7 +42,9 @@ export function CategoryTable({ categories }: CategoryTableProps) {
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
-  const { voters } = useDatabase();
+  const { voters, elections } = useDatabase();
+
+  const electionMap = useMemo(() => new Map(elections.map((e) => [e.id, e.name])), [elections]);
 
   const filteredCategories = categories.filter((category) =>
     category.name.toLowerCase().includes(filter.toLowerCase())
@@ -118,6 +116,7 @@ export function CategoryTable({ categories }: CategoryTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead>Nama Kategori</TableHead>
+              <TableHead>Pemilihan yang Diikuti</TableHead>
               <TableHead className="w-[100px] text-right">Tindakan</TableHead>
             </TableRow>
           </TableHeader>
@@ -126,6 +125,19 @@ export function CategoryTable({ categories }: CategoryTableProps) {
               filteredCategories.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell className="font-medium">{category.name}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {category.allowedElections && category.allowedElections.length > 0 ? (
+                        category.allowedElections.map(electionId => (
+                          <Badge key={electionId} variant="secondary">
+                            {electionMap.get(electionId) || 'Unknown Election'}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-xs text-muted-foreground">Tidak ada</span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -150,7 +162,7 @@ export function CategoryTable({ categories }: CategoryTableProps) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={2} className="h-24 text-center">
+                <TableCell colSpan={3} className="h-24 text-center">
                   Tidak ada kategori ditemukan.
                 </TableCell>
               </TableRow>

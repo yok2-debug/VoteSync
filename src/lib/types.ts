@@ -45,6 +45,7 @@ export interface Voter {
 export interface Category {
   id: string;
   name: string;
+  allowedElections?: string[];
 }
 
 export type Admin = {

@@ -9,7 +9,7 @@ import { useDatabase } from '@/context/database-context';
 import { getVoterSession } from '@/lib/session-client';
 import { useEffect, useState, useMemo } from 'react';
 import Loading from '../loading';
-import type { VoterSessionPayload, Election } from '@/lib/types';
+import type { VoterSessionPayload, Election, Voter } from '@/lib/types';
 
 export default function VoterDashboardPage() {
   const router = useRouter();
@@ -27,20 +27,23 @@ export default function VoterDashboardPage() {
     setIsSessionLoading(false);
   }, [router]);
 
-  const voter = useMemo(() => {
-    if (!session?.voterId) return null;
-    return voters.find(v => v.id === session.voterId);
-  }, [voters, session]);
+  const voter: Voter | undefined = useMemo(() => {
+    if (!session?.voterId) return undefined;
+    const foundVoter = voters.find(v => v.id === session.voterId);
+    if (!foundVoter) return undefined;
+    
+    // Enrich voter with followedElections
+    const category = elections.find(c => c.id === foundVoter.category);
+    const followedElections = elections.filter(e => category?.allowedElections?.includes(e.id));
+    
+    return {...foundVoter, followedElections: followedElections};
+    
+  }, [voters, session, elections]);
   
   const availableElections = useMemo(() => {
-    if (!voter) return [];
-    // A voter can participate in any active election. 
-    // The logic to check if they are in an allowed category is now implicit.
-    // If they exist as a voter, they are part of some category.
-    // We assume the admin assigns categories correctly.
-    // The main check is just if the election is 'active'.
-    return elections.filter(e => e.status === 'active');
-  }, [elections, voter]);
+    if (!voter || !voter.followedElections) return [];
+    return voter.followedElections.filter(e => e.status === 'active');
+  }, [voter]);
   
   const isLoading = isDbLoading || isSessionLoading;
 
