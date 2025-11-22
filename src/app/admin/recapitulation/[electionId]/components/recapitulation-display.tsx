@@ -48,19 +48,19 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
   const DPT_female = useMemo(() => votersForThisElection.filter(v => v.gender === 'Perempuan').length, [votersForThisElection]);
   const DPT_total = votersForThisElection.length;
 
-  const votersWhoVoted = useMemo(() => votersForThisElection.filter(v => votersWhoVotedIds.has(v.id)), [votersForThisElection, votersWhoVotedIds]);
-  const votersWhoVoted_male = useMemo(() => votersWhoVoted.filter(v => v.gender === 'Laki-laki').length, [votersWhoVoted]);
-  const votersWhoVoted_female = useMemo(() => votersWhoVoted.filter(v => v.gender === 'Perempuan').length, [votersWhoVoted]);
-  const votersWhoVoted_total = votersWhoVoted.length;
-
-  const votersDidNotVote_male = DPT_male - votersWhoVoted_male;
-  const votersDidNotVote_female = DPT_female - votersWhoVoted_female;
-  const votersDidNotVote_total = DPT_total - votersWhoVoted_total;
-
   const totalValidVotesFromResults = useMemo(() => {
     if (!election.results) return 0;
     return Object.values(election.results).reduce((sum, count) => sum + count, 0);
   }, [election.results]);
+  
+  const votersWhoVoted = useMemo(() => votersForThisElection.filter(v => votersWhoVotedIds.has(v.id)), [votersForThisElection, votersWhoVotedIds]);
+  const votersWhoVoted_male = useMemo(() => votersWhoVoted.filter(v => v.gender === 'Laki-laki').length, [votersWhoVoted]);
+  const votersWhoVoted_female = useMemo(() => votersWhoVoted.filter(v => v.gender === 'Perempuan').length, [votersWhoVoted]);
+  
+  const votersDidNotVote_total = DPT_total - totalValidVotesFromResults;
+  const votersDidNotVote_male = DPT_male - votersWhoVoted_male;
+  const votersDidNotVote_female = DPT_female - votersWhoVoted_female;
+
   
   const handlePrint = () => {
     window.print();
@@ -237,7 +237,7 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
                                     <TableCell>Jumlah Pemilih yang Menggunakan Hak Pilih</TableCell>
                                     <TableCell className="text-center font-bold">{votersWhoVoted_male}</TableCell>
                                     <TableCell className="text-center font-bold">{votersWhoVoted_female}</TableCell>
-                                    <TableCell className="text-center font-bold">{votersWhoVoted_total}</TableCell>
+                                    <TableCell className="text-center font-bold">{totalValidVotesFromResults}</TableCell>
                                 </TableRow>
                                  <TableRow>
                                     <TableCell>Jumlah Pemilih yang Tidak Menggunakan Hak Pilih</TableCell>
@@ -266,7 +266,7 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
                                 {candidates.length > 0 ? candidates.map((candidate) => (
                                     <TableRow key={candidate.id}>
                                         <TableCell className="text-center">{candidate.orderNumber}</TableCell>
-                                        <TableCell className="font-medium">{candidate.name}</TableCell>
+                                        <TableCell className="font-medium">{candidate.name}{candidate.viceCandidateName ? ` & ${candidate.viceCandidateName}`: ''}</TableCell>
                                         <TableCell className="text-right font-bold">{election.results?.[candidate.id] || 0}</TableCell>
                                     </TableRow>
                                 )) : (
