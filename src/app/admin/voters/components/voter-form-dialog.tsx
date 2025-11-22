@@ -47,7 +47,7 @@ interface VoterFormDialogProps {
   onOpenChange: (open: boolean) => void;
   voter: Voter | null;
   categories: Category[];
-  onSave: (voter: Voter & { isNew?: boolean }) => void;
+  onSave: (voter: Voter & { isNew?: boolean }) => Promise<void>;
 }
 
 export function VoterFormDialog({
@@ -140,6 +140,12 @@ export function VoterFormDialog({
       };
       
       await onSave({ ...savedVoter, isNew: !isEditing });
+      
+      toast({
+        title: `Voter ${isEditing ? 'updated' : 'created'}`,
+        description: `"${savedVoter.name}" has been successfully saved.`,
+      });
+
       onOpenChange(false);
     } catch (error) {
        toast({
@@ -193,7 +199,7 @@ export function VoterFormDialog({
                 control={control}
                 name="gender"
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <SelectTrigger>
                       <SelectValue placeholder="Pilih jenis kelamin" />
                     </SelectTrigger>
@@ -217,7 +223,7 @@ export function VoterFormDialog({
               control={control}
               name="category"
               render={({ field }) => (
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>

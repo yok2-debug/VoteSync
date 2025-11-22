@@ -1,6 +1,6 @@
 'use client';
 import { useState, useMemo } from 'react';
-import type { Voter, Category } from '@/lib/types';
+import type { Voter } from '@/lib/types';
 import {
   Dialog,
   DialogContent,
@@ -19,13 +19,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useDatabase } from '@/context/database-context';
 
 interface VoterSearchDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onVoterSelect: (voter: Voter) => void;
   voters: Voter[];
-  categories: Category[];
 }
 
 export function VoterSearchDialog({
@@ -33,9 +33,9 @@ export function VoterSearchDialog({
   onOpenChange,
   onVoterSelect,
   voters,
-  categories,
 }: VoterSearchDialogProps) {
   const [filter, setFilter] = useState('');
+  const { categories } = useDatabase();
   const categoryMap = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
 
   const filteredVoters = useMemo(() => {

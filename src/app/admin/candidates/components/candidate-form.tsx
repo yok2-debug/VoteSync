@@ -6,7 +6,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useForm, Controller, SubmitHandler } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useEffect, useState } from 'react';
@@ -56,7 +56,7 @@ export function CandidateForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [searchDialog, setSearchDialog] = useState<{ open: boolean, target: 'main' | 'vice' | null }>({ open: false, target: null });
-  const { voters, categories } = useDatabase();
+  const { voters } = useDatabase();
   const isEditing = !!initialData;
 
   const {
@@ -141,7 +141,7 @@ export function CandidateForm({
             throw new Error(`Nomor urut ${finalOrderNumber} sudah digunakan dalam pemilihan ini.`);
         }
       } else {
-        const maxOrderNumber = candidatesArray.reduce((max, c) => Math.max(max, c.orderNumber || 0), 0);
+        const maxOrderNumber = Math.max(0, ...candidatesArray.map(c => c.orderNumber || 0));
         finalOrderNumber = maxOrderNumber + 1;
       }
 
@@ -308,7 +308,6 @@ export function CandidateForm({
         onOpenChange={(isOpen) => setSearchDialog({ open: isOpen, target: null })}
         onVoterSelect={handleVoterSelect}
         voters={voters}
-        categories={categories}
       />
     </>
   );
