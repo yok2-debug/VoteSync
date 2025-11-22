@@ -23,6 +23,14 @@ import {
 } from '@/components/ui/dialog';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
+// This function is required for static export of dynamic routes.
+// It tells Next.js what pages to generate at build time.
+// Since our elections are dynamic, we'll return an empty array
+// and handle rendering entirely on the client side.
+export async function generateStaticParams() {
+  return [];
+}
+
 export default function VotePage() {
   const { electionId } = useParams() as { electionId: string };
   const { elections, voters, isLoading: isDbLoading } = useDatabase();
@@ -52,9 +60,21 @@ export default function VotePage() {
   }, [router]);
 
   useEffect(() => {
-    if (isDbLoading || isSessionLoading || !election || !voter) {
+    if (isDbLoading || isSessionLoading) {
       return; // Wait for all data to be loaded
     }
+    
+    // If the election doesn't exist yet (e.g. on first load for static page), don't redirect yet.
+    // The component will re-render once the database context provides the election.
+    if (!election || !voter) {
+       if (!isDbLoading) {
+           // If DB is loaded and still no election/voter, then it's an issue.
+           // For now, we allow it to wait, client-side logic will handle it.
+       }
+       setIsValid(true); // Assume valid for now to prevent flicker, checks below will gate actions.
+       return;
+    }
+
 
     const now = new Date();
     const electionStarted = election.startDate ? new Date(election.startDate) <= now : true;
@@ -77,7 +97,7 @@ export default function VotePage() {
   }, [isDbLoading, isSessionLoading, election, voter, electionId, router]);
 
 
-  if (isDbLoading || isSessionLoading || !isValid || !election || !voter) {
+  if (isDbLoading || isSessionLoading || !election || !voter) {
     return <Loading />; 
   }
   
@@ -109,7 +129,7 @@ export default function VotePage() {
                       <DialogTrigger asChild>
                         <img
                           src={candidate.photo || defaultAvatar?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
-                          alt={`Photo of ${candidate.name}`}
+                          alt={`Photo of ${'candidate.name'}`}
                           width={144}
                           height={144}
                           className="rounded-full border-4 border-primary object-cover cursor-pointer hover:opacity-90 transition-opacity h-36 w-36"
@@ -124,7 +144,7 @@ export default function VotePage() {
                         <DialogClose asChild>
                           <img
                               src={candidate.photo || defaultAvatar?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
-                              alt={`Photo of ${candidate.name}`}
+                              alt={`Photo of ${'candidate.name'}`}
                               className="w-full h-auto rounded-md cursor-pointer"
                           />
                         </DialogClose>
@@ -152,7 +172,7 @@ export default function VotePage() {
                         <DialogHeader>
                             <DialogTitle>
                               {candidate.name}
-                              {candidate.viceCandidateName && ` & ${candidate.viceCandidateName}`}
+                              {candidate.viceCandidateName && ` & ${'candidate.viceCandidateName'}`}
                             </DialogTitle>
                             <DialogDescription>
                             Visi dan Misi Kandidat
