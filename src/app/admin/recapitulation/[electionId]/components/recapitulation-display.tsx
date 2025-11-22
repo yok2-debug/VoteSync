@@ -92,7 +92,7 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
         {`
           @page {
             margin-top: 1.5cm;
-            margin-bottom: 1cm;
+            margin-bottom: 1.5cm; /* Adjusted for footer */
           }
           @media print {
             body, body * {
@@ -118,6 +118,19 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
             }
             .no-print {
                 display: none;
+            }
+            .print-footer {
+                visibility: visible;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                text-align: center;
+                font-size: 10px;
+                color: #000;
+            }
+            .print-footer .page-number::after {
+                content: counter(page) " dari " counter(pages);
             }
             .print-card {
                 border: none !important;
@@ -368,8 +381,9 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
             </CardContent>
         </Card>
       </div>
+      <footer className="print-footer">
+          <span className="page-number"></span>
+      </footer>
     </div>
   );
 }
-
-    
