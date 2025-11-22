@@ -21,11 +21,37 @@ import { useRouter } from 'next/navigation';
 import { getAdminUsers, getRoles } from '@/lib/data';
 import { setAdminSession } from '@/lib/session-client';
 import { createAdminSession } from '@/lib/session';
+import type { Permission } from '@/lib/types';
 
 const adminLoginSchema = z.object({
   username: z.string().min(1, { message: 'Username is required.' }),
   password: z.string().min(1, { message: 'Password is required.' }),
 });
+
+// Urutan prioritas halaman tujuan setelah login
+const permissionRedirectOrder: { permission: Permission; path: string }[] = [
+    { permission: 'dashboard', path: '/admin/dashboard' },
+    { permission: 'recapitulation', path: '/admin/recapitulation' },
+    { permission: 'elections', path: '/admin/elections' },
+    { permission: 'candidates', path: '/admin/candidates' },
+    { permission: 'voters', path: '/admin/voters' },
+    { permission: 'categories', path: '/admin/categories' },
+    { permission: 'users', path: '/admin/users' },
+    { permission: 'settings', path: '/admin/settings' },
+];
+
+function getRedirectPath(permissions: Permission[]): string | null {
+    if (!permissions || permissions.length === 0) {
+        return null;
+    }
+    for (const route of permissionRedirectOrder) {
+        if (permissions.includes(route.permission)) {
+            return route.path;
+        }
+    }
+    return null; // Tidak ada rute yang cocok ditemukan
+}
+
 
 export function AdminLoginForm() {
   const { toast } = useToast();
@@ -48,7 +74,7 @@ export function AdminLoginForm() {
         }
 
         const role = roles.find(r => r.id === user.roleId);
-        if (!role || !role.permissions) {
+        if (!role || !role.permissions || role.permissions.length === 0) {
             throw new Error('Konfigurasi peran pengguna tidak valid atau tidak memiliki hak akses.');
         }
 
@@ -59,15 +85,23 @@ export function AdminLoginForm() {
         };
 
         await createAdminSession(sessionPayload);
-        // Also save a copy to localStorage for client-side access
+        // Juga simpan salinan ke localStorage untuk akses sisi klien
         setAdminSession(sessionPayload);
         
+        const redirectPath = getRedirectPath(role.permissions);
+
+        if (!redirectPath) {
+             throw new Error('Tidak ada halaman yang dapat diakses ditemukan untuk peran Anda.');
+        }
+
         toast({
             title: 'Login Berhasil',
-            description: 'Mengarahkan ke dasbor Anda...',
+            description: 'Mengarahkan ke halaman Anda...',
         });
-        router.push('/admin/dashboard');
+
+        router.push(redirectPath);
         router.refresh();
+
     } catch (error) {
       toast({
         variant: 'destructive',

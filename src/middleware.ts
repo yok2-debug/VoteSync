@@ -13,12 +13,17 @@ const routePermissions: Record<string, Permission> = {
     '/admin/recapitulation': 'recapitulation',
     '/admin/settings': 'settings',
     '/admin/users': 'users',
-    '/admin/profile': 'dashboard', // Allow profile access if they can see the dashboard
+    // '/admin/profile' akan ditangani secara terpisah
 };
 
 async function hasPermission(session: AdminSessionPayload | null, path: string): Promise<boolean> {
-    if (!session || !Array.isArray(session.permissions)) {
+    if (!session || !Array.isArray(session.permissions) || session.permissions.length === 0) {
       return false;
+    }
+    
+    // Izinkan akses ke halaman profil jika pengguna memiliki setidaknya satu izin
+    if (path.startsWith('/admin/profile')) {
+      return true;
     }
 
     for (const route in routePermissions) {
@@ -46,25 +51,28 @@ export async function middleware(request: NextRequest) {
   
   const isPublicAdminPage = pathname.startsWith('/admin-login');
 
-  // If user is logged in
+  // Jika pengguna sudah login
   if (session) {
-    // If they are on a public admin page (like login), redirect them to the dashboard
+    // Jika mereka berada di halaman login publik, arahkan mereka
     if (isPublicAdminPage) {
+        // Logika pengalihan cerdas akan ditangani di sisi klien setelah login berhasil
+        // Cukup arahkan ke dasbor sebagai default jika sesi sudah ada
         return NextResponse.redirect(new URL('/admin/dashboard', request.url));
     }
     
-    // For all other admin pages, check for permissions
+    // Untuk semua halaman admin lainnya, periksa izin
     const userHasPermission = await hasPermission(session, pathname);
     if (!userHasPermission) {
-        // Redirect to dashboard with an error if they lack permissions
+        // Arahkan ke dasbor dengan error jika mereka kekurangan izin
+        // Dasbor akan menangani pengalihan lebih lanjut jika diperlukan
         return NextResponse.redirect(new URL('/admin/dashboard?error=permission_denied', request.url));
     }
   } 
-  // If user is NOT logged in
+  // Jika pengguna BELUM login
   else {
-    // And they are trying to access a protected admin page
+    // Dan mereka mencoba mengakses halaman admin yang dilindungi
     if (pathname.startsWith('/admin') && !isPublicAdminPage) {
-        // Redirect them to the login page
+        // Arahkan mereka ke halaman login
         return NextResponse.redirect(new URL('/admin-login', request.url));
     }
   }
