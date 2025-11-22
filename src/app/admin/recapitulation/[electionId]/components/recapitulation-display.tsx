@@ -166,6 +166,9 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
             #print-section * {
                 font-size: 12px !important;
             }
+            #print-section h3 {
+                font-size: 14px !important;
+            }
             #print-section table th {
                 font-size: 13px !important;
             }
@@ -437,5 +440,7 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
     </div>
   );
 }
+
+    
 
     
