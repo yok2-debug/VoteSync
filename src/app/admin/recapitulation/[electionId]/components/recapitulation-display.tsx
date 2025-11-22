@@ -166,6 +166,13 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
             #print-section * {
                 font-size: 12px !important;
             }
+            #print-section .print-card-header h2 {
+                font-size: 16px !important;
+            }
+            #print-section .print-card-header h1,
+            #print-section .print-card-header h3 {
+                font-size: 14px !important;
+            }
             #print-section h3 {
                 font-size: 14px !important;
             }
@@ -440,6 +447,8 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
     </div>
   );
 }
+
+    
 
     
 
