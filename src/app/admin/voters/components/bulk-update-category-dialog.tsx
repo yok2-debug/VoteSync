@@ -1,0 +1,130 @@
+'use client';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useState } from 'react';
+import type { Category } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
+import { db } from '@/lib/firebase';
+import { ref, update } from 'firebase/database';
+
+const bulkUpdateSchema = z.object({
+  categoryId: z.string().min(1, { message: 'A category must be selected.' }),
+});
+
+type BulkUpdateFormData = z.infer<typeof bulkUpdateSchema>;
+
+interface BulkUpdateCategoryDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  selectedVoterIds: string[];
+  categories: Category[];
+  onSuccess: () => void;
+}
+
+export function BulkUpdateCategoryDialog({
+  open,
+  onOpenChange,
+  selectedVoterIds,
+  categories,
+  onSuccess,
+}: BulkUpdateCategoryDialogProps) {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const numSelected = selectedVoterIds.length;
+
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<BulkUpdateFormData>({
+    resolver: zodResolver(bulkUpdateSchema),
+  });
+
+  const onSubmit = async (data: BulkUpdateFormData) => {
+    setIsSubmitting(true);
+    try {
+      const updates: { [key: string]: string } = {};
+      selectedVoterIds.forEach(voterId => {
+        updates[`/voters/${voterId}/category`] = data.categoryId;
+      });
+
+      await update(ref(db), updates);
+
+      toast({
+        title: 'Update Successful',
+        description: `${numSelected} voter(s) have been moved to the new category.`,
+      });
+      onSuccess();
+      onOpenChange(false);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error Updating Voters',
+        description: error instanceof Error ? error.message : 'An unknown error occurred.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Bulk Update Voter Category</DialogTitle>
+          <DialogDescription>
+            Change the category for the {numSelected} selected voter(s).
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit(onSubmit)} id="bulk-update-form" className="space-y-4 py-4">
+          <Controller
+            control={control}
+            name="categoryId"
+            render={({ field }) => (
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a new category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+          {errors.categoryId && <p className="text-sm text-destructive mt-1">{errors.categoryId.message}</p>}
+        </form>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            Cancel
+          </Button>
+          <Button type="submit" form="bulk-update-form" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isSubmitting ? 'Updating...' : `Update ${numSelected} Voters`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

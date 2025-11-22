@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import type { Voter, Category } from '@/lib/types';
 import {
   Table,
@@ -40,6 +40,8 @@ import { db } from '@/lib/firebase';
 import { ref, remove, update, set } from 'firebase/database';
 import * as z from 'zod';
 import { useDatabase } from '@/context/database-context';
+import { Checkbox } from '@/components/ui/checkbox';
+import { BulkUpdateCategoryDialog } from './bulk-update-category-dialog';
 
 type VoterTableProps = {
   voters: Voter[];
@@ -57,10 +59,12 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showResetPasswordDialog, setShowResetPasswordDialog] = useState(false);
   const [showImportDialog, setShowImportDialog] = useState(false);
+  const [showBulkUpdateDialog, setShowBulkUpdateDialog] = useState(false);
   const [importedData, setImportedData] = useState<any[]>([]);
   const [selectedVoter, setSelectedVoter] = useState<Voter | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -73,7 +77,13 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
       (voter.nik && voter.nik.includes(filter))) &&
       (categoryFilter === 'all' || voter.category === categoryFilter)
   ), [voters, filter, categoryFilter]);
-
+  
+  useEffect(() => {
+    // Clear selection when filters change
+    setRowSelection({});
+    setCurrentPage(1);
+  }, [filter, categoryFilter]);
+  
   const totalPages = Math.ceil(filteredVoters.length / ITEMS_PER_PAGE);
   const paginatedVoters = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -81,22 +91,34 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     return filteredVoters.slice(startIndex, endIndex);
   }, [filteredVoters, currentPage]);
 
+  const selectedVoterIds = useMemo(() => Object.keys(rowSelection).filter(id => rowSelection[id]), [rowSelection]);
+  const numSelected = selectedVoterIds.length;
 
+  const handleSelectAll = (checked: boolean) => {
+    const newSelection: Record<string, boolean> = {};
+    if (checked) {
+      paginatedVoters.forEach(voter => newSelection[voter.id] = true);
+    }
+    setRowSelection(newSelection);
+  };
+  
   const handlePrint = async () => {
-    if (filteredVoters.length === 0) {
+    const votersToPrintIds = numSelected > 0 ? selectedVoterIds : filteredVoters.map(v => v.id);
+    
+    if (votersToPrintIds.length === 0) {
       toast({
         variant: 'destructive',
         title: 'No voters to print',
-        description: 'There are no voters in the current filtered list.',
+        description: 'There are no voters in the current list or selection.',
       });
       return;
     }
 
     setIsPrinting(true);
-    toast({ title: 'Preparing print...', description: 'Using latest available voter data...' });
+    toast({ title: 'Preparing print...', description: `Printing ${votersToPrintIds.length} voter cards...` });
 
     try {
-      const idsToPrint = new Set(filteredVoters.map(v => v.id));
+      const idsToPrint = new Set(votersToPrintIds);
       const votersToPrint = allEnrichedVoters.filter(v => idsToPrint.has(v.id));
 
       const printContent = renderToStaticMarkup(
@@ -390,10 +412,30 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
             </Button>
         </div>
       </div>
+
+       {numSelected > 0 && (
+        <div className="flex items-center gap-2 p-2 bg-muted rounded-md">
+          <p className="text-sm font-medium">{numSelected} voter(s) selected.</p>
+          <Button size="sm" onClick={() => setShowBulkUpdateDialog(true)}>
+            Ubah Kategori untuk {numSelected} pemilih
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setRowSelection({})}>
+            Batalkan Pilihan
+          </Button>
+        </div>
+      )}
+
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
+               <TableHead padding="checkbox" className="w-[50px]">
+                  <Checkbox
+                    checked={paginatedVoters.length > 0 && numSelected === paginatedVoters.length}
+                    onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
+                    aria-label="Select all"
+                  />
+                </TableHead>
               <TableHead>Voter ID</TableHead>
               <TableHead>NIK</TableHead>
               <TableHead>Name</TableHead>
@@ -405,7 +447,14 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
           <TableBody>
             {paginatedVoters.length > 0 ? (
               paginatedVoters.map((voter) => (
-                <TableRow key={voter.id}>
+                <TableRow key={voter.id} data-state={rowSelection[voter.id] ? 'selected' : ''}>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                        checked={rowSelection[voter.id] || false}
+                        onCheckedChange={(checked) => setRowSelection(prev => ({ ...prev, [voter.id]: !!checked }))}
+                        aria-label="Select row"
+                    />
+                  </TableCell>
                   <TableCell className="font-mono">{voter.id}</TableCell>
                   <TableCell className="font-mono">{voter.nik || 'N/A'}</TableCell>
                   <TableCell className="font-medium">{voter.name}</TableCell>
@@ -439,7 +488,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
+                <TableCell colSpan={7} className="h-24 text-center">
                   No voters found.
                 </TableCell>
               </TableRow>
@@ -490,6 +539,16 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
         categories={categories}
         onSave={handleImportSave}
       />}
+
+      {showBulkUpdateDialog && <BulkUpdateCategoryDialog
+        open={showBulkUpdateDialog}
+        onOpenChange={setShowBulkUpdateDialog}
+        selectedVoterIds={selectedVoterIds}
+        categories={categories}
+        onSuccess={() => {
+            setRowSelection({});
+        }}
+       />}
 
        {selectedVoter && (
         <ResetPasswordDialog
