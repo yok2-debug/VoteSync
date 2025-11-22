@@ -41,6 +41,7 @@ import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { deleteAdminSession, getAdminSession } from '@/lib/session-client';
 import { useEffect, useState } from 'react';
 import type { AdminSessionPayload } from '@/lib/types';
+import { logoutAdmin } from '@/lib/session';
 
 export function AdminSidebar() {
   const pathname = usePathname();
@@ -56,13 +57,11 @@ export function AdminSidebar() {
 
   const handleLogout = async () => {
     try {
-      deleteAdminSession();
+      await logoutAdmin();
       toast({
         title: 'Logged Out',
         description: 'You have been successfully logged out.',
       });
-      router.push('/admin-login');
-      router.refresh();
     } catch (error) {
       toast({
         variant: 'destructive',
