@@ -106,8 +106,32 @@ export function CandidateForm({
       const candidatesRef = ref(db, `elections/${data.electionId}/candidates`);
       const snapshot = await get(candidatesRef);
       const existingCandidates = snapshot.val() || {};
-      const candidatesArray: Candidate[] = Object.values(existingCandidates);
       
+      const candidatesArray: (Candidate & { id: string })[] = Object.keys(existingCandidates).map(id => ({ ...existingCandidates[id], id }));
+      
+      // --- Strict Duplicate Validation ---
+      const otherCandidates = isEditing ? candidatesArray.filter(c => c.id !== initialData?.id) : candidatesArray;
+      const allOtherParticipantIds = new Set<string>();
+      otherCandidates.forEach(c => {
+        allOtherParticipantIds.add(c.id); // Add main candidate ID
+        if (c.viceCandidateId) {
+          allOtherParticipantIds.add(c.viceCandidateId); // Add vice candidate ID
+        }
+      });
+
+      const mainCandidateVoter = voters.find(v => v.id === data.voterId);
+      if (allOtherParticipantIds.has(data.voterId)) {
+        throw new Error(`Pemilih "${mainCandidateVoter?.name || data.voterId}" sudah terdaftar sebagai kandidat atau wakil dalam pemilihan ini.`);
+      }
+      
+      if (data.viceCandidateId) {
+        const viceCandidateVoter = voters.find(v => v.id === data.viceCandidateId);
+        if (allOtherParticipantIds.has(data.viceCandidateId)) {
+           throw new Error(`Pemilih "${viceCandidateVoter?.name || data.viceCandidateId}" sudah terdaftar sebagai kandidat atau wakil dalam pemilihan ini.`);
+        }
+      }
+      // --- End of Strict Duplicate Validation ---
+
       let finalOrderNumber = data.orderNumber;
 
       if (finalOrderNumber) {
@@ -123,20 +147,11 @@ export function CandidateForm({
       }
 
       const candidateId = data.voterId;
-
-      // Prevent adding the same voter as a candidate twice in the same election
-      const isDuplicate = !isEditing && existingCandidates[candidateId];
-      // For editing, check if the new voterId is already another candidate
-      const isDuplicateOnEdit = isEditing && initialData?.id !== candidateId && existingCandidates[candidateId];
-
-      if (isDuplicate || isDuplicateOnEdit) {
-          throw new Error(`Pemilih "${data.name}" sudah menjadi kandidat dalam pemilihan ini.`);
-      }
-
+      
       const candidateData: Partial<Candidate> = {
         name: data.name,
-        viceCandidateId: data.viceCandidateId,
-        viceCandidateName: data.viceCandidateName,
+        viceCandidateId: data.viceCandidateId || "",
+        viceCandidateName: data.viceCandidateName || "",
         vision: data.vision,
         mission: data.mission,
         orderNumber: finalOrderNumber,
@@ -144,7 +159,6 @@ export function CandidateForm({
         id: candidateId, 
       };
       
-      // If the election ID has changed during edit
       if (isEditing && initialData?.electionId && initialData.electionId !== data.electionId) {
           // Remove from old election
           await set(ref(db, `elections/${initialData.electionId}/candidates/${initialData.id}`), null);
