@@ -97,7 +97,7 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
             @bottom-center {
               content: "Halaman " counter(page);
               font-size: 10px;
-              color: #000;
+              color: #666;
             }
           }
           @media print {
@@ -185,7 +185,7 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
                 position: relative;
             }
             .print-signature-table .signature-dots {
-                border-bottom: 1px dotted #000;
+                border-bottom: 1px dotted #bbb;
                 width: 100%;
                 position: absolute;
                 bottom: 0;
