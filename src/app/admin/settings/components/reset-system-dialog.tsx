@@ -1,3 +1,4 @@
+
 'use client';
 import { useState } from 'react';
 import {
@@ -52,10 +53,10 @@ async function performResetAction(action: string) {
         }
         break;
       case 'reset_election_results':
-        const electionsSnapshot = await get(child(dbRef, 'elections'));
-        if (electionsSnapshot.exists()) {
+        const electionsSnapshotResults = await get(child(dbRef, 'elections'));
+        if (electionsSnapshotResults.exists()) {
           const updates: { [key: string]: null } = {};
-          electionsSnapshot.forEach((election) => {
+          electionsSnapshotResults.forEach((election) => {
             updates[`/elections/${election.key}/votes`] = null;
             updates[`/elections/${election.key}/results`] = null;
           });
@@ -66,6 +67,16 @@ async function performResetAction(action: string) {
         await remove(child(dbRef, 'voters'));
         break;
       case 'reset_all_elections':
+        // 1. Clean up category references first
+        const categoriesSnapshot = await get(child(dbRef, 'categories'));
+        if (categoriesSnapshot.exists()) {
+            const updates: { [key: string]: null } = {};
+            categoriesSnapshot.forEach(category => {
+                updates[`/categories/${category.key}/allowedElections`] = null;
+            });
+            await update(dbRef, updates);
+        }
+        // 2. Then, delete all elections
         await remove(child(dbRef, 'elections'));
         break;
       default:
