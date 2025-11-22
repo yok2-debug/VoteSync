@@ -50,6 +50,8 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
 
   const totalValidVotesFromResults = useMemo(() => {
     if (!election.results) return 0;
+    // Summing up the vote counts for each candidate from the `results` object.
+    // This is the single source of truth for total valid votes.
     return Object.values(election.results).reduce((sum, count) => sum + count, 0);
   }, [election.results]);
   
