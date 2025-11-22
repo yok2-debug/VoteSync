@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import type { Election, Voter, Category } from '@/lib/types';
@@ -17,13 +16,59 @@ type RecapitulationDisplayProps = {
   categories: Category[];
 };
 
+const toWords = (num: number): string => {
+    const ones = ['', 'satu', 'dua', 'tiga', 'empat', 'lima', 'enam', 'tujuh', 'delapan', 'sembilan'];
+    const teens = ['sepuluh', 'sebelas', 'dua belas', 'tiga belas', 'empat belas', 'lima belas', 'enam belas', 'tujuh belas', 'delapan belas', 'sembilan belas'];
+    const tens = ['', '', 'dua puluh', 'tiga puluh', 'empat puluh', 'lima puluh', 'enam puluh', 'tujuh puluh', 'delapan puluh', 'sembilan puluh'];
+
+    if (num === 0) return 'nol';
+
+    let words = '';
+
+    if (Math.floor(num / 1000) > 0) {
+        if (Math.floor(num / 1000) === 1) {
+            words += 'seribu ';
+        } else {
+            words += toWords(Math.floor(num / 1000)) + ' ribu ';
+        }
+        num %= 1000;
+    }
+
+    if (Math.floor(num / 100) > 0) {
+        if (Math.floor(num / 100) === 1) {
+            words += 'seratus ';
+        } else {
+            words += ones[Math.floor(num / 100)] + ' ratus ';
+        }
+        num %= 100;
+    }
+
+    if (num >= 10 && num < 20) {
+        words += teens[num - 10] + ' ';
+        num = 0;
+    } else if (Math.floor(num / 10) > 0) {
+        words += tens[Math.floor(num / 10)] + ' ';
+        num %= 10;
+    }
+
+    if (num > 0) {
+        words += ones[num] + ' ';
+    }
+
+    return words.trim();
+};
+
+
 const formatDateToWords = (date: Date) => {
     const dayName = format(date, 'EEEE', { locale: localeID });
     const day = date.getDate();
     const monthName = format(date, 'MMMM', { locale: localeID });
     const year = date.getFullYear();
 
-    return `Pada hari ini <b>${dayName}</b> tanggal <b>${day}</b> bulan <b>${monthName}</b> tahun <b>${year}</b>`;
+    const dayInWords = toWords(day);
+    const yearInWords = toWords(year);
+
+    return `Pada hari ini <b>${dayName}</b> tanggal <b>${dayInWords}</b> bulan <b>${monthName}</b> tahun <b>${yearInWords}</b>`;
 };
 
 
@@ -46,16 +91,16 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
   // Recalculate results from `votes` to ensure consistency. This is the single source of truth.
   const recalculatedResults = useMemo(() => {
     const results: Record<string, number> = {};
+    candidates.forEach(c => results[c.id] = 0); // Initialize all candidates with 0 votes
+
     const allVotes = Object.values(election.votes || {});
     for (const candidateId of allVotes) {
-      if (results[candidateId]) {
+      if (results[candidateId] !== undefined) { // Check if the vote is for a valid, existing candidate
         results[candidateId]++;
-      } else {
-        results[candidateId] = 1;
       }
     }
     return results;
-  }, [election.votes]);
+  }, [election.votes, candidates]);
   
   const totalValidVotes = useMemo(() => {
     return Object.values(recalculatedResults).reduce((sum, count) => sum + count, 0);
@@ -377,3 +422,5 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
     </div>
   );
 }
+
+    
