@@ -72,10 +72,19 @@ export default function CandidatesPage() {
 
     const activeElectionFilters = Object.keys(electionFilter).filter(id => electionFilter[id]);
 
-    return candidatesWithElectionInfo.filter(c => 
+    const filtered = candidatesWithElectionInfo.filter(c => 
       c.name.toLowerCase().includes(filter.toLowerCase()) &&
       (activeElectionFilters.length === 0 || activeElectionFilters.includes(c.electionId))
     );
+
+    return filtered.sort((a, b) => {
+        const orderA = a.orderNumber ?? Infinity;
+        const orderB = b.orderNumber ?? Infinity;
+        if (a.electionId === b.electionId) {
+            return orderA - orderB;
+        }
+        return a.electionName.localeCompare(b.electionName) || orderA - orderB;
+    });
 
   }, [elections, isLoading, filter, electionFilter]);
   
