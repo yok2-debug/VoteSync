@@ -10,7 +10,8 @@ export default function ElectionEditPage() {
   const { elections, isLoading } = useDatabase();
 
   const election = useMemo(() => {
-    if (isLoading) return null;
+    if (isLoading) return undefined;
+    
     if (electionId === 'new') {
       return {
         id: 'new',
@@ -23,14 +24,15 @@ export default function ElectionEditPage() {
         endDate: undefined,
       };
     }
-    return elections.find(e => e.id === electionId);
+    const found = elections.find(e => e.id === electionId);
+    return found || 'redirect';
   }, [elections, electionId, isLoading]);
 
-  if (isLoading) {
+  if (isLoading || election === undefined) {
     return <Loading />;
   }
 
-  if (!election) {
+  if (election === 'redirect') {
     redirect('/admin/elections');
     return <Loading />;
   }

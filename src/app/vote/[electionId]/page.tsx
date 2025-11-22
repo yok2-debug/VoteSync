@@ -1,5 +1,5 @@
 'use client';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CandidateVoteForm } from './components/candidate-vote-form';
 import { VoterLogoutButton } from '../components/voter-logout-button';
 import { Button } from '@/components/ui/button';
@@ -31,8 +31,15 @@ export default function VotePage() {
   const [isValid, setIsValid] = useState(false);
   const router = useRouter();
 
-  const election = useMemo(() => elections.find(e => e.id === electionId), [elections, electionId]);
-  const voter = useMemo(() => voters.find(v => v.id === session?.voterId), [voters, session]);
+  const voter = useMemo(() => {
+    if (!session?.voterId || isDbLoading) return undefined;
+    return voters.find(v => v.id === session.voterId);
+  }, [voters, session, isDbLoading]);
+
+  const election = useMemo(() => {
+    if (isDbLoading) return undefined;
+    return elections.find(e => e.id === electionId);
+  }, [elections, electionId, isDbLoading]);
   
   useEffect(() => {
     const voterSession = getVoterSession();
@@ -46,10 +53,12 @@ export default function VotePage() {
 
   useEffect(() => {
     if (isDbLoading || isSessionLoading || !election || !voter) {
-      return;
+      return; // Wait for all data to be loaded
     }
 
     const voterCategory = categories.find(c => c.id === voter.category);
+    
+    // If any data is missing or invalid, redirect.
     if (!voterCategory) {
       router.replace('/vote');
       return;
@@ -72,6 +81,7 @@ export default function VotePage() {
       return;
     }
 
+    // All checks passed, the page is valid to be displayed.
     setIsValid(true);
 
   }, [isDbLoading, isSessionLoading, election, voter, categories, electionId, router]);

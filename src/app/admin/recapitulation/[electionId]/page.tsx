@@ -10,15 +10,16 @@ export default function RecapitulationPage() {
   const { elections, voters, categories, isLoading } = useDatabase();
 
   const election = useMemo(() => {
-    if (isLoading) return null;
-    return elections.find(e => e.id === electionId);
+    if (isLoading) return undefined;
+    const found = elections.find(e => e.id === electionId);
+    return found || 'redirect';
   }, [elections, electionId, isLoading]);
 
-  if (isLoading) {
+  if (isLoading || election === undefined) {
     return <Loading />;
   }
 
-  if (!election) {
+  if (election === 'redirect') {
     redirect('/admin/recapitulation');
     return <Loading />;
   }

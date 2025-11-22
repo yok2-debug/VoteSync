@@ -6,6 +6,10 @@ import Loading from '@/app/loading';
 export default function VotersPage() {
   const { voters, categories, isLoading } = useDatabase();
 
+  if (isLoading) {
+    return <Loading />;
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -14,11 +18,7 @@ export default function VotersPage() {
           Add, import, and manage all voters in the system.
         </p>
       </div>
-      {isLoading ? (
-        <Loading />
-      ) : (
-        <VoterTable voters={voters} categories={categories} />
-      )}
+      <VoterTable voters={voters} categories={categories} />
     </div>
   );
 }
