@@ -76,12 +76,12 @@ export function CandidateTable({ election }: CandidateTableProps) {
     try {
       await remove(ref(db, `elections/${election.id}/candidates/${selectedCandidateId}`));
       await remove(ref(db, `elections/${election.id}/results/${selectedCandidateId}`));
-      toast({ title: 'Candidate deleted successfully.' });
+      toast({ title: 'Kandidat berhasil dihapus.' });
       // The context will auto-update the UI
     } catch (error) {
        toast({
         variant: 'destructive',
-        title: 'Error deleting candidate',
+        title: 'Error menghapus kandidat',
         description: error instanceof Error ? error.message : String(error),
       });
     } finally {
@@ -98,14 +98,14 @@ export function CandidateTable({ election }: CandidateTableProps) {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <Input
-          placeholder="Filter by name..."
+          placeholder="Saring berdasarkan nama..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           className="max-w-sm"
         />
         <Button onClick={handleAdd}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Add Candidate
+          Tambah Kandidat
         </Button>
       </div>
       <div className="rounded-md border">
@@ -113,9 +113,9 @@ export function CandidateTable({ election }: CandidateTableProps) {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px]">No.</TableHead>
-              <TableHead className="w-[80px]">Photo</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead className="w-[100px] text-right">Actions</TableHead>
+              <TableHead className="w-[80px]">Foto</TableHead>
+              <TableHead>Nama</TableHead>
+              <TableHead className="w-[100px] text-right">Tindakan</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -126,7 +126,7 @@ export function CandidateTable({ election }: CandidateTableProps) {
                     <TableCell>
                         <img
                           src={candidate.photo || defaultPhoto?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
-                          alt={`Photo of ${candidate.name}`}
+                          alt={`Foto ${candidate.name}`}
                           width={40}
                           height={40}
                           className="rounded-full object-cover"
@@ -141,18 +141,18 @@ export function CandidateTable({ election }: CandidateTableProps) {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
+                            <span className="sr-only">Buka menu</span>
                             <MoreHorizontal className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleEdit(candidate.id)}>
                             <Edit className="mr-2 h-4 w-4" />
-                            Edit
+                            Ubah
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleDelete(candidate.id)}>
                              <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-                            <span className="text-destructive">Delete</span>
+                            <span className="text-destructive">Hapus</span>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -162,7 +162,7 @@ export function CandidateTable({ election }: CandidateTableProps) {
             ) : (
               <TableRow>
                 <TableCell colSpan={4} className="h-24 text-center">
-                  No candidates found for this election.
+                  Tidak ada kandidat ditemukan untuk pemilihan ini.
                 </TableCell>
               </TableRow>
             )}
@@ -173,17 +173,17 @@ export function CandidateTable({ election }: CandidateTableProps) {
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the candidate
-              "{selectedCandidate?.name}" and any votes they have received.
+              Tindakan ini tidak dapat dibatalkan. Ini akan menghapus kandidat secara permanen
+              "{selectedCandidate?.name}" dan semua suara yang telah mereka terima.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
               {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Delete
+              Hapus
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

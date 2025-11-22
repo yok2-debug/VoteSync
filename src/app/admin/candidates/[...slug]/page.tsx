@@ -29,28 +29,29 @@ export default function CandidateActionPage() {
   }
 
   const isNew = action === 'new';
-  const candidate = !isNew && candidateId ? election.candidates?.[candidateId] : null;
-
+  const candidate = !isNew && candidateId ? (election.candidates?.[candidateId] ? { id: candidateId, ...election.candidates[candidateId] } : null) : null;
+  
   if (!isNew && !candidate) {
     redirect(`/admin/candidates?electionId=${electionId}`);
     return <Loading />;
   }
   
   const candidateName = !isNew && candidate ? `"${candidate.name}"` : '';
+  const initialDataWithVoterId = candidate ? { ...candidate, voterId: candidate.id } : null;
 
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
-            {isNew ? 'Create New Candidate' : 'Edit Candidate'}
+            {isNew ? 'Buat Kandidat Baru' : 'Ubah Kandidat'}
         </h1>
         <p className="text-muted-foreground">
-            {isNew ? `Add a new candidate for the "${election.name}" election.` : `Update the details for ${candidateName} in the "${election.name}" election.`}
+            {isNew ? `Tambah kandidat baru untuk pemilihan "${election.name}" dengan memilih dari pemilih yang ada.` : `Perbarui detail untuk ${candidateName} dalam pemilihan "${election.name}".`}
         </p>
       </div>
       <CandidateForm
         electionId={election.id}
-        initialData={candidate ? { id: candidateId, ...candidate } : null}
+        initialData={initialDataWithVoterId}
       />
     </div>
   );
