@@ -81,7 +81,7 @@ export default function LoginPage() {
             </p>
         </div>
       </div>
-      <main className="flex flex-1 flex-col items-center bg-background p-4 -mt-12">
+      <main className="flex flex-1 flex-col items-center bg-background p-4">
         <div className="w-full max-w-6xl mx-auto space-y-10">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12 items-start">
             <div className="space-y-6 md:col-span-2">
