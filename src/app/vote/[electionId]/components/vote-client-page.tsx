@@ -19,6 +19,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
@@ -146,7 +147,7 @@ export function VoteClientPage() {
                   <CardContent className="flex-grow flex flex-col items-center p-4 text-center">
                       <h3 className="text-xl font-bold">
                         <span className="block">{candidate.name}</span>
-                        {candidate.viceCandidateName && <span className="block text-lg font-medium">&amp;</span>}
+                        {candidate.viceCandidateName && <span className="block text-lg font-medium">&</span>}
                         {candidate.viceCandidateName && <span className="block">{candidate.viceCandidateName}</span>}
                       </h3>
                   </CardContent>
@@ -162,7 +163,7 @@ export function VoteClientPage() {
                         <DialogHeader>
                             <DialogTitle>
                               {candidate.name}
-                              {candidate.viceCandidateName && ` &amp; ${candidate.viceCandidateName}`}
+                              {candidate.viceCandidateName && ` & ${candidate.viceCandidateName}`}
                             </DialogTitle>
                             <DialogDescription>
                             Visi dan Misi Kandidat
