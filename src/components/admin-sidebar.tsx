@@ -56,23 +56,9 @@ export function AdminSidebar() {
   }, [pathname]);
 
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     startTransition(async () => {
-      try {
-        // Clear client-side session immediately for faster UI feedback
-        deleteClientSession();
-        await logoutAdmin();
-        toast({
-          title: 'Logged Out',
-          description: 'You have been successfully logged out.',
-        });
-      } catch (error) {
-        toast({
-          variant: 'destructive',
-          title: 'Logout Failed',
-          description: 'An error occurred while logging out.',
-        });
-      }
+      await logoutAdmin();
     });
   };
 
