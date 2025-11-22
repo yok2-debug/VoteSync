@@ -1,5 +1,5 @@
 'use client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { CandidateVoteForm } from './candidate-vote-form';
 import { VoterLogoutButton } from '../../components/voter-logout-button';
 import { Button } from '@/components/ui/button';
@@ -109,51 +109,53 @@ export function VoteClientPage() {
           <h1 className="text-3xl font-bold tracking-tight">{election.name}</h1>
           <p className="text-muted-foreground">Pilih kandidat pilihan Anda di bawah ini.</p>
         </div>
-        <div className="flex flex-wrap justify-center gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {candidates.map(candidate => (
-                <Card key={candidate.id} className="flex flex-col w-full max-w-xs sm:w-64">
-                <CardHeader className="flex flex-col items-center p-0 pt-6">
-                   <Dialog>
-                      <DialogTrigger asChild>
-                        <img
-                          src={candidate.photo || defaultAvatar?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
-                          alt={`Photo of ${candidate.name}`}
-                          width={144}
-                          height={144}
-                          className="rounded-full border-4 border-primary object-cover cursor-pointer hover:opacity-90 transition-opacity h-36 w-36"
-                        />
-                      </DialogTrigger>
-                      <DialogContent className="max-w-xl p-2 border-0 bg-transparent shadow-none">
-                         <DialogHeader>
-                          <DialogTitle className="sr-only">
-                            Foto {candidate.name} diperbesar
-                          </DialogTitle>
-                        </DialogHeader>
-                        <DialogClose asChild>
-                          <img
+                <Card key={candidate.id} className="flex flex-col w-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+                  <CardHeader className="flex flex-col items-center p-6 bg-card/80">
+                    <div className="relative">
+                       <span className="absolute -top-2 -left-2 bg-primary text-primary-foreground rounded-full h-10 w-10 flex items-center justify-center text-lg font-bold border-4 border-background">
+                        {candidate.orderNumber}
+                       </span>
+                       <Dialog>
+                          <DialogTrigger asChild>
+                            <img
                               src={candidate.photo || defaultAvatar?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
                               alt={`Photo of ${candidate.name}`}
-                              className="w-full h-auto rounded-md cursor-pointer"
-                          />
-                        </DialogClose>
-                      </DialogContent>
-                   </Dialog>
-                    <CardTitle className="pt-2 text-base flex flex-col items-center text-center">
-                      <span>{candidate.name}</span>
+                              width={160}
+                              height={160}
+                              className="rounded-full border-4 border-primary object-cover cursor-pointer hover:opacity-90 transition-opacity h-40 w-40"
+                            />
+                          </DialogTrigger>
+                          <DialogContent className="max-w-xl p-2 border-0 bg-transparent shadow-none">
+                            <DialogHeader>
+                              <DialogTitle className="sr-only">
+                                Foto {candidate.name} diperbesar
+                              </DialogTitle>
+                            </DialogHeader>
+                            <DialogClose asChild>
+                              <img
+                                  src={candidate.photo || defaultAvatar?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
+                                  alt={`Photo of ${candidate.name}`}
+                                  className="w-full h-auto rounded-md cursor-pointer"
+                              />
+                            </DialogClose>
+                          </DialogContent>
+                      </Dialog>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-grow flex flex-col items-center p-4 text-center">
+                      <h3 className="text-xl font-bold">{candidate.name}</h3>
                       {candidate.viceCandidateName && (
-                        <>
-                          <span className="text-base font-normal leading-none">&</span>
-                          <span>{candidate.viceCandidateName}</span>
-                        </>
+                        <p className="text-md text-muted-foreground">{candidate.viceCandidateName}</p>
                       )}
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="flex-grow flex flex-col justify-center items-center p-0 pt-4">
+                  </CardContent>
+                  <CardFooter className="p-4 bg-muted/50 grid grid-cols-2 gap-2">
                     <Dialog>
                         <DialogTrigger asChild>
-                        <Button variant="secondary">
+                        <Button variant="outline" className="w-full">
                             <FileText className="mr-2 h-4 w-4" />
-                            Lihat Visi & Misi
+                            Visi Misi
                         </Button>
                         </DialogTrigger>
                         <DialogContent className="sm:max-w-2xl">
@@ -176,10 +178,8 @@ export function VoteClientPage() {
                         </div>
                         </DialogContent>
                     </Dialog>
-                </CardContent>
-                <div className="p-6 pt-2">
                     <CandidateVoteForm electionId={election.id} candidate={candidate} voterId={voter.id} />
-                </div>
+                  </CardFooter>
                 </Card>
             ))}
         </div>
