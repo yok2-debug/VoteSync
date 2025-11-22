@@ -228,7 +228,7 @@ export function VoterFormDialog({
               type="password" 
               {...register('password')} 
               className="w-full" 
-              placeholder={isEditing ? "Kosongkan untuk tidak mengubah" : "Kosongkan untuk generate otomatis"}
+              placeholder={isEditing ? "Kosongkan untuk tidak mengubah" : "Otomatis jika kosong"}
             />
             {errors.password && <p className="text-sm text-destructive mt-1">{errors.password.message}</p>}
           </div>

@@ -8,7 +8,7 @@ export interface Election {
   candidates: Record<string, Candidate>;
   committee?: CommitteeMember[];
   votes?: Record<string, string>; // { [voterId]: candidateId }
-  results?: Record<string, number>; // { [candidateId]: voteCount }
+  results?: Record<string, number>;
 }
 
 export interface Candidate {

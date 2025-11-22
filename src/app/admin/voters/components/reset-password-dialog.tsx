@@ -121,7 +121,7 @@ export function ResetPasswordDialog({
           </Button>
           <Button type="submit" form="reset-password-form" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Menyimpan...' : 'Atur Kata Sandi Baru'}
+            {isSubmitting ? 'Menyimpan...' : 'Atur Kata Sandi'}
           </Button>
         </DialogFooter>
       </DialogContent>
