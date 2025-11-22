@@ -5,16 +5,12 @@ import { useDatabase } from '@/context/database-context';
 import Loading from '@/app/loading';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
-import { ReorderCandidatesDialog } from './components/reorder-candidates-dialog';
-import { Button } from '@/components/ui/button';
-import { ListOrdered } from 'lucide-react';
+import { useMemo } from 'react';
 
 export default function CandidatesPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { elections, isLoading } = useDatabase();
-  const [isReorderOpen, setIsReorderOpen] = useState(false);
   
   const selectedElectionId = searchParams.get('electionId');
 
@@ -39,25 +35,19 @@ export default function CandidatesPage() {
         </p>
       </div>
       
-      <div className="flex gap-2 items-center">
-        <div className="max-w-sm flex-grow">
-          <Select onValueChange={handleElectionChange} value={selectedElectionId || ''}>
-            <SelectTrigger>
-              <SelectValue placeholder="Pilih pemilihan..." />
-            </SelectTrigger>
-            <SelectContent>
-              {elections.map((election) => (
-                <SelectItem key={election.id} value={election.id}>
-                  {election.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <Button variant="outline" onClick={() => setIsReorderOpen(true)}>
-          <ListOrdered className="mr-2 h-4 w-4" />
-          Ubah Urutan
-        </Button>
+      <div className="max-w-sm">
+        <Select onValueChange={handleElectionChange} value={selectedElectionId || ''}>
+          <SelectTrigger>
+            <SelectValue placeholder="Pilih pemilihan..." />
+          </SelectTrigger>
+          <SelectContent>
+            {elections.map((election) => (
+              <SelectItem key={election.id} value={election.id}>
+                {election.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {selectedElection ? (
@@ -67,12 +57,6 @@ export default function CandidatesPage() {
           <p className="text-muted-foreground">Silakan pilih pemilihan untuk melihat kandidat.</p>
         </div>
       )}
-      
-      <ReorderCandidatesDialog 
-        open={isReorderOpen}
-        onOpenChange={setIsReorderOpen}
-        allElections={elections}
-      />
     </div>
   );
 }
