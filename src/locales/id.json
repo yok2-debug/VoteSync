@@ -1,0 +1,47 @@
+{
+    "sidebar": {
+        "dashboard": "Dasbor",
+        "elections": "Pemilihan",
+        "candidates": "Kandidat",
+        "voters": "Pemilih",
+        "categories": "Kategori",
+        "recapitulation": "Rekapitulasi",
+        "settings": "Pengaturan",
+        "admin": {
+            "name": "Administrator",
+            "role": "Peran Admin",
+            "myAccount": "Akun Saya",
+            "changePassword": "Ubah Kata Sandi",
+            "logout": "Keluar"
+        }
+    },
+    "settings": {
+        "pageTitle": "Pengaturan Sistem",
+        "pageDescription": "Kelola pengaturan seluruh sistem dan lakukan operasi reset.",
+        "languageSettings": {
+            "title": "Pengaturan Bahasa",
+            "description": "Pilih bahasa tampilan untuk dasbor admin.",
+            "selectPlaceholder": "Pilih bahasa"
+        },
+        "dangerZone": {
+            "title": "Zona Berbahaya",
+            "description": "Tindakan ini tidak dapat diurungkan dan dapat menyebabkan kehilangan data permanen. Lanjutkan dengan sangat hati-hati."
+        },
+        "resetVoterStatus": {
+            "title": "Reset Status Pemilih",
+            "description": "Mereset status \"telah memilih\" untuk semua pemilih, memungkinkan mereka memilih lagi. Jumlah suara tidak dihapus."
+        },
+        "resetElectionResults": {
+            "title": "Reset Hasil Pemilihan",
+            "description": "Menghapus semua suara yang telah masuk dan mereset jumlah suara menjadi nol untuk semua pemilihan."
+        },
+        "deleteAllVoters": {
+            "title": "Hapus Semua Pemilih",
+            "description": "Secara permanen menghapus semua data pemilih dari sistem. Tindakan ini tidak dapat diurungkan."
+        },
+        "resetAllElections": {
+            "title": "Reset Semua Pemilihan",
+            "description": "Menghapus semua pemilihan, kandidat, dan data terkait. Sistem akan menjadi kosong."
+        }
+    }
+}
