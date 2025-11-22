@@ -145,10 +145,10 @@ export function VoteClientPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="flex-grow flex flex-col items-center p-4 text-center">
-                      <h3 className="text-xl font-bold">{candidate.name}</h3>
-                      {candidate.viceCandidateName && (
-                        <p className="text-md text-muted-foreground">{candidate.viceCandidateName}</p>
-                      )}
+                      <h3 className="text-xl font-bold">
+                        {candidate.name}
+                        {candidate.viceCandidateName && ` & ${candidate.viceCandidateName}`}
+                      </h3>
                   </CardContent>
                   <CardFooter className="p-4 bg-muted/50 grid grid-cols-2 gap-2">
                     <Dialog>
