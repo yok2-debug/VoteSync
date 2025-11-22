@@ -1,5 +1,5 @@
 'use client';
-import { ElectionForm } from '../components/election-form';
+import { ElectionForm } from '../../components/election-form';
 import { redirect, useParams } from 'next/navigation';
 import { useDatabase } from '@/context/database-context';
 import Loading from '@/app/loading';
