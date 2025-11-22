@@ -1,6 +1,5 @@
 'use client';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
 import { ResetSystemDialog } from './components/reset-system-dialog';
 import { useTranslation } from '@/hooks/use-translation';
@@ -13,23 +12,15 @@ export default function SettingsPage() {
 
   const resetOptions = [
     {
-      title: t('resetVoterStatus.title'),
-      description: t('resetVoterStatus.description'),
       action: 'reset_voter_status',
     },
     {
-      title: t('resetElectionResults.title'),
-      description: t('resetElectionResults.description'),
       action: 'reset_election_results',
     },
     {
-      title: t('deleteAllVoters.title'),
-      description: t('deleteAllVoters.description'),
       action: 'delete_all_voters',
     },
     {
-      title: t('resetAllElections.title'),
-      description: t('resetAllElections.description'),
       action: 'reset_all_elections',
     },
   ];
@@ -73,16 +64,16 @@ export default function SettingsPage() {
           {resetOptions.map((option) => (
             <Card key={option.action}>
               <CardHeader>
-                <CardTitle className="text-lg">{option.title}</CardTitle>
+                <CardTitle className="text-lg">{t(`${option.action}.title`)}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-muted-foreground">{option.description}</p>
+                <p className="text-muted-foreground">{t(`${option.action}.description`)}</p>
               </CardContent>
               <CardFooter>
                 <ResetSystemDialog
                   action={option.action}
-                  title={option.title}
-                  description={option.description}
+                  title={t(`${option.action}.title`)}
+                  description={t(`${option.action}.description`)}
                 />
               </CardFooter>
             </Card>
