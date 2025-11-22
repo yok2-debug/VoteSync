@@ -7,7 +7,6 @@ export interface Election {
   status: 'active' | 'pending';
   candidates: Record<string, Candidate>;
   committee?: CommitteeMember[];
-  voters?: Voter[];
   votes?: Record<string, string>; // { [voterId]: candidateId }
   results?: Record<string, number>; // { [candidateId]: voteCount }
 }
