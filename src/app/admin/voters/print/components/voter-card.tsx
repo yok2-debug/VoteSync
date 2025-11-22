@@ -83,7 +83,7 @@ export function VoterCard({ voter }: VoterCardProps) {
           <p style={{ margin: '0 0 2px 0', fontSize: '8px', color: '#333' }}>Pemilihan yang Diikuti:</p>
           <ul style={{ margin: 0, paddingLeft: '16px', fontSize: '8px', listStyle: 'disc' }}>
             {voter.followedElections && voter.followedElections.length > 0 ? (
-                voter.followedElections.map(election => (
+                voter.followedElections?.map(election => (
                     <li key={election.id} style={{ marginBottom: '2px' }}>{election.name}</li>
                 ))
             ) : (
