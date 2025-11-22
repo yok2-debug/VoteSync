@@ -17,7 +17,7 @@ export default function RealCountPage() {
   return (
     <>
       <PublicNavbar />
-      <main className="flex min-h-screen flex-col items-center bg-background p-4 pt-20">
+      <main className="flex min-h-screen flex-col items-center bg-gradient-to-br from-primary/10 via-background to-accent/10 p-4 pt-20">
         <div className="w-full max-w-7xl mx-auto">
            <div className="flex flex-col space-y-2 text-center mb-10">
             <h1 className="text-3xl font-bold tracking-tight">Real Count Pemilihan</h1>

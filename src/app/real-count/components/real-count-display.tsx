@@ -98,7 +98,7 @@ export function RealCountDisplay({ election, categories }: RealCountDisplayProps
             </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
             <div className="w-full">
                 <ElectionPieChart data={chartData} />
             </div>
