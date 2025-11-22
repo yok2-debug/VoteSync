@@ -20,7 +20,7 @@ async function createSession(payload: AdminSessionPayload) {
 }
 
 export async function createAdminSession(payload: Omit<AdminSessionPayload, 'expires'>) {
-    await createSession({ ...payload, isAdmin: true });
+    await createSession(payload);
 }
 
 async function getSession<T>(cookieName: string): Promise<T | null> {

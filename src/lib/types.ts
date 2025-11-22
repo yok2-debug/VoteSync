@@ -49,10 +49,21 @@ export interface Category {
   allowedElections?: string[];
 }
 
-export type Admin = {
+export type Permission = 'dashboard' | 'elections' | 'candidates' | 'voters' | 'categories' | 'recapitulation' | 'settings' | 'users';
+
+export interface Role {
+    id: string;
+    name: string;
+    permissions: Permission[];
+}
+
+export interface AdminUser {
+  id: string;
   username: string;
-  password?: string; // Should be handled securely, not stored plainly
-};
+  password?: string;
+  roleId: string;
+  role?: Role; // Populated client-side
+}
 
 export type AppSettings = {
   app_name: string;
@@ -61,7 +72,9 @@ export type AppSettings = {
 };
 
 export interface AdminSessionPayload {
-  isAdmin: true;
+  userId: string;
+  username: string;
+  permissions: Permission[];
   expires?: number;
 }
 

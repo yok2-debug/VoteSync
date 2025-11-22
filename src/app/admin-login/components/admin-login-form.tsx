@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAdminCredentials } from '@/lib/data';
+import { getAdminUsers, getRoles } from '@/lib/data';
 import { createAdminSession } from '@/lib/session';
 
 const adminLoginSchema = z.object({
@@ -33,32 +33,39 @@ export function AdminLoginForm() {
 
   const form = useForm<z.infer<typeof adminLoginSchema>>({
     resolver: zodResolver(adminLoginSchema),
-    defaultValues: { username: 'admin', password: '' },
+    defaultValues: { username: '', password: '' },
   });
 
   async function handleAdminLogin(values: z.infer<typeof adminLoginSchema>) {
     setIsSubmitting(true);
     try {
-        const adminCreds = await getAdminCredentials();
-        if (
-            adminCreds &&
-            adminCreds.username === values.username &&
-            adminCreds.password === values.password
-        ) {
-            await createAdminSession({ isAdmin: true });
+        const [users, roles] = await Promise.all([getAdminUsers(), getRoles()]);
+        const user = users.find(u => u.username === values.username);
+        
+        if (user && user.password === values.password) {
+            const role = roles.find(r => r.id === user.roleId);
+            if (!role) {
+                throw new Error('Konfigurasi peran pengguna tidak valid.');
+            }
+
+            await createAdminSession({
+                userId: user.id,
+                username: user.username,
+                permissions: role.permissions,
+            });
             toast({
-                title: 'Login Successful',
-                description: 'Redirecting to your dashboard...',
+                title: 'Login Berhasil',
+                description: 'Mengarahkan ke dasbor Anda...',
             });
             router.replace('/admin/dashboard');
         } else {
-            throw new Error('Invalid admin credentials.');
+            throw new Error('Nama pengguna atau kata sandi tidak valid.');
         }
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Login Failed',
-        description: error instanceof Error ? error.message : 'An unknown error occurred.',
+        title: 'Login Gagal',
+        description: error instanceof Error ? error.message : 'Terjadi kesalahan tidak diketahui.',
       });
     } finally {
       setIsSubmitting(false);
@@ -75,7 +82,7 @@ export function AdminLoginForm() {
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="admin" {...field} />
+                <Input placeholder="username" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

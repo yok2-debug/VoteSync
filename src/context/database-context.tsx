@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode, useMemo } from 'react';
-import type { Election, Voter, Category } from '@/lib/types';
+import type { Election, Voter, Category, Role, AdminUser } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { ref, onValue } from 'firebase/database';
 
@@ -9,6 +9,8 @@ interface DatabaseContextType {
   elections: Election[];
   voters: Voter[];
   categories: Category[];
+  roles: Role[];
+  adminUsers: AdminUser[];
   isLoading: boolean;
 }
 
@@ -18,6 +20,8 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   const [elections, setElections] = useState<Election[]>([]);
   const [rawVoters, setRawVoters] = useState<Voter[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [rawAdminUsers, setRawAdminUsers] = useState<AdminUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const enrichedVoters = useMemo(() => {
@@ -42,54 +46,63 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
 
   }, [rawVoters, categories, elections, isLoading]);
 
+  const enrichedAdminUsers = useMemo(() => {
+    if (isLoading || rawAdminUsers.length === 0 || roles.length === 0) {
+      return rawAdminUsers;
+    }
+    const rolesMap = new Map(roles.map(r => [r.id, r]));
+    return rawAdminUsers.map(user => ({
+      ...user,
+      role: rolesMap.get(user.roleId)
+    }));
+  }, [rawAdminUsers, roles, isLoading]);
+
 
   useEffect(() => {
-    const electionsRef = ref(db, 'elections');
-    const votersRef = ref(db, 'voters');
-    const categoriesRef = ref(db, 'categories');
+    const refs = {
+      elections: ref(db, 'elections'),
+      voters: ref(db, 'voters'),
+      categories: ref(db, 'categories'),
+      roles: ref(db, 'roles'),
+      users: ref(db, 'users'),
+    };
 
-    let electionsLoaded = false;
-    let votersLoaded = false;
-    let categoriesLoaded = false;
-
+    let loaded = {
+        elections: false,
+        voters: false,
+        categories: false,
+        roles: false,
+        users: false,
+    };
+    
     const checkAllLoaded = () => {
-      if (electionsLoaded && votersLoaded && categoriesLoaded) {
+      if (Object.values(loaded).every(Boolean)) {
         setIsLoading(false);
       }
     };
 
-    const unsubscribeElections = onValue(electionsRef, (snapshot) => {
-      const data = snapshot.val();
-      const electionsArray = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
-      setElections(electionsArray);
-      electionsLoaded = true;
-      checkAllLoaded();
-    }, () => {
-      electionsLoaded = true;
-      checkAllLoaded();
-    });
+    const createUnsubscriber = (
+      nodeRef: any,
+      setter: React.Dispatch<React.SetStateAction<any[]>>,
+      key: keyof typeof loaded
+    ) => {
+      return onValue(nodeRef, (snapshot) => {
+        const data = snapshot.val();
+        const array = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
+        setter(array);
+        loaded[key] = true;
+        checkAllLoaded();
+      }, () => {
+        loaded[key] = true;
+        checkAllLoaded();
+      });
+    };
 
-    const unsubscribeVoters = onValue(votersRef, (snapshot) => {
-      const data = snapshot.val();
-      const votersArray = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
-      setRawVoters(votersArray);
-      votersLoaded = true;
-      checkAllLoaded();
-    }, () => {
-      votersLoaded = true;
-      checkAllLoaded();
-    });
-
-    const unsubscribeCategories = onValue(categoriesRef, (snapshot) => {
-      const data = snapshot.val();
-      const categoriesArray = data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
-      setCategories(categoriesArray);
-      categoriesLoaded = true;
-      checkAllLoaded();
-    }, () => {
-      categoriesLoaded = true;
-      checkAllLoaded();
-    });
+    const unsubElections = createUnsubscriber(refs.elections, setElections, 'elections');
+    const unsubVoters = createUnsubscriber(refs.voters, setRawVoters, 'voters');
+    const unsubCategories = createUnsubscriber(refs.categories, setCategories, 'categories');
+    const unsubRoles = createUnsubscriber(refs.roles, setRoles, 'roles');
+    const unsubUsers = createUnsubscriber(refs.users, setRawAdminUsers, 'users');
     
     // Safety timeout in case Firebase listeners don't fire for empty nodes
     const timeout = setTimeout(() => {
@@ -100,14 +113,16 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
 
     return () => {
       clearTimeout(timeout);
-      unsubscribeElections();
-      unsubscribeVoters();
-      unsubscribeCategories();
+      unsubElections();
+      unsubVoters();
+      unsubCategories();
+      unsubRoles();
+      unsubUsers();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const value = { elections, voters: enrichedVoters, categories, isLoading };
+  const value = { elections, voters: enrichedVoters, categories, roles, adminUsers: enrichedAdminUsers, isLoading };
 
   return <DatabaseContext.Provider value={value}>{children}</DatabaseContext.Provider>;
 }

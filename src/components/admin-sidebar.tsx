@@ -8,9 +8,8 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
+  SidebarGroup,
+  SidebarGroupLabel,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/logo';
 import {
@@ -23,8 +22,8 @@ import {
   Settings,
   Users,
   Vote,
-  UserSquare,
-  User as UserIcon,
+  User,
+  Shield,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -39,17 +38,25 @@ import {
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { deleteAdminSession } from '@/lib/session';
+import { deleteAdminSession, getAdminSession } from '@/lib/session-client';
+import { useEffect, useState } from 'react';
+import type { AdminSessionPayload } from '@/lib/types';
 
 export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { toast } = useToast();
   const avatar = PlaceHolderImages.find(p => p.id === 'default-avatar');
+  const [session, setSession] = useState<AdminSessionPayload | null>(null);
+  
+  useEffect(() => {
+    setSession(getAdminSession());
+  }, [pathname]);
+
 
   const handleLogout = async () => {
     try {
-      await deleteAdminSession();
+      deleteAdminSession();
       toast({
         title: 'Logged Out',
         description: 'You have been successfully logged out.',
@@ -66,14 +73,22 @@ export function AdminSidebar() {
   };
 
   const menuItems = [
-    { href: '/admin/dashboard', icon: <Home />, label: 'Dasbor' },
-    { href: '/admin/elections', icon: <Vote />, label: 'Pemilihan' },
-    { href: '/admin/candidates', icon: <UserSquare />, label: 'Kandidat' },
-    { href: '/admin/voters', icon: <Users />, label: 'Pemilih' },
-    { href: '/admin/categories', icon: <Box />, label: 'Kategori' },
-    { href: '/admin/recapitulation', icon: <FileText />, label: 'Rekapitulasi' },
-    { href: '/admin/settings', icon: <Settings />, label: 'Pengaturan' },
+    { href: '/admin/dashboard', icon: <Home />, label: 'Dasbor', permission: 'dashboard' },
+    { href: '/admin/elections', icon: <Vote />, label: 'Pemilihan', permission: 'elections' },
+    { href: '/admin/candidates', icon: <Users />, label: 'Kandidat', permission: 'candidates' },
+    { href: '/admin/voters', icon: <Users />, label: 'Pemilih', permission: 'voters' },
+    { href: '/admin/categories', icon: <Box />, label: 'Kategori', permission: 'categories' },
+    { href: '/admin/recapitulation', icon: <FileText />, label: 'Rekapitulasi', permission: 'recapitulation' },
   ];
+
+  const userManagementItems = [
+      { href: '/admin/users', icon: <User />, label: 'Pengguna', permission: 'users' },
+      { href: '/admin/users/roles', icon: <Shield />, label: 'Peran', permission: 'users' },
+  ]
+  
+  const settingsItem = { href: '/admin/settings', icon: <Settings />, label: 'Pengaturan', permission: 'settings' };
+
+  const hasPermission = (permission: string) => session?.permissions.includes(permission as any);
 
   return (
     <Sidebar>
@@ -85,7 +100,7 @@ export function AdminSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {menuItems.map((item) => (
+          {menuItems.filter(item => hasPermission(item.permission)).map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 onClick={() => router.push(item.href)}
@@ -97,6 +112,37 @@ export function AdminSidebar() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
+          
+          {hasPermission('users') && (
+            <SidebarGroup>
+              <SidebarGroupLabel>Manajemen Pengguna</SidebarGroupLabel>
+              {userManagementItems.map((item) => (
+                 <SidebarMenuItem key={item.href}>
+                  <SidebarMenuButton
+                    onClick={() => router.push(item.href)}
+                    isActive={pathname.startsWith(item.href)}
+                    tooltip={item.label}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarGroup>
+          )}
+
+          {hasPermission(settingsItem.permission) && (
+             <SidebarMenuItem>
+              <SidebarMenuButton
+                onClick={() => router.push(settingsItem.href)}
+                isActive={pathname.startsWith(settingsItem.href)}
+                tooltip={settingsItem.label}
+              >
+                {settingsItem.icon}
+                <span>{settingsItem.label}</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
@@ -105,11 +151,11 @@ export function AdminSidebar() {
             <Button variant="ghost" className="flex h-12 w-full items-center justify-start gap-2 px-2">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={avatar?.imageUrl} alt="Admin" data-ai-hint={avatar?.imageHint} />
-                <AvatarFallback>A</AvatarFallback>
+                <AvatarFallback>{session?.username?.[0]?.toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-start">
-                <span className="text-sm font-medium">Administrator</span>
-                <span className="text-xs text-muted-foreground">Peran Admin</span>
+                <span className="text-sm font-medium">{session?.username || 'User'}</span>
+                <span className="text-xs text-muted-foreground">Admin Role</span>
               </div>
               <ChevronDown className="ml-auto h-4 w-4" />
             </Button>
@@ -118,7 +164,7 @@ export function AdminSidebar() {
             <DropdownMenuLabel>Akun Saya</DropdownMenuLabel>
             <DropdownMenuSeparator />
              <DropdownMenuItem onClick={() => router.push('/admin/profile')}>
-              <UserIcon className="mr-2 h-4 w-4" />
+              <User className="mr-2 h-4 w-4" />
               <span>Ubah Kata Sandi</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />

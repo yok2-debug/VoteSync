@@ -24,7 +24,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import { updateAdminPassword } from '@/lib/data';
+import { changeOwnPassword } from '@/lib/data';
+import { getAdminSession } from '@/lib/session-client';
+
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, { message: 'Kata sandi saat ini wajib diisi.' }),
@@ -50,8 +52,19 @@ export function ChangePasswordForm() {
 
   async function onSubmit(values: z.infer<typeof changePasswordSchema>) {
     setIsSubmitting(true);
+    const session = getAdminSession();
+    if (!session?.userId) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Sesi tidak ditemukan atau tidak valid.',
+        });
+        setIsSubmitting(false);
+        return;
+    }
+    
     try {
-      await updateAdminPassword(values.currentPassword, values.newPassword);
+      await changeOwnPassword(session.userId, values.currentPassword, values.newPassword);
       toast({
         title: 'Kata Sandi Diperbarui',
         description: 'Kata sandi Anda telah berhasil diubah.',
