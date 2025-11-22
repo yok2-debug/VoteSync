@@ -109,9 +109,9 @@ export function VoteClientPage() {
           <h1 className="text-3xl font-bold tracking-tight">{election.name}</h1>
           <p className="text-muted-foreground">Pilih kandidat pilihan Anda di bawah ini.</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="flex flex-wrap justify-center gap-6">
             {candidates.map(candidate => (
-                <Card key={candidate.id} className="flex flex-col w-full overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <Card key={candidate.id} className="flex flex-col w-full max-w-sm overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
                   <CardHeader className="flex flex-col items-center p-6 bg-card/80">
                     <div className="relative">
                        <span className="absolute -top-2 -left-2 bg-primary text-primary-foreground rounded-full h-10 w-10 flex items-center justify-center text-lg font-bold border-4 border-background">
