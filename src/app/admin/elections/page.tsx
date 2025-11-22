@@ -13,9 +13,9 @@ export default function ElectionsPage() {
       ) : (
         <div className="flex flex-col gap-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Election Management</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Manajemen Pemilihan</h1>
             <p className="text-muted-foreground">
-              Create, view, and manage all elections in the system.
+              Buat, lihat, dan kelola semua pemilihan dalam sistem.
             </p>
           </div>
           <ElectionTable elections={elections} />

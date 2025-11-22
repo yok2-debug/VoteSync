@@ -16,9 +16,9 @@ export default function RecapitulationDashboardPage() {
     return (
         <div className="flex flex-col gap-6">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Election Recapitulation</h1>
+                <h1 className="text-3xl font-bold tracking-tight">Rekapitulasi Pemilihan</h1>
                 <p className="text-muted-foreground">
-                    Select an election to view or generate a recapitulation report.
+                    Pilih pemilihan untuk melihat atau membuat laporan rekapitulasi.
                 </p>
             </div>
 
@@ -33,14 +33,14 @@ export default function RecapitulationDashboardPage() {
                              <Button asChild className="w-full">
                                 <Link href={`/admin/recapitulation/${election.id}`}>
                                     <FileText className="mr-2 h-4 w-4" />
-                                    View Recapitulation
+                                    Lihat Rekapitulasi
                                 </Link>
                             </Button>
                         </CardContent>
                     </Card>
                 ))}
                 {elections.length === 0 && (
-                     <p className="text-muted-foreground col-span-full">No elections available to show recapitulation for.</p>
+                     <p className="text-muted-foreground col-span-full">Tidak ada pemilihan yang tersedia untuk ditampilkan rekapitulasinya.</p>
                 )}
             </div>
         </div>

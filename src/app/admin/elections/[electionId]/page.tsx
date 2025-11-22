@@ -42,9 +42,9 @@ export default function ElectionEditPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">{isNew ? 'Create New Election' : 'Edit Election'}</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{isNew ? 'Buat Pemilihan Baru' : 'Ubah Pemilihan'}</h1>
         <p className="text-muted-foreground">
-          {isNew ? 'Fill in the details for the new election.' : `Manage the details for "${election.name}".`}
+          {isNew ? 'Isi detail untuk pemilihan baru.' : `Kelola detail untuk "${election.name}".`}
         </p>
       </div>
       <ElectionForm election={election} />

@@ -2,7 +2,7 @@
 import { useForm, useFieldArray, SubmitHandler, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { Election, Candidate, CommitteeMember } from '@/lib/types';
+import type { Election, CommitteeMember } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -35,14 +35,14 @@ import { db } from '@/lib/firebase';
 import { ref, set, get, push } from 'firebase/database';
 
 const committeeMemberSchema = z.object({
-  name: z.string().min(1, 'Committee member name is required.'),
+  name: z.string().min(1, 'Nama anggota panitia wajib diisi.'),
   role: z.enum(['Ketua', 'Anggota']),
 });
 
 const electionSchema = z.object({
   id: z.string(),
-  name: z.string().min(3, 'Election name must be at least 3 characters.'),
-  description: z.string().min(10, 'Description must be at least 10 characters.'),
+  name: z.string().min(3, 'Nama pemilihan minimal 3 karakter.'),
+  description: z.string().min(10, 'Deskripsi minimal 10 karakter.'),
   status: z.enum(['pending', 'active']),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
@@ -53,7 +53,7 @@ const electionSchema = z.object({
     }
     return true;
 }, {
-    message: "End date and time must be after start date and time.",
+    message: "Tanggal & waktu akhir harus setelah tanggal & waktu mulai.",
     path: ["endDate"],
 });
 
@@ -118,15 +118,15 @@ export function ElectionForm({ election }: ElectionFormProps) {
         });
 
       toast({
-        title: `Election ${data.id === 'new' ? 'created' : 'updated'}`,
-        description: `The election "${data.name}" has been saved successfully.`,
+        title: `Pemilihan ${data.id === 'new' ? 'dibuat' : 'diperbarui'}`,
+        description: `Pemilihan "${data.name}" telah berhasil disimpan.`,
       });
       router.push('/admin/elections');
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Error saving election',
-        description: error instanceof Error ? error.message : 'An unknown error occurred.',
+        title: 'Error menyimpan pemilihan',
+        description: error instanceof Error ? error.message : 'Terjadi kesalahan tidak diketahui.',
       });
     } finally {
       setIsSubmitting(false);
@@ -141,19 +141,19 @@ export function ElectionForm({ election }: ElectionFormProps) {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <Card>
           <CardHeader>
-            <CardTitle>Election Details</CardTitle>
-            <CardDescription>Provide basic information about the election.</CardDescription>
+            <CardTitle>Detail Pemilihan</CardTitle>
+            <CardDescription>Berikan informasi dasar tentang pemilihan.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Election Name</Label>
+              <Label htmlFor="name">Nama Pemilihan</Label>
               <Input id="name" {...form.register('name')} />
               {form.formState.errors.name && (
                 <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Deskripsi</Label>
               <Textarea id="description" {...form.register('description')} />
               {form.formState.errors.description && (
                 <p className="text-sm text-destructive">{form.formState.errors.description.message}</p>
@@ -165,7 +165,7 @@ export function ElectionForm({ election }: ElectionFormProps) {
                     name="startDate"
                     render={({ field }) => (
                         <FormItem className="flex flex-col gap-2">
-                        <FormLabel>Start Date & Time</FormLabel>
+                        <FormLabel>Tanggal &amp; Waktu Mulai</FormLabel>
                         <div className="flex gap-2">
                            <Popover>
                                 <PopoverTrigger asChild>
@@ -181,7 +181,7 @@ export function ElectionForm({ election }: ElectionFormProps) {
                                     {field.value ? (
                                         format(field.value, "PPP")
                                     ) : (
-                                        <span>Pick a date</span>
+                                        <span>Pilih tanggal</span>
                                     )}
                                     </Button>
                                 </FormControl>
@@ -249,7 +249,7 @@ export function ElectionForm({ election }: ElectionFormProps) {
                     name="endDate"
                     render={({ field }) => (
                          <FormItem className="flex flex-col gap-2">
-                        <FormLabel>End Date & Time</FormLabel>
+                        <FormLabel>Tanggal &amp; Waktu Akhir</FormLabel>
                         <div className="flex gap-2">
                            <Popover>
                                 <PopoverTrigger asChild>
@@ -265,7 +265,7 @@ export function ElectionForm({ election }: ElectionFormProps) {
                                     {field.value ? (
                                         format(field.value, "PPP")
                                     ) : (
-                                        <span>Pick a date</span>
+                                        <span>Pilih tanggal</span>
                                     )}
                                     </Button>
                                 </FormControl>
@@ -337,11 +337,11 @@ export function ElectionForm({ election }: ElectionFormProps) {
                   render={({ field }) => (
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <SelectTrigger>
-                              <SelectValue placeholder="Select status" />
+                              <SelectValue placeholder="Pilih status" />
                           </SelectTrigger>
                           <SelectContent>
                               <SelectItem value="pending">Pending</SelectItem>
-                              <SelectItem value="active">Active</SelectItem>
+                              <SelectItem value="active">Aktif</SelectItem>
                           </SelectContent>
                       </Select>
                   )}
@@ -355,8 +355,8 @@ export function ElectionForm({ election }: ElectionFormProps) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Election Committee</CardTitle>
-            <CardDescription>Manage the committee members for this election.</CardDescription>
+            <CardTitle>Panitia Pemilihan</CardTitle>
+            <CardDescription>Kelola anggota panitia untuk pemilihan ini.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {committeeFields.map((field, index) => (
@@ -372,7 +372,7 @@ export function ElectionForm({ election }: ElectionFormProps) {
                 </Button>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor={`committee.${index}.name`}>Member Name</Label>
+                    <Label htmlFor={`committee.${index}.name`}>Nama Anggota</Label>
                     <Input
                       id={`committee.${index}.name`}
                       {...form.register(`committee.${index}.name`)}
@@ -382,14 +382,14 @@ export function ElectionForm({ election }: ElectionFormProps) {
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor={`committee.${index}.role`}>Role</Label>
+                    <Label htmlFor={`committee.${index}.role`}>Peran</Label>
                     <Controller
                       control={form.control}
                       name={`committee.${index}.role`}
                       render={({ field }) => (
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select role" />
+                            <SelectValue placeholder="Pilih peran" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Ketua">Ketua</SelectItem>
@@ -411,18 +411,18 @@ export function ElectionForm({ election }: ElectionFormProps) {
               onClick={() => appendCommittee({ name: '', role: 'Anggota' })}
             >
               <PlusCircle className="mr-2 h-4 w-4" />
-              Add Committee Member
+              Tambah Anggota Panitia
             </Button>
           </CardContent>
         </Card>
         
         <div className="flex justify-end gap-2">
            <Button type="button" variant="outline" onClick={() => router.push('/admin/elections')} disabled={isSubmitting}>
-            Cancel
+            Batal
           </Button>
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isSubmitting ? 'Saving...' : 'Save Election'}
+            {isSubmitting ? 'Menyimpan...' : 'Simpan Pemilihan'}
           </Button>
         </div>
       </form>

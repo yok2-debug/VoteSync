@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -28,17 +27,16 @@ import { Loader2 } from 'lucide-react';
 import { updateAdminPassword } from '@/lib/data';
 
 const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1, { message: 'Current password is required.' }),
-  newPassword: z.string().min(6, { message: 'New password must be at least 6 characters.' }),
+  currentPassword: z.string().min(1, { message: 'Kata sandi saat ini wajib diisi.' }),
+  newPassword: z.string().min(6, { message: 'Kata sandi baru minimal 6 karakter.' }),
   confirmPassword: z.string(),
 }).refine(data => data.newPassword === data.confirmPassword, {
-  message: "New passwords don't match.",
+  message: "Kata sandi baru tidak cocok.",
   path: ['confirmPassword'],
 });
 
 export function ChangePasswordForm() {
   const { toast } = useToast();
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const form = useForm<z.infer<typeof changePasswordSchema>>({
@@ -55,15 +53,15 @@ export function ChangePasswordForm() {
     try {
       await updateAdminPassword(values.currentPassword, values.newPassword);
       toast({
-        title: 'Password Updated',
-        description: 'Your password has been successfully changed.',
+        title: 'Kata Sandi Diperbarui',
+        description: 'Kata sandi Anda telah berhasil diubah.',
       });
       form.reset();
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Update Failed',
-        description: error instanceof Error ? error.message : 'An unknown error occurred.',
+        title: 'Gagal Memperbarui',
+        description: error instanceof Error ? error.message : 'Terjadi kesalahan tidak diketahui.',
       });
     } finally {
       setIsSubmitting(false);
@@ -73,9 +71,9 @@ export function ChangePasswordForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Change Password</CardTitle>
+        <CardTitle>Ubah Kata Sandi</CardTitle>
         <CardDescription>
-          Enter your current password and a new password below.
+          Masukkan kata sandi Anda saat ini dan kata sandi baru di bawah.
         </CardDescription>
       </CardHeader>
       <Form {...form}>
@@ -86,7 +84,7 @@ export function ChangePasswordForm() {
               name="currentPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Current Password</FormLabel>
+                  <FormLabel>Kata Sandi Saat Ini</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
@@ -99,7 +97,7 @@ export function ChangePasswordForm() {
               name="newPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>New Password</FormLabel>
+                  <FormLabel>Kata Sandi Baru</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
@@ -112,7 +110,7 @@ export function ChangePasswordForm() {
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Confirm New Password</FormLabel>
+                  <FormLabel>Konfirmasi Kata Sandi Baru</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
@@ -124,7 +122,7 @@ export function ChangePasswordForm() {
           <CardFooter>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isSubmitting ? 'Updating...' : 'Update Password'}
+              {isSubmitting ? 'Memperbarui...' : 'Perbarui Kata Sandi'}
             </Button>
           </CardFooter>
         </form>

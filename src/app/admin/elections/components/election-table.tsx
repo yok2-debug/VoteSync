@@ -74,7 +74,7 @@ export function ElectionTable({ elections }: ElectionTableProps) {
         case 'pending':
           return <Badge variant="secondary">Pending</Badge>;
         case 'active':
-          return <Badge className="bg-yellow-400 text-black hover:bg-yellow-400/90">Active</Badge>;
+          return <Badge className="bg-yellow-400 text-black hover:bg-yellow-400/90">Aktif</Badge>;
         default:
           return <Badge>{election.status}</Badge>;
       }
@@ -120,11 +120,11 @@ export function ElectionTable({ elections }: ElectionTableProps) {
 
       // Then, delete the election itself
       await remove(ref(db, `elections/${selectedElection.id}`));
-      toast({ title: 'Election deleted successfully.' });
+      toast({ title: 'Pemilihan berhasil dihapus.' });
     } catch (error) {
        toast({
         variant: 'destructive',
-        title: 'Error deleting election',
+        title: 'Error menghapus pemilihan',
         description: error instanceof Error ? error.message : String(error),
       });
     } finally {
@@ -135,7 +135,7 @@ export function ElectionTable({ elections }: ElectionTableProps) {
   };
 
   const formatSchedule = (start?: string, end?: string) => {
-    if (!start || !end) return 'Not set';
+    if (!start || !end) return 'Tidak diatur';
     const startDate = new Date(start);
     const endDate = new Date(end);
     const startFormat = format(startDate, 'd MMM yyyy, HH:mm');
@@ -147,26 +147,26 @@ export function ElectionTable({ elections }: ElectionTableProps) {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <Input
-          placeholder="Filter elections..."
+          placeholder="Saring pemilihan..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           className="max-w-sm"
         />
         <Button onClick={handleAdd}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Add Election
+          Tambah Pemilihan
         </Button>
       </div>
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Schedule</TableHead>
-              <TableHead>DB Status</TableHead>
-              <TableHead>Schedule Status</TableHead>
-              <TableHead>Candidates</TableHead>
-              <TableHead className="w-[100px] text-right">Actions</TableHead>
+              <TableHead>Nama</TableHead>
+              <TableHead>Jadwal</TableHead>
+              <TableHead>Status DB</TableHead>
+              <TableHead>Status Jadwal</TableHead>
+              <TableHead>Kandidat</TableHead>
+              <TableHead className="w-[100px] text-right">Tindakan</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -184,19 +184,19 @@ export function ElectionTable({ elections }: ElectionTableProps) {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
+                          <span className="sr-only">Buka menu</span>
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => handleEdit(election)}>
                           <Edit className="mr-2 h-4 w-4" />
-                          Edit
+                          Ubah
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(election)}>
+                        <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-100 dark:focus:bg-red-900/40" onClick={() => handleDelete(election)}>
                           <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
+                          Hapus
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -206,7 +206,7 @@ export function ElectionTable({ elections }: ElectionTableProps) {
             ) : (
               <TableRow>
                 <TableCell colSpan={6} className="h-24 text-center">
-                  No elections found.
+                  Tidak ada pemilihan ditemukan.
                 </TableCell>
               </TableRow>
             )}
@@ -217,17 +217,17 @@ export function ElectionTable({ elections }: ElectionTableProps) {
        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
             <AlertDialogDescription>
               Tindakan ini tidak dapat dibatalkan. Ini akan menghapus pemilihan secara permanen
               "{selectedElection?.name}" dan semua data terkaitnya.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDelete} className="bg-destructive hover:bg-destructive/90" disabled={isDeleting}>
               {isDeleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Delete
+              Hapus
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

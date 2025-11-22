@@ -19,13 +19,13 @@ export default function AdminLoginPage() {
              <div className="mx-auto">
                 <Logo />
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight">Admin Portal</h1>
-            <p className="text-sm text-muted-foreground">Enter your administrator credentials to continue</p>
+            <h1 className="text-2xl font-semibold tracking-tight">Portal Admin</h1>
+            <p className="text-sm text-muted-foreground">Masukkan kredensial administrator Anda untuk melanjutkan</p>
           </div>
           <Card>
             <CardHeader>
-              <CardTitle>Admin Login</CardTitle>
-              <CardDescription>Access the management dashboard.</CardDescription>
+              <CardTitle>Login Admin</CardTitle>
+              <CardDescription>Akses dasbor manajemen.</CardDescription>
             </CardHeader>
             <CardContent>
               <AdminLoginForm />

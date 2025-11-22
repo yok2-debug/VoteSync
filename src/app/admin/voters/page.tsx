@@ -13,9 +13,9 @@ export default function VotersPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Voter Management</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Manajemen Pemilih</h1>
         <p className="text-muted-foreground">
-          Add, import, and manage all voters in the system.
+          Tambah, impor, dan kelola semua pemilih dalam sistem.
         </p>
       </div>
       <VoterTable voters={voters} categories={categories} />
