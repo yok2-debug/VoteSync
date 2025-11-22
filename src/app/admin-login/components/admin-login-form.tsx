@@ -19,7 +19,8 @@ import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAdminUsers, getRoles } from '@/lib/data';
-import { createAdminSession, setAdminSession } from '@/lib/session-client';
+import { setAdminSession } from '@/lib/session-client';
+import { createAdminSession } from '@/lib/session';
 
 const adminLoginSchema = z.object({
   username: z.string().min(1, { message: 'Username is required.' }),
