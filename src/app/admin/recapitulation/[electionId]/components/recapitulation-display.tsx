@@ -24,6 +24,16 @@ const toWords = (num: number): string => {
     if (num === 0) return 'nol';
 
     let words = '';
+    
+    if (num >= 1000000000) {
+        words += toWords(Math.floor(num / 1000000000)) + ' milyar ';
+        num %= 1000000000;
+    }
+    
+    if (num >= 1000000) {
+        words += toWords(Math.floor(num / 1000000)) + ' juta ';
+        num %= 1000000;
+    }
 
     if (Math.floor(num / 1000) > 0) {
         if (Math.floor(num / 1000) === 1) {
