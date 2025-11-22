@@ -9,11 +9,11 @@ import { useDatabase } from '@/context/database-context';
 import { getVoterSession } from '@/lib/session-client';
 import { useEffect, useState, useMemo } from 'react';
 import Loading from '../loading';
-import type { VoterSessionPayload, Election, Voter } from '@/lib/types';
+import type { VoterSessionPayload, Election, Voter, Category } from '@/lib/types';
 
 export default function VoterDashboardPage() {
   const router = useRouter();
-  const { elections, voters, isLoading: isDbLoading } = useDatabase();
+  const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
 
@@ -33,12 +33,12 @@ export default function VoterDashboardPage() {
     if (!foundVoter) return undefined;
     
     // Enrich voter with followedElections
-    const category = elections.find(c => c.id === foundVoter.category);
-    const followedElections = elections.filter(e => category?.allowedElections?.includes(e.id));
+    const voterCategory = categories.find(c => c.id === foundVoter.category);
+    const followedElections = elections.filter(e => voterCategory?.allowedElections?.includes(e.id));
     
     return {...foundVoter, followedElections: followedElections};
     
-  }, [voters, session, elections]);
+  }, [voters, session, elections, categories]);
   
   const availableElections = useMemo(() => {
     if (!voter || !voter.followedElections) return [];

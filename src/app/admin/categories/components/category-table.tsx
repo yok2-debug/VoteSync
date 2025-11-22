@@ -35,6 +35,10 @@ import { ref, remove } from 'firebase/database';
 import { useDatabase } from '@/context/database-context';
 import { Badge } from '@/components/ui/badge';
 
+type CategoryTableProps = {
+  categories: Category[];
+};
+
 export function CategoryTable({ categories }: CategoryTableProps) {
   const [filter, setFilter] = useState('');
   const [showFormDialog, setShowFormDialog] = useState(false);
@@ -44,7 +48,7 @@ export function CategoryTable({ categories }: CategoryTableProps) {
   const { toast } = useToast();
   const { voters, elections } = useDatabase();
 
-  const electionMap = useMemo(() => new Map(elections.map((e) => [e.id, e.name])), [elections]);
+  const electionMap = useMemo(() => new Map(elections.map((e) => [e.id, e.name])), [elections, categories]);
 
   const filteredCategories = categories.filter((category) =>
     category.name.toLowerCase().includes(filter.toLowerCase())
