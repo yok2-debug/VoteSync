@@ -4,6 +4,7 @@ import { useDatabase } from '@/context/database-context';
 import Loading from '@/app/loading';
 import { CandidateForm } from '../components/candidate-form';
 import { useMemo } from 'react';
+import type { Candidate } from '@/lib/types';
 
 export default function CandidateActionPage() {
   const params = useParams();
@@ -11,8 +12,7 @@ export default function CandidateActionPage() {
   
   const { slug } = params as { slug: string[] };
   const action = slug ? slug[0] : null;
-  const electionId = slug && slug.length > 1 ? slug[1] : undefined;
-  const candidateId = slug && slug.length > 2 ? slug[2] : undefined;
+  const candidateId = slug && slug.length > 1 ? slug[1] : undefined;
 
   const initialData = useMemo(() => {
     if (isLoading || !action) return undefined;
@@ -21,18 +21,36 @@ export default function CandidateActionPage() {
         return null;
     }
     
-    if (action === 'edit' && electionId && candidateId) {
-        const election = elections.find(e => e.id === electionId);
-        if (!election) return 'redirect';
+    if (action === 'edit' && candidateId) {
+        // Find the first occurrence of the candidate in any election
+        for (const election of elections) {
+            if (election.candidates?.[candidateId]) {
+                const candidateData = election.candidates[candidateId];
+                
+                // Find all elections this candidate participates in
+                const participatedElections = elections
+                    .filter(e => e.candidates?.[candidateId])
+                    .map(e => ({
+                        electionId: e.id,
+                        orderNumber: e.candidates?.[candidateId]?.orderNumber || 0
+                    }));
 
-        const candidate = election.candidates?.[candidateId];
-        if (!candidate) return 'redirect';
-
-        return { ...candidate, id: candidateId };
+                return {
+                    id: candidateId,
+                    name: candidateData.name,
+                    viceCandidateName: candidateData.viceCandidateName,
+                    photo: candidateData.photo,
+                    vision: candidateData.vision,
+                    mission: candidateData.mission,
+                    participatedElections: participatedElections,
+                } as Partial<Candidate> & { participatedElections: { electionId: string, orderNumber: number }[] };
+            }
+        }
+        return 'redirect'; // Candidate not found in any election
     }
 
     return 'redirect';
-  }, [isLoading, action, electionId, candidateId, elections]);
+  }, [isLoading, action, candidateId, elections]);
 
 
   if (isLoading || initialData === undefined) {
@@ -59,7 +77,6 @@ export default function CandidateActionPage() {
       </div>
       <CandidateForm
         initialData={initialData}
-        electionId={electionId}
         allElections={elections}
       />
     </div>

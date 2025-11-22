@@ -10,41 +10,45 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useForm, SubmitHandler, Controller } from 'react-hook-form';
+import { useForm, SubmitHandler, Controller, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useEffect, useState } from 'react';
 import type { Candidate, Election } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useRouter } from 'next/navigation';
 import { MarkdownEditor } from '@/components/ui/markdown-editor';
 import { db } from '@/lib/firebase';
-import { ref, set, get, push } from 'firebase/database';
+import { ref, set, get, push, update, remove } from 'firebase/database';
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
+
+const participatedElectionSchema = z.object({
+  electionId: z.string(),
+  orderNumber: z.coerce.number().min(1, 'Order number is required'),
+});
 
 const candidateSchema = z.object({
   id: z.string().optional(),
-  electionId: z.string().min(1, { message: 'Election must be selected.' }),
-  orderNumber: z.coerce.number().optional(),
   name: z.string().min(3, { message: 'Candidate name must be at least 3 characters.' }),
   viceCandidateName: z.string().optional(),
   vision: z.string().optional(),
   mission: z.string().optional(),
   photo: z.string().optional(),
+  participatedElections: z.array(participatedElectionSchema).min(1, 'Candidate must participate in at least one election.'),
 });
 
 type CandidateFormData = z.infer<typeof candidateSchema>;
 
 interface CandidateFormProps {
-  initialData: Partial<Candidate> | null;
-  electionId?: string;
+  initialData: (Partial<Candidate> & { participatedElections?: { electionId: string, orderNumber: number }[] }) | null;
   allElections: Election[];
 }
 
 export function CandidateForm({
   initialData,
-  electionId: propElectionId,
   allElections,
 }: CandidateFormProps) {
   const { toast } = useToast();
@@ -52,96 +56,87 @@ export function CandidateForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEditing = !!initialData?.id;
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    control,
-    formState: { errors },
-  } = useForm<CandidateFormData>({
+  const form = useForm<CandidateFormData>({
     resolver: zodResolver(candidateSchema),
   });
 
+  const { fields, append, remove, update: updateField } = useFieldArray({
+    control: form.control,
+    name: "participatedElections"
+  });
+
+  const selectedElectionIds = form.watch('participatedElections', []).map(p => p.electionId);
+
   useEffect(() => {
     if (initialData) {
-      reset({
+      form.reset({
           id: initialData.id,
-          electionId: propElectionId || '',
-          orderNumber: initialData.orderNumber,
           name: initialData.name || '',
           viceCandidateName: initialData.viceCandidateName || '',
           vision: initialData.vision || '',
           mission: initialData.mission || '',
           photo: initialData.photo || '',
+          participatedElections: initialData.participatedElections || [],
       });
     } else {
-      reset({ id: `new-${Date.now()}`, electionId: '', name: '', viceCandidateName: '', vision: '', mission: '', photo: '' });
+      form.reset({ id: `new-${Date.now()}`, name: '', viceCandidateName: '', vision: '', mission: '', photo: '', participatedElections: [] });
     }
-  }, [initialData, propElectionId, reset]);
+  }, [initialData, form]);
 
   const onSubmit: SubmitHandler<CandidateFormData> = async (data) => {
     setIsSubmitting(true);
     try {
-      
-      let finalOrderNumber = data.orderNumber;
-
-      if (!isEditing && !finalOrderNumber) {
-        const selectedElection = allElections.find(e => e.id === data.electionId);
-        if (selectedElection && selectedElection.candidates) {
-          const existingCandidates = Object.values(selectedElection.candidates);
-          const maxOrderNumber = existingCandidates.reduce((max, c) => Math.max(max, c.orderNumber || 0), 0);
-          finalOrderNumber = maxOrderNumber + 1;
-        } else {
-          finalOrderNumber = 1; // Default to 1 if no candidates exist
-        }
-      }
-      
-      if (!finalOrderNumber) {
-        toast({
-            variant: 'destructive',
-            title: 'Nomor Urut Dibutuhkan',
-            description: 'Silakan masukkan nomor urut kandidat.',
-        });
-        setIsSubmitting(false);
-        return;
-      }
-
       let candidateId = data.id;
-      const electionRef = ref(db, `elections/${data.electionId}`);
-      
-      const electionSnapshot = await get(electionRef);
-      if (electionSnapshot.exists()) {
-        const electionData: Election = electionSnapshot.val();
-        const candidates = electionData.candidates || {};
-        const isOrderNumberTaken = Object.values(candidates).some(
-          c => c.orderNumber === finalOrderNumber && c.id !== candidateId
-        );
-        if (isOrderNumberTaken) {
-          throw new Error(`Nomor urut ${finalOrderNumber} sudah digunakan oleh kandidat lain pada pemilihan ini.`);
-        }
-      } else {
-          throw new Error("Pemilihan tidak ditemukan.");
-      }
+      const isNew = !isEditing;
   
-      const electionCandidatesRef = ref(db, `elections/${data.electionId}/candidates`);
-  
-      if (!candidateId || candidateId.startsWith('new-')) {
-        candidateId = push(electionCandidatesRef).key!;
+      if (isNew) {
+        // Generate a single ID for the new candidate
+        candidateId = push(ref(db, `elections/${data.participatedElections[0].electionId}/candidates`)).key!;
       }
       
-      const candidateToSave = {
-        id: candidateId,
-        orderNumber: finalOrderNumber,
+      const candidateDataToSave = {
         name: data.name,
         viceCandidateName: data.viceCandidateName,
         vision: data.vision,
         mission: data.mission,
         photo: data.photo,
-       };
-      
-      const candidateRef = ref(db, `elections/${data.electionId}/candidates/${candidateId}`);
-      await set(candidateRef, candidateToSave);
+      };
 
+      const dbUpdates: { [key: string]: any } = {};
+
+      // First, handle updates and additions
+      for (const participated of data.participatedElections) {
+        const { electionId, orderNumber } = participated;
+        const electionCandidatesRef = ref(db, `elections/${electionId}/candidates`);
+        const electionSnapshot = await get(electionCandidatesRef);
+        const candidates = electionSnapshot.val() || {};
+
+        const isOrderNumberTaken = Object.entries(candidates).some(
+          ([key, c]: [string, any]) => c.orderNumber === orderNumber && key !== candidateId
+        );
+        if (isOrderNumberTaken) {
+          const electionName = allElections.find(e => e.id === electionId)?.name || electionId;
+          throw new Error(`Order number ${orderNumber} is already taken in election "${electionName}".`);
+        }
+        
+        dbUpdates[`/elections/${electionId}/candidates/${candidateId}`] = { ...candidateDataToSave, orderNumber };
+      }
+
+      // If editing, we need to handle removals from elections
+      if (isEditing && initialData?.participatedElections) {
+        const initialElectionIds = new Set(initialData.participatedElections.map(p => p.electionId));
+        const currentElectionIds = new Set(data.participatedElections.map(p => p.electionId));
+
+        for (const electionId of initialElectionIds) {
+          if (!currentElectionIds.has(electionId)) {
+            // This candidate was removed from this election
+            dbUpdates[`/elections/${electionId}/candidates/${candidateId}`] = null;
+            dbUpdates[`/elections/${electionId}/results/${candidateId}`] = null;
+          }
+        }
+      }
+
+      await update(ref(db), dbUpdates);
 
       toast({
         title: `Candidate ${isEditing ? 'updated' : 'created'}`,
@@ -161,9 +156,23 @@ export function CandidateForm({
       setIsSubmitting(false);
     }
   };
+  
+  const handleElectionCheck = (checked: boolean | string, electionId: string) => {
+    const index = fields.findIndex(field => field.electionId === electionId);
+    if (checked) {
+      if (index === -1) {
+        append({ electionId, orderNumber: 1 });
+      }
+    } else {
+      if (index !== -1) {
+        remove(index);
+      }
+    }
+  };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <Form {...form}>
+    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
       <Card>
           <CardHeader>
               <CardTitle>{isEditing ? 'Edit Candidate' : 'Add New Candidate'}</CardTitle>
@@ -172,55 +181,93 @@ export function CandidateForm({
               </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-           <div className="space-y-2">
-              <Label htmlFor="electionId">Election</Label>
-               <Controller
-                control={control}
-                name="electionId"
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isEditing}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select an election" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {allElections.map((election) => (
-                        <SelectItem key={election.id} value={election.id}>
-                          {election.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {errors.electionId && (
-                <p className="text-sm text-destructive mt-1">{errors.electionId.message}</p>
-              )}
-            </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                  <Label htmlFor="orderNumber">Nomor Urut (kosongkan untuk otomatis)</Label>
-                  <Input id="orderNumber" type="number" {...register('orderNumber')} />
-                  {errors.orderNumber && (
-                      <p className="text-sm text-destructive mt-1">{errors.orderNumber.message}</p>
-                  )}
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="name">Candidate Name</Label>
-                <Input id="name" {...register('name')} />
-                {errors.name && (
-                  <p className="text-sm text-destructive mt-1">{errors.name.message}</p>
+                <Input id="name" {...form.register('name')} />
+                {form.formState.errors.name && (
+                  <p className="text-sm text-destructive mt-1">{form.formState.errors.name.message}</p>
                 )}
               </div>
+               <div className="space-y-2">
+                <Label htmlFor="viceCandidateName">Vice Candidate Name (Optional)</Label>
+                <Input id="viceCandidateName" {...form.register('viceCandidateName')} />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="viceCandidateName">Vice Candidate Name (Optional)</Label>
-              <Input id="viceCandidateName" {...register('viceCandidateName')} />
+             <div className="space-y-2">
+                <Label htmlFor="photo">Photo URL (Optional)</Label>
+                <Input id="photo" {...form.register('photo')} placeholder="https://example.com/photo.jpg" />
             </div>
-            <div className="space-y-2">
+        </CardContent>
+      </Card>
+      
+       <Card>
+        <CardHeader>
+            <CardTitle>Election Participation</CardTitle>
+            <CardDescription>Select the elections this candidate will participate in and set their order number for each.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormItem>
+                   <FormLabel className="text-base">Select Elections</FormLabel>
+                     <ScrollArea className="h-48 w-full rounded-md border p-4">
+                      {allElections.length > 0 ? allElections.map((item) => (
+                          <FormItem
+                            key={item.id}
+                            className="flex flex-row items-start space-x-3 space-y-0 mb-3"
+                          >
+                            <FormControl>
+                              <Checkbox
+                                checked={selectedElectionIds.includes(item.id)}
+                                onCheckedChange={(checked) => handleElectionCheck(checked, item.id)}
+                              />
+                            </FormControl>
+                            <FormLabel className="font-normal">
+                              {item.name}
+                            </FormLabel>
+                          </FormItem>
+                      )) : <p className="text-sm text-muted-foreground">No elections available.</p>}
+                    </ScrollArea>
+                </FormItem>
+                <div className="space-y-4">
+                   <FormLabel className="text-base">Set Order Numbers</FormLabel>
+                    <ScrollArea className="h-48 w-full rounded-md border p-4">
+                    {fields.length > 0 ? fields.map((field, index) => {
+                      const electionName = allElections.find(e => e.id === field.electionId)?.name;
+                      return (
+                        <div key={field.id} className="flex items-center gap-3 mb-2">
+                          <Label htmlFor={`participatedElections.${index}.orderNumber`} className="flex-1 text-sm text-muted-foreground">{electionName}</Label>
+                           <Input
+                              id={`participatedElections.${index}.orderNumber`}
+                              type="number"
+                              {...form.register(`participatedElections.${index}.orderNumber`)}
+                              className="w-24"
+                              placeholder="No."
+                            />
+                        </div>
+                      )
+                    }) : (
+                        <p className="text-center text-sm text-muted-foreground p-4">Select an election to set the order number.</p>
+                    )}
+                   </ScrollArea>
+                </div>
+            </div>
+             {form.formState.errors.participatedElections && (
+                <p className="text-sm text-destructive mt-2">{form.formState.errors.participatedElections.message || form.formState.errors.participatedElections.root?.message}</p>
+              )}
+        </CardContent>
+       </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Vision & Mission</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
               <Label htmlFor="vision">Vision</Label>
               <Controller
                 name="vision"
-                control={control}
+                control={form.control}
                 render={({ field }) => <MarkdownEditor {...field} />}
               />
             </div>
@@ -228,16 +275,15 @@ export function CandidateForm({
               <Label htmlFor="mission">Mission</Label>
               <Controller
                 name="mission"
-                control={control}
+                control={form.control}
                 render={({ field }) => <MarkdownEditor {...field} />}
               />
             </div>
-            <div className="space-y-2">
-                <Label htmlFor="photo">Photo URL (Optional)</Label>
-                <Input id="photo" {...register('photo')} placeholder="https://example.com/photo.jpg" />
-            </div>
         </CardContent>
-        <CardFooter className="flex justify-end gap-2">
+      </Card>
+
+
+      <div className="flex justify-end gap-2">
           <Button variant="outline" type="button" onClick={() => router.push('/admin/candidates')} disabled={isSubmitting}>
             Cancel
           </Button>
@@ -245,8 +291,8 @@ export function CandidateForm({
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {isSubmitting ? 'Saving...' : 'Save Candidate'}
           </Button>
-        </CardFooter>
-      </Card>
+      </div>
     </form>
+    </Form>
   );
 }

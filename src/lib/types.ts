@@ -15,7 +15,7 @@ export interface Election {
 export interface Candidate {
   id: string;
   name: string;
-  orderNumber?: number;
+  orderNumber?: number; // This is now specific to the election context
   viceCandidateName?: string;
   photo?: string;
   vision?: string;

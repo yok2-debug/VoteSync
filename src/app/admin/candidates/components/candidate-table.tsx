@@ -29,77 +29,82 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import { ReorderCandidatesDialog } from './reorder-candidates-dialog';
 import { db } from '@/lib/firebase';
-import { ref, get, remove } from 'firebase/database';
+import { ref, get, update } from 'firebase/database';
+import { Badge } from '@/components/ui/badge';
 
 type CandidateTableProps = {
   allElections: Election[];
 };
 
-type GroupedCandidates = {
-  [electionName: string]: (Candidate & { electionName: string; electionId: string })[];
+type EnrichedCandidate = Candidate & {
+  participatedIn: { electionId: string; electionName: string; orderNumber?: number }[];
 };
-
 
 export function CandidateTable({ allElections }: CandidateTableProps) {
   const [filter, setFilter] = useState('');
-  const [electionFilter, setElectionFilter] = useState('all');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showReorderDialog, setShowReorderDialog] = useState(false);
-  const [selectedCandidate, setSelectedCandidate] = useState<{ candidate: Candidate, electionId: string } | null>(null);
+  const [selectedCandidate, setSelectedCandidate] = useState<EnrichedCandidate | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
-  
+
   const allCandidates = useMemo(() => {
-    return allElections.flatMap(election => 
-      Object.values(election.candidates || {}).map(candidate => ({
-        ...candidate,
-        electionName: election.name,
-        electionId: election.id,
-      }))
-    ).sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999));
+    const candidatesMap = new Map<string, EnrichedCandidate>();
+
+    for (const election of allElections) {
+      if (!election.candidates) continue;
+
+      for (const candidateId in election.candidates) {
+        const candidateData = election.candidates[candidateId];
+        const participationInfo = {
+          electionId: election.id,
+          electionName: election.name,
+          orderNumber: candidateData.orderNumber
+        };
+
+        if (candidatesMap.has(candidateId)) {
+          // Add election to existing candidate
+          const existing = candidatesMap.get(candidateId)!;
+          existing.participatedIn.push(participationInfo);
+        } else {
+          // Create new candidate entry
+          candidatesMap.set(candidateId, {
+            id: candidateId,
+            name: candidateData.name,
+            viceCandidateName: candidateData.viceCandidateName,
+            photo: candidateData.photo,
+            vision: candidateData.vision,
+            mission: candidateData.mission,
+            participatedIn: [participationInfo],
+          });
+        }
+      }
+    }
+    return Array.from(candidatesMap.values());
   }, [allElections]);
 
   const filteredCandidates = useMemo(() => 
     allCandidates.filter(candidate => 
       (candidate.name.toLowerCase().includes(filter.toLowerCase()) ||
-       (candidate.viceCandidateName && candidate.viceCandidateName.toLowerCase().includes(filter.toLowerCase()))) &&
-      (electionFilter === 'all' || candidate.electionId === electionFilter)
-    ), [allCandidates, filter, electionFilter]);
-
-  const groupedCandidates = useMemo(() => {
-    if (electionFilter !== 'all') {
-      // If a specific election is selected, don't group, just return the filtered list under a single key.
-      const election = allElections.find(e => e.id === electionFilter);
-      return { [election?.name || 'Selected Election']: filteredCandidates };
-    }
-    // If "All Elections" is selected, group by election name.
-    return filteredCandidates.reduce((acc, candidate) => {
-      const { electionName } = candidate;
-      if (!acc[electionName]) {
-        acc[electionName] = [];
-      }
-      acc[electionName].push(candidate);
-      return acc;
-    }, {} as GroupedCandidates);
-  }, [filteredCandidates, electionFilter, allElections]);
+       (candidate.viceCandidateName && candidate.viceCandidateName.toLowerCase().includes(filter.toLowerCase())))
+    ), [allCandidates, filter]);
 
   const handleAdd = () => {
     router.push('/admin/candidates/new');
   };
   
-  const handleEdit = (candidate: Candidate, electionId: string) => {
-    router.push(`/admin/candidates/edit/${electionId}/${candidate.id}`);
+  const handleEdit = (candidate: EnrichedCandidate) => {
+    router.push(`/admin/candidates/edit/${candidate.id}`);
   };
 
-  const handleDelete = (candidate: Candidate, electionId: string) => {
-    setSelectedCandidate({ candidate, electionId });
+  const handleDelete = (candidate: EnrichedCandidate) => {
+    setSelectedCandidate(candidate);
     setShowDeleteDialog(true);
   };
 
@@ -107,22 +112,33 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
     if (!selectedCandidate) return;
     setIsDeleting(true);
     try {
-        const { candidate, electionId } = selectedCandidate;
-        const electionVotesRef = ref(db, `elections/${electionId}/votes`);
-        const votesSnapshot = await get(electionVotesRef);
-        if (votesSnapshot.exists()) {
-            const votes = votesSnapshot.val();
-            const hasVotes = Object.values(votes).some(vote => vote === candidate.id);
-            if (hasVotes) {
-                throw new Error("Cannot delete candidate. They have already received votes in this election.");
+        let hasVotes = false;
+        for (const p of selectedCandidate.participatedIn) {
+            const electionVotesRef = ref(db, `elections/${p.electionId}/votes`);
+            const votesSnapshot = await get(electionVotesRef);
+            if (votesSnapshot.exists()) {
+                const votes = votesSnapshot.val();
+                if (Object.values(votes).some(vote => vote === selectedCandidate.id)) {
+                    hasVotes = true;
+                    break;
+                }
             }
         }
         
-        await remove(ref(db, `elections/${electionId}/candidates/${candidate.id}`));
-        await remove(ref(db, `elections/${electionId}/results/${candidate.id}`));
+        if (hasVotes) {
+          throw new Error("Cannot delete candidate. They have already received votes in at least one election.");
+        }
+        
+        const updates: { [key: string]: null } = {};
+        for (const p of selectedCandidate.participatedIn) {
+            updates[`/elections/${p.electionId}/candidates/${selectedCandidate.id}`] = null;
+            updates[`/elections/${p.electionId}/results/${selectedCandidate.id}`] = null;
+        }
+
+        await update(ref(db), updates);
 
         toast({ title: 'Candidate deleted successfully.' });
-      // The context will auto-update the UI, no need for local state management
+      // The context will auto-update the UI
     } catch (error) {
        toast({
         variant: 'destructive',
@@ -148,19 +164,6 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
               onChange={(e) => setFilter(e.target.value)}
               className="max-w-sm"
             />
-            <Select value={electionFilter} onValueChange={setElectionFilter}>
-                <SelectTrigger className="w-[250px]">
-                    <SelectValue placeholder="Filter by election" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All Elections</SelectItem>
-                    {allElections.map((election) => (
-                    <SelectItem key={election.id} value={election.id}>
-                        {election.name}
-                    </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setShowReorderDialog(true)}>
@@ -177,70 +180,65 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50px]">No.</TableHead>
               <TableHead className="w-[80px]">Photo</TableHead>
               <TableHead>Name</TableHead>
-              {electionFilter === 'all' && <TableHead>Election</TableHead>}
+              <TableHead>Participated In</TableHead>
               <TableHead className="w-[100px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredCandidates.length > 0 ? (
-               Object.keys(groupedCandidates).map(electionName => (
-                <React.Fragment key={electionName}>
-                  {electionFilter === 'all' && (
-                     <TableRow className="bg-muted/50 hover:bg-muted/50">
-                        <TableCell colSpan={5} className="font-bold text-muted-foreground">
-                          {electionName}
-                        </TableCell>
-                      </TableRow>
-                  )}
-                  {groupedCandidates[electionName].map((candidate) => (
-                    <TableRow key={candidate.id}>
-                      <TableCell className="font-bold">{candidate.orderNumber}</TableCell>
-                      <TableCell>
-                          <img
-                            src={candidate.photo || defaultPhoto?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
-                            alt={`Photo of ${candidate.name}`}
-                            width={40}
-                            height={40}
-                            className="rounded-full object-cover"
-                            data-ai-hint={defaultPhoto?.imageHint || 'person portrait'}
-                          />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {candidate.name}
-                        {candidate.viceCandidateName && <span className="block text-xs text-muted-foreground">{candidate.viceCandidateName}</span>}
-                      </TableCell>
-                      {electionFilter === 'all' && <TableCell className="text-muted-foreground">{candidate.electionName}</TableCell>}
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                              <span className="sr-only">Open menu</span>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEdit(candidate, candidate.electionId)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDelete(candidate, candidate.electionId)}>
-                               <Trash2 className="mr-2 h-4 w-4 text-destructive" />
-                              <span className="text-destructive">Delete</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </React.Fragment>
-              ))
+                filteredCandidates.map((candidate) => (
+                  <TableRow key={candidate.id}>
+                    <TableCell>
+                        <img
+                          src={candidate.photo || defaultPhoto?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
+                          alt={`Photo of ${candidate.name}`}
+                          width={40}
+                          height={40}
+                          className="rounded-full object-cover"
+                          data-ai-hint={defaultPhoto?.imageHint || 'person portrait'}
+                        />
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {candidate.name}
+                      {candidate.viceCandidateName && <span className="block text-xs text-muted-foreground">{candidate.viceCandidateName}</span>}
+                    </TableCell>
+                    <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {candidate.participatedIn.sort((a,b) => a.electionName.localeCompare(b.electionName)).map(p => (
+                              <Badge key={p.electionId} variant="secondary" className="font-normal">
+                                  {p.electionName} (No. {p.orderNumber})
+                              </Badge>
+                          ))}
+                        </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEdit(candidate)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDelete(candidate)}>
+                             <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                            <span className="text-destructive">Delete</span>
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
             ) : (
               <TableRow>
-                <TableCell colSpan={5} className="h-24 text-center">
-                  No candidates found for the selected criteria.
+                <TableCell colSpan={4} className="h-24 text-center">
+                  No candidates found.
                 </TableCell>
               </TableRow>
             )}
@@ -260,7 +258,7 @@ export function CandidateTable({ allElections }: CandidateTableProps) {
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
               This action cannot be undone. This will permanently delete the candidate
-              "{selectedCandidate?.candidate.name}".
+              "{selectedCandidate?.name}" from all elections they are participating in.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
