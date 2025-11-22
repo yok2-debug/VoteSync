@@ -275,7 +275,7 @@ export function RecapitulationDisplay({ election }: RecapitulationDisplayProps) 
 
                 {election.committee && election.committee.length > 0 && (
                   <div className="print-signature-container">
-                     <h3 className="text-lg font-semibold mb-4 text-center">Panitia Pemilihan</h3>
+                     <h3 className="text-lg font-semibold mb-4 text-center">Nama dan Tanda Tangan Panitia Pemilihan</h3>
                      <table className="print-signature-table">
                         <thead>
                             <tr>
