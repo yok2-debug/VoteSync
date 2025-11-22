@@ -33,11 +33,20 @@ export function RecapitulationDisplay({ election }: RecapitulationDisplayProps) 
         .sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999)), 
       [election.candidates]
   );
-  const totalVotesCast = useMemo(() => Object.keys(election.votes || {}).length, [election.votes]);
+  
+  const votersWhoVotedIds = useMemo(() => new Set(Object.keys(election.votes || {})), [election.votes]);
+  
+  const DPT_male = useMemo(() => voters.filter(v => v.gender === 'Laki-laki').length, [voters]);
+  const DPT_female = useMemo(() => voters.filter(v => v.gender === 'Perempuan').length, [voters]);
+  const DPT_total = voters.length;
 
-  const DPT = voters.length;
+  const votersWhoVoted_male = useMemo(() => voters.filter(v => v.gender === 'Laki-laki' && votersWhoVotedIds.has(v.id)).length, [voters, votersWhoVotedIds]);
+  const votersWhoVoted_female = useMemo(() => voters.filter(v => v.gender === 'Perempuan' && votersWhoVotedIds.has(v.id)).length, [voters, votersWhoVotedIds]);
+  const votersWhoVoted_total = votersWhoVotedIds.size;
 
-  const votersWhoDidNotVote = DPT - totalVotesCast;
+  const votersDidNotVote_male = DPT_male - votersWhoVoted_male;
+  const votersDidNotVote_female = DPT_female - votersWhoVoted_female;
+  const votersDidNotVote_total = DPT_total - votersWhoVoted_total;
   
   const handlePrint = () => {
     window.print();
@@ -172,27 +181,53 @@ export function RecapitulationDisplay({ election }: RecapitulationDisplayProps) 
                 <p dangerouslySetInnerHTML={{ __html: `${electionDateInfo}, telah dilaksanakan pemungutan suara untuk pemilihan ${election.name} dengan hasil sebagai berikut:` }} />
 
                 <div>
-                    <h3 className="text-lg font-semibold mb-2">A. Data Pemilih dan Penggunaan Hak Pilih</h3>
+                    <h3 className="text-lg font-semibold mb-2">A. Data Pemilih</h3>
                      <div className="rounded-md print-table">
                         <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Uraian</TableHead>
-                                    <TableHead className="text-right">Jumlah</TableHead>
+                                    <TableHead className="w-[100px] text-center">Laki-laki</TableHead>
+                                    <TableHead className="w-[100px] text-center">Perempuan</TableHead>
+                                    <TableHead className="w-[100px] text-center">Jumlah</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 <TableRow>
                                     <TableCell>Jumlah Pemilih dalam Daftar Pemilih Tetap (DPT)</TableCell>
-                                    <TableCell className="text-right font-bold">{DPT}</TableCell>
+                                    <TableCell className="text-center font-bold">{DPT_male}</TableCell>
+                                    <TableCell className="text-center font-bold">{DPT_female}</TableCell>
+                                    <TableCell className="text-center font-bold">{DPT_total}</TableCell>
                                 </TableRow>
-                                 <TableRow>
+                            </TableBody>
+                        </Table>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 className="text-lg font-semibold mb-2">B. Penggunaan Hak Pilih</h3>
+                     <div className="rounded-md print-table">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Uraian</TableHead>
+                                    <TableHead className="w-[100px] text-center">Laki-laki</TableHead>
+                                    <TableHead className="w-[100px] text-center">Perempuan</TableHead>
+                                    <TableHead className="w-[100px] text-center">Jumlah</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                <TableRow>
                                     <TableCell>Jumlah Pemilih yang Menggunakan Hak Pilih</TableCell>
-                                    <TableCell className="text-right font-bold">{totalVotesCast}</TableCell>
+                                    <TableCell className="text-center font-bold">{votersWhoVoted_male}</TableCell>
+                                    <TableCell className="text-center font-bold">{votersWhoVoted_female}</TableCell>
+                                    <TableCell className="text-center font-bold">{votersWhoVoted_total}</TableCell>
                                 </TableRow>
                                  <TableRow>
                                     <TableCell>Jumlah Pemilih yang Tidak Menggunakan Hak Pilih</TableCell>
-                                    <TableCell className="text-right font-bold">{votersWhoDidNotVote}</TableCell>
+                                    <TableCell className="text-center font-bold">{votersDidNotVote_male}</TableCell>
+                                    <TableCell className="text-center font-bold">{votersDidNotVote_female}</TableCell>
+                                    <TableCell className="text-center font-bold">{votersDidNotVote_total}</TableCell>
                                 </TableRow>
                             </TableBody>
                         </Table>
@@ -201,7 +236,7 @@ export function RecapitulationDisplay({ election }: RecapitulationDisplayProps) 
 
                 
                 <div>
-                    <h3 className="text-lg font-semibold mb-2">B. Rincian Perolehan Suara Kandidat</h3>
+                    <h3 className="text-lg font-semibold mb-2">C. Rincian Perolehan Suara Kandidat</h3>
                     <div className="rounded-md print-table">
                         <Table>
                             <TableHeader>
@@ -225,7 +260,7 @@ export function RecapitulationDisplay({ election }: RecapitulationDisplayProps) 
                                 )}
                                 <TableRow className="font-bold bg-muted/50 print-table">
                                     <TableCell colSpan={2}>Total Seluruh Suara Sah</TableCell>
-                                    <TableCell className="text-right">{totalVotesCast}</TableCell>
+                                    <TableCell className="text-right">{votersWhoVoted_total}</TableCell>
                                 </TableRow>
                             </TableBody>
                         </Table>
