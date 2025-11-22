@@ -34,7 +34,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { db } from '@/lib/firebase';
-import { ref, remove } from 'firebase/database';
+import { ref, remove, update, get } from 'firebase/database';
 
 type ElectionTableProps = {
   elections: Election[];
@@ -86,10 +86,6 @@ export function ElectionTable({ elections }: ElectionTableProps) {
 
   const handleEdit = (election: Election) => {
     router.push(`/admin/elections/${election.id}`);
-  };
-
-  const handleManageCandidates = (electionId: string) => {
-    router.push(`/admin/candidates?electionId=${electionId}`);
   };
 
   const handleDelete = (election: Election) => {
@@ -196,10 +192,6 @@ export function ElectionTable({ elections }: ElectionTableProps) {
                         <DropdownMenuItem onClick={() => handleEdit(election)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleManageCandidates(election.id)}>
-                          <UserSquare className="mr-2 h-4 w-4" />
-                          Kelola Kandidat
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(election)}>
