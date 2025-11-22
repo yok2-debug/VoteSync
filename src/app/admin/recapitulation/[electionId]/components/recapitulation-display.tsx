@@ -116,6 +116,7 @@ export function RecapitulationDisplay({ election }: RecapitulationDisplayProps) 
             
              .print-signature-container {
                 padding-top: 1rem;
+                page-break-inside: avoid;
              }
 
              .print-signature-table {
