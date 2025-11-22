@@ -4,11 +4,15 @@ import { db } from '@/lib/firebase';
 import type { AdminUser, Role, Permission } from '@/lib/types';
 import { get, ref, update, set, push } from 'firebase/database';
 
-async function initializeDefaultAdmin() {
-  // Check if roles exist
-  const rolesSnapshot = await get(ref(db, 'roles'));
-  let superAdminRoleId: string | null = null;
+async function initializeDefaultAdmin(): Promise<void> {
+  const rolesRef = ref(db, 'roles');
+  const usersRef = ref(db, 'users');
 
+  let superAdminRoleId: string | null = null;
+  let adminUserExists = false;
+
+  // 1. Check for Super Admin role
+  const rolesSnapshot = await get(rolesRef);
   if (rolesSnapshot.exists()) {
     const roles = rolesSnapshot.val();
     for (const id in roles) {
@@ -19,9 +23,9 @@ async function initializeDefaultAdmin() {
     }
   }
 
-  // If Super Admin role doesn't exist, create it
+  // 2. If Super Admin role doesn't exist, create it
   if (!superAdminRoleId) {
-    const newRoleRef = push(ref(db, 'roles'));
+    const newRoleRef = push(rolesRef);
     const allPermissions: Permission[] = ['dashboard', 'elections', 'candidates', 'voters', 'categories', 'recapitulation', 'settings', 'users'];
     const superAdminRole: Omit<Role, 'id'> = {
       name: 'Super Admin',
@@ -31,28 +35,39 @@ async function initializeDefaultAdmin() {
     superAdminRoleId = newRoleRef.key;
   }
 
-  // Check if users exist
-  const usersSnapshot = await get(ref(db, 'users'));
-  if (!usersSnapshot.exists() && superAdminRoleId) {
-    // If no users node, create the default admin
+  // 3. Check for 'admin' user
+  const usersSnapshot = await get(usersRef);
+  if (usersSnapshot.exists()) {
+    const users = usersSnapshot.val();
+    for (const id in users) {
+      if (users[id].username === 'admin') {
+        adminUserExists = true;
+        break;
+      }
+    }
+  }
+
+  // 4. If 'admin' user doesn't exist, create it
+  if (!adminUserExists && superAdminRoleId) {
     const defaultAdmin: Omit<AdminUser, 'id'> = {
       username: 'admin',
       password: 'admin',
       roleId: superAdminRoleId
     };
-    const newUserRef = push(ref(db, 'users'));
+    // Note: We don't need to use push() for the very first user if the node doesn't exist,
+    // but using a unique key is safer. Let's find a user with username 'admin' and if not found, create one.
+    const newUserRef = push(usersRef);
     await set(newUserRef, defaultAdmin);
-    return [{ ...defaultAdmin, id: newUserRef.key! }];
   }
-
-  const usersData = usersSnapshot.val();
-  return usersData ? Object.keys(usersData).map(id => ({ id, ...usersData[id] })) : [];
 }
+
 
 export async function getAdminUsers(): Promise<AdminUser[]> {
   try {
-    const users = await initializeDefaultAdmin();
-    return users;
+    await initializeDefaultAdmin(); // Ensure default admin and role exist
+    const usersSnapshot = await get(ref(db, 'users'));
+    const usersData = usersSnapshot.val();
+    return usersData ? Object.keys(usersData).map(id => ({ id, ...usersData[id] })) : [];
   } catch (error) {
     console.error("Error fetching/initializing admin users:", error);
     return [];
