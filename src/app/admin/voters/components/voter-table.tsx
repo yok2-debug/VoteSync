@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef, useMemo, useEffect } from 'react';
-import type { Voter, Category } from '@/lib/types';
+import type { Voter, Category, Election } from '@/lib/types';
 import {
   Table,
   TableBody,
@@ -37,7 +37,7 @@ import { VoterImportDialog } from './voter-import-dialog';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { VoterCard } from '../../voters/print/components/voter-card';
 import { db } from '@/lib/firebase';
-import { ref, remove, update, set } from 'firebase/database';
+import { ref, update, set, get, runTransaction } from 'firebase/database';
 import { useDatabase } from '@/context/database-context';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BulkUpdateCategoryDialog } from './bulk-update-category-dialog';
@@ -49,8 +49,9 @@ type VoterTableProps = {
 
 const ITEMS_PER_PAGE = 100;
 
+
 export function VoterTable({ voters, categories }: VoterTableProps) {
-  const { voters: allEnrichedVoters } = useDatabase();
+  const { voters: allEnrichedVoters, elections } = useDatabase();
   const [filter, setFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -292,23 +293,80 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     setShowDeleteDialog(true);
   };
 
+  const processVoterDeletion = async (voterIdsToDelete: string[]) => {
+    if (voterIdsToDelete.length === 0) return;
+  
+    const updates: { [key: string]: any } = {};
+    const voterIdsSet = new Set(voterIdsToDelete);
+  
+    // 1. Find and nullify votes, preparing to decrement results
+    for (const election of elections) {
+      if (election.votes) {
+        for (const voterId of voterIdsToDelete) {
+          if (election.votes[voterId]) {
+            const candidateVotedId = election.votes[voterId];
+            updates[`/elections/${election.id}/votes/${voterId}`] = null;
+  
+            // Use a transaction for decrementing to avoid race conditions
+            const resultRef = ref(db, `/elections/${election.id}/results/${candidateVotedId}`);
+            await runTransaction(resultRef, (currentCount) => {
+                return (currentCount || 0) > 0 ? currentCount - 1 : 0;
+            });
+          }
+        }
+      }
+  
+      // 2. Nullify candidate entries
+      if (election.candidates) {
+        for (const candidateId in election.candidates) {
+          const candidate = election.candidates[candidateId];
+          // Check if main or vice candidate is being deleted
+          if (voterIdsSet.has(candidate.id) || (candidate.viceCandidateId && voterIdsSet.has(candidate.viceCandidateId))) {
+            updates[`/elections/${election.id}/candidates/${candidate.id}`] = null;
+          }
+        }
+      }
+    }
+  
+    // 3. Nullify voter records
+    for (const voterId of voterIdsToDelete) {
+      updates[`/voters/${voterId}`] = null;
+    }
+    
+    // 4. Apply all nullification updates in one go
+    await update(ref(db), updates);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedVoter) return;
+    setIsDeleting(true);
+    try {
+      await processVoterDeletion([selectedVoter.id]);
+      toast({ title: 'Voter deleted successfully.' });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error deleting voter',
+        description: error instanceof Error ? error.message : String(error),
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+      setSelectedVoter(null);
+    }
+  };
+
   const handleBulkDelete = async () => {
     setIsBulkDeleting(true);
     try {
-        const updates: Record<string, null> = {};
-        selectedVoterIds.forEach(id => {
-            updates[`/voters/${id}`] = null;
-        });
-
-        await update(ref(db), updates);
-
-        toast({ title: `${numSelected} pemilih berhasil dihapus.` });
+        await processVoterDeletion(selectedVoterIds);
+        toast({ title: `${numSelected} voter(s) successfully deleted.` });
         setRowSelection({});
     } catch (error) {
         toast({
             variant: 'destructive',
-            title: 'Gagal menghapus pemilih',
-            description: error instanceof Error ? error.message : 'Terjadi kesalahan tidak diketahui.',
+            title: 'Error deleting voters',
+            description: error instanceof Error ? error.message : 'An unknown error occurred.',
         });
     } finally {
         setIsBulkDeleting(false);
@@ -320,26 +378,6 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   const handleResetPassword = (voter: Voter) => {
     setSelectedVoter(voter);
     setShowResetPasswordDialog(true);
-  };
-
-
-  const confirmDelete = async () => {
-    if (!selectedVoter) return;
-    setIsDeleting(true);
-    try {
-      await remove(ref(db, `voters/${selectedVoter.id}`));
-      toast({ title: 'Voter deleted successfully.' });
-    } catch (error) {
-       toast({
-        variant: 'destructive',
-        title: 'Error deleting voter',
-        description: error instanceof Error ? error.message : String(error),
-      });
-    } finally {
-      setIsDeleting(false);
-      setShowDeleteDialog(false);
-      setSelectedVoter(null);
-    }
   };
   
   const onFormSave = async (voterToSave: Voter) => {
@@ -552,8 +590,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the voter
-              "{selectedVoter?.name}" ({selectedVoter?.id}).
+              This action cannot be undone. This will permanently delete the voter "{selectedVoter?.name}" ({selectedVoter?.id}) and all associated data like votes and candidate status.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -571,7 +608,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
             <AlertDialogHeader>
               <AlertDialogTitle>Apakah Anda benar-benar yakin?</AlertDialogTitle>
               <AlertDialogDescription>
-                Tindakan ini tidak dapat dibatalkan. Ini akan menghapus secara permanen {numSelected} pemilih yang dipilih.
+                Tindakan ini tidak dapat dibatalkan. Ini akan menghapus secara permanen {numSelected} pemilih yang dipilih dan semua data terkaitnya (suara, status kandidat, dll).
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
