@@ -21,26 +21,6 @@ export async function createAdminSession(payload: Omit<AdminSessionPayload, 'exp
 }
 
 
-export async function getAdminSession(): Promise<AdminSessionPayload | null> {
-    const sessionCookie = cookies().get(ADMIN_SESSION_COOKIE_NAME)?.value;
-
-    if (!sessionCookie) {
-        return null;
-    }
-
-    try {
-        const parsed = JSON.parse(sessionCookie);
-        if (parsed.expires && parsed.expires < Date.now()) {
-            await deleteAdminSession();
-            return null;
-        }
-        return parsed;
-    } catch (error) {
-        return null;
-    }
-}
-
-
 export async function deleteAdminSession() {
   cookies().delete(ADMIN_SESSION_COOKIE_NAME);
 }

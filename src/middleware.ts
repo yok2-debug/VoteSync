@@ -2,7 +2,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { type AdminSessionPayload, type Permission } from './lib/types';
-import { getAdminSession } from './lib/session';
+
+const ADMIN_SESSION_COOKIE_NAME = 'votesync_admin_session';
 
 const routePermissions: Record<string, Permission> = {
     '/admin/dashboard': 'dashboard',
@@ -40,8 +41,25 @@ async function hasPermission(session: AdminSessionPayload | null, path: string):
     return false;
 }
 
+async function getSessionFromCookie(request: NextRequest): Promise<AdminSessionPayload | null> {
+    const sessionCookie = request.cookies.get(ADMIN_SESSION_COOKIE_NAME)?.value;
+    if (!sessionCookie) {
+        return null;
+    }
+    try {
+        const parsed = JSON.parse(sessionCookie);
+        if (parsed.expires && parsed.expires < Date.now()) {
+            // Cookie is expired, treat as no session
+            return null;
+        }
+        return parsed;
+    } catch (error) {
+        return null;
+    }
+}
+
 export async function middleware(request: NextRequest) {
-  const session = await getAdminSession();
+  const session = await getSessionFromCookie(request);
   const { pathname } = request.nextUrl;
 
   const isApiRoute = pathname.startsWith('/api/');
