@@ -2,7 +2,7 @@
 import { redirect, useParams } from 'next/navigation';
 import { useDatabase } from '@/context/database-context';
 import Loading from '@/app/loading';
-import { CandidateForm } from '../components/candidate-form';
+import { CandidateForm } from '../../components/candidate-form';
 import { useMemo } from 'react';
 
 export function CandidateActionClientPage() {
