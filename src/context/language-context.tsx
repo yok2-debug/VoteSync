@@ -1,6 +1,7 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
+import { useDatabase } from './database-context';
 
 type Language = 'id' | 'en';
 
@@ -12,22 +13,12 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>('id');
-
-  useEffect(() => {
-    const storedLanguage = localStorage.getItem('votesync-lang') as Language;
-    if (storedLanguage && ['id', 'en'].includes(storedLanguage)) {
-      setLanguageState(storedLanguage);
-    }
-  }, []);
-
-  const setLanguage = (newLanguage: Language) => {
-    localStorage.setItem('votesync-lang', newLanguage);
-    setLanguageState(newLanguage);
-    // Force a full reload to ensure all components get the new language
-    window.location.reload();
-  };
+  const { language, setLanguage, isLoading } = useDatabase();
   
+  if (isLoading) {
+    return null; // Or a loading spinner, but DatabaseProvider already handles loading state
+  }
+
   const value = { language, setLanguage };
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
@@ -36,7 +27,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 export function useLanguage() {
   const context = useContext(LanguageContext);
   if (context === undefined) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
+    // This can happen if used outside DatabaseProvider, so we point to the root provider.
+    throw new Error('useLanguage must be used within a DatabaseProvider');
   }
   return context;
 }
