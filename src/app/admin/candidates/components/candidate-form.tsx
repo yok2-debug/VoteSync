@@ -35,7 +35,7 @@ const candidateSchema = z.object({
     z.coerce.number({ invalid_type_error: 'Nomor urut harus berupa angka' }).positive('Nomor urut harus angka positif').optional()
   ),
   photo: z.string().optional(),
-}).refine(data => data.voterId !== data.viceCandidateId || !data.viceCandidateId, {
+}).refine(data => !data.viceCandidateId || data.voterId !== data.viceCandidateId, {
     message: "Kandidat utama dan wakil tidak boleh orang yang sama.",
     path: ["viceCandidateId"],
 });
