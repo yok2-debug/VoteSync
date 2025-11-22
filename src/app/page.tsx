@@ -82,8 +82,7 @@ export default function LoginPage() {
                 </p>
             </div>
         </div>
-        <div className="flex flex-1 flex-col items-center bg-background p-4">
-            <div className="w-full max-w-6xl mx-auto space-y-10">
+        <div className="container mx-auto px-4 py-10 max-w-6xl">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-12 items-start">
                 <div className="space-y-6 md:col-span-2">
                 <h2 className="text-2xl font-semibold tracking-tight text-center md:text-left">Pemilihan Aktif</h2>
@@ -215,7 +214,6 @@ export default function LoginPage() {
                 </div>
             </div>
             </div>
-        </div>
       </main>
     </>
   );
