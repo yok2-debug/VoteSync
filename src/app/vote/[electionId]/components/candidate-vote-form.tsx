@@ -43,7 +43,8 @@ export function CandidateVoteForm({ electionId, candidate, voterId }: CandidateV
           if (!election.votes) election.votes = {};
           if (!election.results) election.results = {};
           if (election.votes[voterId]) {
-            return; // Abort
+            // Abort transaction if voter already voted in this election
+            return; 
           }
           election.votes[voterId] = candidate.id;
           if (!election.results[candidate.id]) {

@@ -46,7 +46,8 @@ export default function CandidateActionPage() {
           <p className="text-muted-foreground">Update the details for "{candidate.name}".</p>
         </div>
         <CandidateForm
-          initialData={{ candidate, electionId }}
+          initialData={{ ...candidate, id: candidateId }} // Pass full candidate data
+          electionId={electionId}
           allElections={elections}
         />
       </div>

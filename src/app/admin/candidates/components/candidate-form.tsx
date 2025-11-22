@@ -37,18 +37,20 @@ const candidateSchema = z.object({
 type CandidateFormData = z.infer<typeof candidateSchema>;
 
 interface CandidateFormProps {
-  initialData: { candidate: Partial<Candidate>, electionId?: string } | null;
+  initialData: Partial<Candidate> | null;
+  electionId?: string;
   allElections: Election[];
 }
 
 export function CandidateForm({
   initialData,
+  electionId: propElectionId,
   allElections,
 }: CandidateFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const isEditing = !!initialData?.candidate?.id;
+  const isEditing = !!initialData?.id;
 
   const {
     register,
@@ -63,19 +65,19 @@ export function CandidateForm({
   useEffect(() => {
     if (initialData) {
       reset({
-          id: initialData.candidate.id,
-          electionId: initialData.electionId || '',
-          orderNumber: initialData.candidate.orderNumber,
-          name: initialData.candidate.name || '',
-          viceCandidateName: initialData.candidate.viceCandidateName || '',
-          vision: initialData.candidate.vision || '',
-          mission: initialData.candidate.mission || '',
-          photo: initialData.candidate.photo || '',
+          id: initialData.id,
+          electionId: propElectionId || '',
+          orderNumber: initialData.orderNumber,
+          name: initialData.name || '',
+          viceCandidateName: initialData.viceCandidateName || '',
+          vision: initialData.vision || '',
+          mission: initialData.mission || '',
+          photo: initialData.photo || '',
       });
     } else {
       reset({ id: `new-${Date.now()}`, electionId: '', name: '', viceCandidateName: '', vision: '', mission: '', photo: '' });
     }
-  }, [initialData, reset]);
+  }, [initialData, propElectionId, reset]);
 
   const onSubmit: SubmitHandler<CandidateFormData> = async (data) => {
     setIsSubmitting(true);

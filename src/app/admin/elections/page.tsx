@@ -18,7 +18,7 @@ export default function ElectionsPage() {
               Create, view, and manage all elections in the system.
             </p>
           </div>
-          <ElectionTable initialElections={elections} />
+          <ElectionTable elections={elections} />
         </div>
       )}
     </>

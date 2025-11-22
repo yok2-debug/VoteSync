@@ -36,11 +36,10 @@ import { db } from '@/lib/firebase';
 import { ref, remove } from 'firebase/database';
 
 type ElectionTableProps = {
-  initialElections: Election[];
+  elections: Election[];
 };
 
-export function ElectionTable({ initialElections }: ElectionTableProps) {
-  const [elections, setElections] = useState<Election[]>(initialElections);
+export function ElectionTable({ elections }: ElectionTableProps) {
   const [filter, setFilter] = useState('');
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedElection, setSelectedElection] = useState<Election | null>(null);
@@ -98,7 +97,7 @@ export function ElectionTable({ initialElections }: ElectionTableProps) {
     setIsDeleting(true);
     try {
       await remove(ref(db, `elections/${selectedElection.id}`));
-      setElections(elections.filter((e) => e.id !== selectedElection.id));
+      // UI will update automatically via DatabaseProvider
       toast({ title: 'Election deleted successfully.' });
     } catch (error) {
        toast({

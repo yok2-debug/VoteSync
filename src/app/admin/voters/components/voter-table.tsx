@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import type { Voter, Category } from '@/lib/types';
 import {
   Table,
@@ -34,7 +34,7 @@ import { ResetPasswordDialog } from './reset-password-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Papa from 'papaparse';
 import { VoterImportDialog } from './voter-import-dialog';
-import { getVoters, getCategories } from '@/lib/data';
+import { getVoters } from '@/lib/data';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { VoterCard } from '../../voters/print/components/voter-card';
 import { db } from '@/lib/firebase';
@@ -48,8 +48,7 @@ type VoterTableProps = {
 
 const ITEMS_PER_PAGE = 100;
 
-export function VoterTable({ voters: initialVoters, categories }: VoterTableProps) {
-  const [voters, setVoters] = useState<Voter[]>(initialVoters);
+export function VoterTable({ voters, categories }: VoterTableProps) {
   const [filter, setFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
@@ -64,11 +63,7 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const categoryMap = new Map(categories.map((c) => [c.id, c.name]));
-
-  useEffect(() => {
-    setVoters(initialVoters);
-  }, [initialVoters]);
+  const categoryMap = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
 
   const filteredVoters = useMemo(() => voters.filter(
     (voter) =>
@@ -218,7 +213,6 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
         const categoryNameMap = new Map(categories.map(c => [c.name.replace(/\s+/g, '').toLowerCase(), c.id]));
         
         const votersToImportForDb: Record<string, Omit<Voter, 'id' | 'hasVoted'>> = {};
-        const votersToAddToState: Voter[] = [];
 
         const importVoterSchema = z.object({
             id: z.string().min(1, 'ID is required'),
@@ -250,22 +244,15 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
                 password: rest.password || Math.random().toString(36).substring(2, 8),
             };
             votersToImportForDb[`voters/${id}`] = voterDataForDb;
-
-            const voterDataForState: Voter = {
-                id,
-                ...voterDataForDb,
-            };
-            votersToAddToState.push(voterDataForState);
         }
 
         if (Object.keys(votersToImportForDb).length > 0) {
             await update(ref(db), votersToImportForDb);
-            setVoters(prevVoters => [...prevVoters, ...votersToAddToState]);
         }
 
       toast({
         title: 'Import Successful',
-        description: `${votersToAddToState.length} voters were successfully imported.`,
+        description: `${dataToImport.length} voters were successfully imported. The table will update shortly.`,
       });
     } catch (error) {
        toast({
@@ -305,7 +292,6 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
     setIsDeleting(true);
     try {
       await remove(ref(db, `voters/${selectedVoter.id}`));
-      setVoters(voters.filter(v => v.id !== selectedVoter.id));
       toast({ title: 'Voter deleted successfully.' });
     } catch (error) {
        toast({
@@ -330,7 +316,6 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
         const dataToSet = { ...savedVoterData };
         delete (dataToSet as any).id; // Don't save ID inside the object itself
         await set(voterRef, dataToSet);
-        setVoters(prev => [...prev, savedVoterData]);
       } else {
         // Update existing voter
         const updates: { [key: string]: any } = {};
@@ -340,7 +325,6 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
           }
         });
         await update(ref(db), updates);
-        setVoters(voters.map(v => v.id === savedVoterData.id ? savedVoterData : v));
       }
 
       toast({
@@ -500,7 +484,7 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
         onSave={onFormSave}
       />
       
-      {importedData.length > 0 && showImportDialog && <VoterImportDialog 
+      {showImportDialog && <VoterImportDialog 
         open={showImportDialog}
         onOpenChange={setShowImportDialog}
         data={importedData}
@@ -537,5 +521,3 @@ export function VoterTable({ voters: initialVoters, categories }: VoterTableProp
     </div>
   );
 }
-
-    

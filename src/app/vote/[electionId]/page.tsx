@@ -23,84 +23,61 @@ import {
 } from '@/components/ui/dialog';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 
-function VotePageContent() {
+export default function VotePage() {
   const { electionId } = useParams() as { electionId: string };
   const { elections, voters, categories, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
-  const [isValidating, setIsValidating] = useState(true);
+  const [isValid, setIsValid] = useState(false);
   const router = useRouter();
 
-  const voter = useMemo(() => {
-    if (!session?.voterId || isDbLoading) return null;
-    return voters.find(v => v.id === session.voterId);
-  }, [voters, session, isDbLoading]);
+  const election = useMemo(() => elections.find(e => e.id === electionId), [elections, electionId]);
+  const voter = useMemo(() => voters.find(v => v.id === session?.voterId), [voters, session]);
   
-  const election = useMemo(() => {
-    if (isDbLoading) return null;
-    return elections.find(e => e.id === electionId);
-  }, [elections, electionId, isDbLoading]);
-
   useEffect(() => {
-    // 1. Get session
     const voterSession = getVoterSession();
     if (!voterSession?.voterId) {
-      router.push('/');
+      router.replace('/');
       return;
     }
     setSession(voterSession);
     setIsSessionLoading(false);
+  }, [router]);
 
-    // 2. Wait for all data to be loaded
-    if (isDbLoading || isSessionLoading) {
+  useEffect(() => {
+    if (isDbLoading || isSessionLoading || !election || !voter) {
       return;
     }
 
-    // 3. Find the relevant data
-    const currentElection = elections.find(e => e.id === electionId);
-    const currentVoter = voters.find(v => v.id === voterSession.voterId);
-    
-    // 4. If data is not ready yet, or voter has changed, wait for next effect run.
-    if (!currentElection || !currentVoter) {
-        // If the database is loaded but we can't find the election/voter, redirect.
-        if (!isDbLoading) {
-           router.push('/vote');
-        }
-        return;
-    }
-    
-    const voterCategory = categories.find(c => c.id === currentVoter.category);
-
+    const voterCategory = categories.find(c => c.id === voter.category);
     if (!voterCategory) {
-       router.push('/vote');
-       return;
+      router.replace('/vote');
+      return;
     }
-    
-    // 5. Perform validation
+
     const now = new Date();
-    const electionStarted = currentElection.startDate ? new Date(currentElection.startDate) <= now : true;
-    const electionEnded = currentElection.endDate ? new Date(currentElection.endDate) < now : false;
+    const electionStarted = election.startDate ? new Date(election.startDate) <= now : true;
+    const electionEnded = election.endDate ? new Date(election.endDate) < now : false;
     const isVoterAllowed = voterCategory.allowedElections?.includes(electionId);
-    const hasVoted = currentVoter.hasVoted?.[electionId];
+    const hasVoted = voter.hasVoted?.[electionId];
 
     if (
-      currentElection.status !== 'active' || 
+      election.status !== 'active' || 
       !electionStarted || 
       electionEnded || 
       !isVoterAllowed || 
       hasVoted
     ) {
-      router.push('/vote');
+      router.replace('/vote');
       return;
     }
 
-    // 6. If all checks pass, allow rendering
-    setIsValidating(false);
+    setIsValid(true);
 
-  }, [isDbLoading, isSessionLoading, elections, voters, categories, electionId, router, voter]);
+  }, [isDbLoading, isSessionLoading, election, voter, categories, electionId, router]);
 
 
-  if (isValidating || !election || !voter) {
+  if (isDbLoading || isSessionLoading || !isValid || !election || !voter) {
     return <Loading />; 
   }
   
@@ -201,9 +178,4 @@ function VotePageContent() {
       </div>
     </main>
   );
-}
-
-
-export default function VotePage() {
-  return <VotePageContent />;
 }

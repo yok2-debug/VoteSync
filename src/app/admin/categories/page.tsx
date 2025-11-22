@@ -18,7 +18,7 @@ export default function CategoriesPage() {
               Manage voter categories for elections.
             </p>
           </div>
-          <CategoryTable initialCategories={categories} allElections={elections} />
+          <CategoryTable categories={categories} allElections={elections} />
         </div>
       )}
     </>

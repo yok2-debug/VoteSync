@@ -35,12 +35,11 @@ import { db } from '@/lib/firebase';
 import { ref, remove } from 'firebase/database';
 
 type CategoryTableProps = {
-  initialCategories: Category[];
+  categories: Category[];
   allElections: Election[];
 };
 
-export function CategoryTable({ initialCategories, allElections }: CategoryTableProps) {
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
+export function CategoryTable({ categories, allElections }: CategoryTableProps) {
   const [filter, setFilter] = useState('');
   const [showFormDialog, setShowFormDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -79,7 +78,6 @@ export function CategoryTable({ initialCategories, allElections }: CategoryTable
       }
   
       await remove(ref(db, `categories/${selectedCategory.id}`));
-      setCategories(categories.filter((c) => c.id !== selectedCategory.id));
       toast({ title: 'Category deleted successfully.' });
     } catch (error) {
        toast({
@@ -95,12 +93,9 @@ export function CategoryTable({ initialCategories, allElections }: CategoryTable
   };
 
 
-  const onFormSave = (savedCategory: Category & { isNew?: boolean }) => {
-    if (savedCategory.isNew) {
-      setCategories([...categories, savedCategory]);
-    } else {
-      setCategories(categories.map((c) => c.id === savedCategory.id ? savedCategory : c));
-    }
+  const onFormSave = () => {
+    // The DatabaseProvider will automatically update the UI.
+    // We don't need to manually update the state here.
   }
 
 

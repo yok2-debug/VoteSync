@@ -1,18 +1,16 @@
-
 'use server';
 
 import { cookies } from 'next/headers';
-import type { AdminSessionPayload, VoterSessionPayload } from './types';
+import type { AdminSessionPayload } from './types';
 
 const ADMIN_SESSION_COOKIE_NAME = 'votesync_admin_session';
 const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 
-async function createSession(payload: AdminSessionPayload, role: 'admin') {
+async function createSession(payload: AdminSessionPayload) {
   const expires = new Date(Date.now() + SESSION_DURATION);
   const session = JSON.stringify({ ...payload, expires: expires.getTime() });
-  const cookieName = ADMIN_SESSION_COOKIE_NAME;
 
-  cookies().set(cookieName, session, {
+  cookies().set(ADMIN_SESSION_COOKIE_NAME, session, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     expires: expires.getTime(),
@@ -22,7 +20,7 @@ async function createSession(payload: AdminSessionPayload, role: 'admin') {
 }
 
 export async function createAdminSession(payload: Omit<AdminSessionPayload, 'expires'>) {
-    await createSession({ ...payload, isAdmin: true }, 'admin');
+    await createSession({ ...payload, isAdmin: true });
 }
 
 async function getSession<T>(cookieName: string): Promise<T | null> {

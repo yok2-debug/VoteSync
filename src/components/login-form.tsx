@@ -39,12 +39,10 @@ export function LoginForm() {
   async function handleVoterLogin(values: z.infer<typeof voterLoginSchema>) {
     setIsSubmitting(true);
     try {
-      // Get all voters and find the one that matches
       const allVoters = await getVoters();
       const voter = allVoters.find(v => v.id === values.voterId);
 
       if (voter && voter.password === values.password) {
-        // Use client-side session management
         setVoterSession({ voterId: voter.id });
 
         toast({
@@ -53,7 +51,6 @@ export function LoginForm() {
         });
         
         router.push('/vote');
-        router.refresh();
       } else {
         throw new Error('Invalid voter ID or password.');
       }
