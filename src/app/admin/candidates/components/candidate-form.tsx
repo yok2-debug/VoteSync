@@ -122,8 +122,16 @@ export function CandidateForm({
         finalOrderNumber = maxOrderNumber + 1;
       }
 
-
       const candidateId = data.voterId;
+
+      // Prevent adding the same voter as a candidate twice in the same election
+      const isDuplicate = !isEditing && existingCandidates[candidateId];
+      // For editing, check if the new voterId is already another candidate
+      const isDuplicateOnEdit = isEditing && initialData?.id !== candidateId && existingCandidates[candidateId];
+
+      if (isDuplicate || isDuplicateOnEdit) {
+          throw new Error(`Pemilih "${data.name}" sudah menjadi kandidat dalam pemilihan ini.`);
+      }
 
       const candidateData: Partial<Candidate> = {
         name: data.name,
@@ -152,10 +160,7 @@ export function CandidateForm({
             await update(ref(db, `elections/${data.electionId}/candidates/${candidateId}`), candidateData);
           }
       } else {
-        // Prevent adding the same voter as a candidate twice in the same election
-        if (existingCandidates[candidateId]) {
-            throw new Error(`Pemilih "${data.name}" sudah menjadi kandidat dalam pemilihan ini.`);
-        }
+        // This is a new candidate, just set the data. The duplicate check is already done above.
         await set(ref(db, `elections/${data.electionId}/candidates/${candidateId}`), candidateData);
       }
 
