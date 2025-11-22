@@ -140,7 +140,7 @@ export default function VoterDashboardPage() {
               }
 
               return (
-                <Card key={election.id}>
+                <Card key={election.id} className="bg-muted">
                   <CardHeader>
                     <CardTitle>{election.name}</CardTitle>
                     <CardDescription>{election.description}</CardDescription>
