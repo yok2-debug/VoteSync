@@ -91,8 +91,14 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
        <style>
         {`
           @page {
-            margin-top: 1.5cm;
-            margin-bottom: 1.5cm; /* Adjusted for footer */
+            size: A4;
+            margin: 1.5cm 1.5cm 2cm 1.5cm; /* bottom margin increased for footer */
+            
+            @bottom-center {
+              content: "Halaman " counter(page);
+              font-size: 10px;
+              color: #000;
+            }
           }
           @media print {
             body, body * {
@@ -118,19 +124,6 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
             }
             .no-print {
                 display: none;
-            }
-            .print-footer {
-                visibility: visible;
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                text-align: center;
-                font-size: 10px;
-                color: #000;
-            }
-            .print-footer .page-number::after {
-                content: counter(page) " dari " counter(pages);
             }
             .print-card {
                 border: none !important;
@@ -361,7 +354,7 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
                                 <tr key={`witness-${candidate.id}`}>
                                     <td className="text-center">{index + 1}</td>
                                     <td>
-                                       <div className="signature-box">
+                                      <div className="signature-box">
                                         <div className="signature-dots"></div>
                                       </div>
                                     </td>
@@ -381,9 +374,6 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
             </CardContent>
         </Card>
       </div>
-      <footer className="print-footer">
-          <span className="page-number"></span>
-      </footer>
     </div>
   );
 }
