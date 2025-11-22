@@ -77,6 +77,7 @@ export function CandidateForm({
     if (initialData) {
       reset({
         ...initialData,
+        electionId: initialData.electionId || '',
         voterId: initialData.voterId || initialData.id,
       });
     } else {
