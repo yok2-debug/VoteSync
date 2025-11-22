@@ -58,8 +58,9 @@ export function VoteClientPage() {
     
     if (!election || !voter) {
        if (!isDbLoading) {
+         // If DB is not loading and we still can't find them, redirect.
+         router.replace('/vote');
        }
-       setIsValid(true);
        return;
     }
 
@@ -84,11 +85,11 @@ export function VoteClientPage() {
   }, [isDbLoading, isSessionLoading, election, voter, electionId, router]);
 
 
-  if (isDbLoading || isSessionLoading || !election || !voter) {
+  if (!isValid) {
     return <Loading />; 
   }
   
-  const candidates = Object.values(election.candidates || {}).sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999));
+  const candidates = Object.values(election?.candidates || {}).sort((a, b) => (a.orderNumber || 999) - (b.orderNumber || 999));
   const defaultAvatar = PlaceHolderImages.find(p => p.id === 'default-avatar');
   
   return (
@@ -116,7 +117,7 @@ export function VoteClientPage() {
                       <DialogTrigger asChild>
                         <img
                           src={candidate.photo || defaultAvatar?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
-                          alt={`Photo of ${'candidate.name'}`}
+                          alt={`Photo of ${candidate.name}`}
                           width={144}
                           height={144}
                           className="rounded-full border-4 border-primary object-cover cursor-pointer hover:opacity-90 transition-opacity h-36 w-36"
@@ -131,7 +132,7 @@ export function VoteClientPage() {
                         <DialogClose asChild>
                           <img
                               src={candidate.photo || defaultAvatar?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
-                              alt={`Photo of ${'candidate.name'}`}
+                              alt={`Photo of ${candidate.name}`}
                               className="w-full h-auto rounded-md cursor-pointer"
                           />
                         </DialogClose>
@@ -159,7 +160,7 @@ export function VoteClientPage() {
                         <DialogHeader>
                             <DialogTitle>
                               {candidate.name}
-                              {candidate.viceCandidateName && ` & ${'candidate.viceCandidateName'}`}
+                              {candidate.viceCandidateName && ` & ${candidate.viceCandidateName}`}
                             </DialogTitle>
                             <DialogDescription>
                             Visi dan Misi Kandidat
@@ -177,7 +178,7 @@ export function VoteClientPage() {
                     </Dialog>
                 </CardContent>
                 <div className="p-6 pt-2">
-                    {election && voter && <CandidateVoteForm electionId={election.id} candidate={candidate} voterId={voter.id} />}
+                    <CandidateVoteForm electionId={election.id} candidate={candidate} voterId={voter.id} />
                 </div>
                 </Card>
             ))}
