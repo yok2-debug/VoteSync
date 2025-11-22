@@ -7,7 +7,7 @@ interface VoterCardProps {
 }
 
 const formatBirthDate = (dateString?: string): string => {
-  if (!dateString) return '-';
+  if (!dateString || dateString.trim() === '') return '-';
   try {
     // Try to handle various formats by replacing separators with a standard one.
     const sanitizedDate = dateString.replace(/[.\/]/g, '-');
