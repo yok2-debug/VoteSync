@@ -56,6 +56,11 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
   const votersDidNotVote_male = DPT_male - votersWhoVoted_male;
   const votersDidNotVote_female = DPT_female - votersWhoVoted_female;
   const votersDidNotVote_total = DPT_total - votersWhoVoted_total;
+
+  const totalValidVotesFromResults = useMemo(() => {
+    if (!election.results) return 0;
+    return Object.values(election.results).reduce((sum, count) => sum + count, 0);
+  }, [election.results]);
   
   const handlePrint = () => {
     window.print();
@@ -271,7 +276,7 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
                                 )}
                                 <TableRow className="font-bold bg-muted/50 print-table">
                                     <TableCell colSpan={2}>Total Seluruh Suara Sah</TableCell>
-                                    <TableCell className="text-right">{votersWhoVoted_total}</TableCell>
+                                    <TableCell className="text-right">{totalValidVotesFromResults}</TableCell>
                                 </TableRow>
                             </TableBody>
                         </Table>
