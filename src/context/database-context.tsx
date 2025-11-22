@@ -48,13 +48,17 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
 
   const enrichedAdminUsers = useMemo(() => {
     if (isLoading || rawAdminUsers.length === 0 || roles.length === 0) {
-      return rawAdminUsers;
+        return rawAdminUsers;
     }
     const rolesMap = new Map(roles.map(r => [r.id, r]));
-    return rawAdminUsers.map(user => ({
-      ...user,
-      role: rolesMap.get(user.roleId)
-    }));
+    return rawAdminUsers.map(user => {
+        const role = rolesMap.get(user.roleId);
+        return {
+            ...user,
+            // Ensure user.role is never undefined to prevent crashes on access.
+            role: role || { id: 'unknown', name: 'Unknown Role', permissions: [] }
+        };
+    });
   }, [rawAdminUsers, roles, isLoading]);
 
 
