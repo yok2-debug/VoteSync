@@ -14,9 +14,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, Edit, Trash2, Loader2 } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Edit, Trash2, Loader2, UserSquare } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
@@ -87,6 +88,10 @@ export function ElectionTable({ elections }: ElectionTableProps) {
     router.push(`/admin/elections/${election.id}`);
   };
 
+  const handleManageCandidates = (electionId: string) => {
+    router.push(`/admin/candidates?electionId=${electionId}`);
+  };
+
   const handleDelete = (election: Election) => {
     setSelectedElection(election);
     setShowDeleteDialog(true);
@@ -96,8 +101,29 @@ export function ElectionTable({ elections }: ElectionTableProps) {
     if (!selectedElection) return;
     setIsDeleting(true);
     try {
+      // First, clean up category references
+      const categoriesRef = ref(db, 'categories');
+      const categoriesSnapshot = await get(categoriesRef);
+      if (categoriesSnapshot.exists()) {
+        const updates: { [key: string]: any } = {};
+        categoriesSnapshot.forEach(category => {
+          const catData = category.val();
+          if (catData.allowedElections && Array.isArray(catData.allowedElections)) {
+            const newAllowedElections = catData.allowedElections.filter(
+              (id: string) => id !== selectedElection.id
+            );
+            if (newAllowedElections.length !== catData.allowedElections.length) {
+              updates[`/categories/${category.key}/allowedElections`] = newAllowedElections;
+            }
+          }
+        });
+        if (Object.keys(updates).length > 0) {
+          await update(ref(db), updates);
+        }
+      }
+
+      // Then, delete the election itself
       await remove(ref(db, `elections/${selectedElection.id}`));
-      // UI will update automatically via DatabaseProvider
       toast({ title: 'Election deleted successfully.' });
     } catch (error) {
        toast({
@@ -171,6 +197,11 @@ export function ElectionTable({ elections }: ElectionTableProps) {
                           <Edit className="mr-2 h-4 w-4" />
                           Edit
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleManageCandidates(election.id)}>
+                          <UserSquare className="mr-2 h-4 w-4" />
+                          Kelola Kandidat
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(election)}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Delete
@@ -196,8 +227,8 @@ export function ElectionTable({ elections }: ElectionTableProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the election
-              "{selectedElection?.name}" and all of its associated data.
+              Tindakan ini tidak dapat dibatalkan. Ini akan menghapus pemilihan secara permanen
+              "{selectedElection?.name}" dan semua data terkaitnya.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
