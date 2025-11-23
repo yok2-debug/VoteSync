@@ -47,7 +47,7 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
   
   useEffect(() => {
     function validateData() {
-        const filteredData = data.filter(row => row && typeof row === 'object' && Object.values(row).some(val => val !== null && val !== ''));
+        const filteredData = data.filter(row => row && typeof row === 'object' && Object.values(row as object).some(val => val !== null && val !== ''));
 
         if (!open || filteredData.length === 0) {
             setValidatedData([]);
@@ -60,7 +60,9 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
         const validated = filteredData.map(row => {
             const errors: string[] = [];
             
-            let gender = typeof row.gender === 'string' ? row.gender.trim() : '';
+            const typedRow = row as Record<string, unknown>;
+
+            let gender = typeof typedRow.gender === 'string' ? typedRow.gender.trim() : '';
             if (gender.toUpperCase() === 'L') {
               gender = 'Laki-laki';
             } else if (gender.toUpperCase() === 'P') {
@@ -68,15 +70,15 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
             }
 
             const cleanRow = {
-                id: row.id ? String(row.id).trim() : '',
-                nik: row.nik ? String(row.nik).trim() : '',
-                name: typeof row.name === 'string' ? row.name.trim() : '',
-                birthPlace: typeof row.birthPlace === 'string' ? row.birthPlace.trim() : '',
-                birthDate: typeof row.birthDate === 'string' ? row.birthDate.trim() : '',
+                id: typedRow.id ? String(typedRow.id).trim() : '',
+                nik: typedRow.nik ? String(typedRow.nik).trim() : '',
+                name: typeof typedRow.name === 'string' ? typedRow.name.trim() : '',
+                birthPlace: typeof typedRow.birthPlace === 'string' ? typedRow.birthPlace.trim() : '',
+                birthDate: typeof typedRow.birthDate === 'string' ? typedRow.birthDate.trim() : '',
                 gender: gender,
-                address: typeof row.address === 'string' ? row.address.trim() : '',
-                category: typeof row.category === 'string' ? row.category.trim() : '',
-                password: row.password ? String(row.password).trim() : ''
+                address: typeof typedRow.address === 'string' ? typedRow.address.trim() : '',
+                category: typeof typedRow.category === 'string' ? typedRow.category.trim() : '',
+                password: typedRow.password ? String(typedRow.password).trim() : ''
             };
             
             if (!cleanRow.id) {
@@ -98,7 +100,7 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
             }
             
             if (cleanRow.gender && !['Laki-laki', 'Perempuan'].includes(cleanRow.gender)) {
-                errors.push(`Invalid gender: '${row.gender}'. Must be 'L', 'P', 'Laki-laki', or 'Perempuan'.`);
+                errors.push(`Invalid gender: '${typedRow.gender}'. Must be 'L', 'P', 'Laki-laki', or 'Perempuan'.`);
             }
 
             return {

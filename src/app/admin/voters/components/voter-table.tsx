@@ -146,7 +146,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
         header: true,
         skipEmptyLines: true,
         complete: (results) => {
-          setImportedData(results.data.filter(row => Object.values(row).some(val => val !== '' && val !== null)));
+          setImportedData(results.data.filter(row => Object.values(row as object).some(val => val !== '' && val !== null)));
           setShowImportDialog(true);
         },
         error: (error: any) => {
@@ -560,5 +560,3 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     </div>
   );
 }
-
-    
