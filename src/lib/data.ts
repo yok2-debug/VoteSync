@@ -62,7 +62,6 @@ async function initializeDefaultAdmin(): Promise<void> {
 
 export async function getAdminUsers(): Promise<AdminUser[]> {
   try {
-    await initializeDefaultAdmin(); // Ensure default admin and role exist before fetching.
     const usersSnapshot = await get(ref(db, 'users'));
     if (!usersSnapshot.exists()) {
       return []; // Return empty array if no users node
@@ -71,7 +70,7 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
     return usersData ? Object.keys(usersData).map(id => ({ id, ...usersData[id] })) : [];
   } catch (error) {
     // In case of error, re-throw it to be handled by the caller.
-    throw new Error('Failed to fetch or initialize admin users.');
+    throw new Error('Failed to fetch admin users.');
   }
 }
 
@@ -79,13 +78,7 @@ export async function getRoles(): Promise<Role[]> {
     try {
         const snapshot = await get(ref(db, 'roles'));
         if (!snapshot.exists()) {
-            // If roles don't exist, it might be the very first run.
-            // Initialize to create the Super Admin role.
-            await initializeDefaultAdmin();
-            const newSnapshot = await get(ref(db, 'roles'));
-            if (!newSnapshot.exists()) return [];
-            const data = newSnapshot.val();
-            return data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
+            return [];
         }
         const data = snapshot.val();
         return data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
