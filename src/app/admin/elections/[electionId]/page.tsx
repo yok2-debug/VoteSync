@@ -1,4 +1,5 @@
 
+
 import { ElectionActionClientPage } from './components/election-action-client-page';
 
 export function generateStaticParams() {

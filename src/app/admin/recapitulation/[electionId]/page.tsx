@@ -1,4 +1,5 @@
 
+
 import { RecapitulationClientPage } from './components/recapitulation-client-page';
 
 export function generateStaticParams() {

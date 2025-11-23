@@ -28,6 +28,7 @@ export function VoteClientPage() {
   const { elections, voters, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
   const [isValid, setIsValid] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
   const router = useRouter();
 
   const election = useMemo(() => {
@@ -41,6 +42,7 @@ export function VoteClientPage() {
   }, [voters, session, isDbLoading]);
 
   useEffect(() => {
+    // This effect handles all validation logic and will only run on the client.
     const voterSession = getVoterSession();
     if (!voterSession?.voterId) {
       router.replace('/');
@@ -48,17 +50,15 @@ export function VoteClientPage() {
     }
     setSession(voterSession);
 
-    // This effect now handles all validation logic and will only run on the client.
     if (isDbLoading) {
       return; // Wait for DB to load
     }
     
-    // Once DB is loaded, find the election and voter
+    // Once DB is loaded, find the election and voter for validation
     const currentElection = elections.find(e => e.id === electionId);
     const currentVoter = voters.find(v => v.id === voterSession.voterId);
     
     if (!currentElection || !currentVoter) {
-       // If data still not found after loading, redirect.
        router.replace('/vote');
        return;
     }
@@ -69,21 +69,21 @@ export function VoteClientPage() {
     const hasVoted = currentVoter.hasVoted?.[electionId];
 
     if (
-      currentElection.status !== 'active' || 
-      !electionStarted || 
-      electionEnded || 
-      hasVoted
+      currentElection.status === 'active' && 
+      electionStarted && 
+      !electionEnded && 
+      !hasVoted
     ) {
+      setIsValid(true);
+    } else {
       router.replace('/vote');
-      return;
     }
-
-    setIsValid(true);
+    setIsChecking(false);
 
   }, [isDbLoading, elections, voters, electionId, router]);
 
 
-  if (!isValid || !election || !voter) {
+  if (isChecking || !isValid || !election || !voter) {
     return <Loading />; 
   }
   

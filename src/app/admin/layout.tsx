@@ -7,6 +7,7 @@ import { useEffect, useState } from 'react';
 import Loading from '../loading';
 import type { Permission } from '@/lib/types';
 import { useDatabase } from '@/context/database-context';
+import { ClientOnly } from '@/components/ui/client-only';
 
 const routePermissions: Record<string, Permission> = {
   '/admin/dashboard': 'dashboard',
@@ -91,22 +92,22 @@ export default function AdminLayout({
 
   }, [pathname, router, isDbLoading, roles]);
 
-  if (!isAuthorized) {
-    return <Loading />;
-  }
-  
   return (
     <SidebarProvider>
-      <AdminSidebar />
-      <SidebarInset className="bg-background">
-        <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6 md:justify-end">
-            <div className="md:hidden">
-              <SidebarTrigger />
-            </div>
-            <h1 className="text-lg font-semibold md:hidden">VoteSync Admin</h1>
-        </header>
-        <main className="flex-1 p-4 sm:p-6">{children}</main>
-      </SidebarInset>
+      <ClientOnly>
+          <AdminSidebar />
+          <SidebarInset className="bg-background">
+            <header className="sticky top-0 z-10 flex h-14 items-center justify-between border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6 md:justify-end">
+                <div className="md:hidden">
+                  <SidebarTrigger />
+                </div>
+                <h1 className="text-lg font-semibold md:hidden">VoteSync Admin</h1>
+            </header>
+            <main className="flex-1 p-4 sm:p-6">
+              {isAuthorized ? children : <Loading />}
+            </main>
+          </SidebarInset>
+      </ClientOnly>
     </SidebarProvider>
   );
 }
