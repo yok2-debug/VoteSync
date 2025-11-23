@@ -20,7 +20,7 @@ export function Footer() {
             rel="noopener noreferrer"
             className="font-medium underline underline-offset-4"
           >
-            Waluyo
+            yok2k
           </a>
         </p>
       </div>
