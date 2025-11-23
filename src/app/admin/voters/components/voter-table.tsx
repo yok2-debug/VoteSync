@@ -102,20 +102,20 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     return numSelected > 0 ? votersSource.filter(v => rowSelection[v.id]) : votersSource;
   }, [numSelected, paginatedVoters, filteredVoters, rowSelection]);
   
-   const printHandler = useReactToPrint({
-      content: () => printComponentRef.current,
-      onBeforeGetContent: () => {
-        if (votersToPrint.length === 0) {
-          toast({
-            variant: 'destructive',
-            title: 'Tidak ada pemilih untuk dicetak',
-            description: 'Tidak ada pemilih dalam daftar atau pilihan saat ini.',
-          });
-          return Promise.reject();
-        }
-        toast({ title: 'Menyiapkan cetak...', description: `Mencetak ${votersToPrint.length} kartu pemilih...` });
-        return Promise.resolve();
-      },
+  const printHandler = useReactToPrint({
+    content: () => printComponentRef.current,
+    onBeforeGetContent: () => {
+      if (votersToPrint.length === 0) {
+        toast({
+          variant: 'destructive',
+          title: 'Tidak ada pemilih untuk dicetak',
+          description: 'Tidak ada pemilih dalam daftar atau pilihan saat ini.',
+        });
+        return Promise.reject();
+      }
+      toast({ title: 'Menyiapkan cetak...', description: `Mencetak ${votersToPrint.length} kartu pemilih...` });
+      return Promise.resolve();
+    },
   });
 
   useEffect(() => {
@@ -366,7 +366,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
           </Select>
         </form>
         <div className="flex gap-2 flex-wrap">
-           <Button variant="outline" onClick={handlePrint || undefined} type="button" disabled={!handlePrint}>
+           <Button variant="outline" onClick={handlePrint} type="button" disabled={!handlePrint}>
               <Printer className="mr-2 h-4 w-4" />
               Cetak Kartu
             </Button>
