@@ -38,10 +38,10 @@ import {
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { getAdminSession, deleteAdminSession as deleteClientSession } from '@/lib/session-client';
+import { getAdminSession, deleteAdminSession } from '@/lib/session-client';
 import { useEffect, useState, useTransition } from 'react';
 import type { AdminSessionPayload } from '@/lib/types';
-import { logoutAdmin } from '@/lib/session';
+import { useDatabase } from '@/context/database-context';
 
 export function AdminSidebar() {
   const pathname = usePathname();
@@ -49,16 +49,26 @@ export function AdminSidebar() {
   const { toast } = useToast();
   const avatar = PlaceHolderImages.find(p => p.id === 'default-avatar');
   const [session, setSession] = useState<AdminSessionPayload | null>(null);
+  const [permissions, setPermissions] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
+  const { roles, isLoading: isDbLoading } = useDatabase();
   
   useEffect(() => {
-    setSession(getAdminSession());
-  }, [pathname]);
+    const currentSession = getAdminSession();
+    setSession(currentSession);
+    if(currentSession && !isDbLoading && roles.length > 0) {
+      const userRole = roles.find(r => r.id === currentSession.roleId);
+      setPermissions(userRole?.permissions || []);
+    }
+  }, [pathname, isDbLoading, roles]);
 
 
   const handleLogout = () => {
-    startTransition(async () => {
-      await logoutAdmin();
+    startTransition(() => {
+        deleteAdminSession();
+        toast({ title: "Logout Berhasil", description: "Anda telah berhasil keluar." });
+        router.push('/admin-login');
+        router.refresh();
     });
   };
 
@@ -78,7 +88,7 @@ export function AdminSidebar() {
   
   const settingsItem = { href: '/admin/settings', icon: <Settings />, label: 'Pengaturan', permission: 'settings' };
 
-  const hasPermission = (permission: string) => session?.permissions.includes(permission as any);
+  const hasPermission = (permission: string) => permissions.includes(permission);
 
   return (
     <Sidebar>
@@ -145,7 +155,7 @@ export function AdminSidebar() {
               </Avatar>
               <div className="flex flex-col items-start">
                 <span className="text-sm font-medium">{session?.username || 'User'}</span>
-                <span className="text-xs text-muted-foreground">Admin Role</span>
+                <span className="text-xs text-muted-foreground">{roles.find(r => r.id === session?.roleId)?.name || 'Admin Role'}</span>
               </div>
               <ChevronDown className="ml-auto h-4 w-4" />
             </Button>

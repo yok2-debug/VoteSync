@@ -8,6 +8,7 @@ export interface Election {
   candidates: Record<string, Candidate>;
   committee?: CommitteeMember[];
   votes?: Record<string, string>; // { [voterId]: candidateId }
+  results?: Record<string, number>; // { [candidateId]: voteCount }
 }
 
 export interface Candidate {
@@ -65,11 +66,9 @@ export interface AdminUser {
 export interface AdminSessionPayload {
   userId: string;
   username: string;
-  permissions: Permission[];
-  expires?: number;
+  roleId: string;
 }
 
 export interface VoterSessionPayload {
     voterId: string;
-    expires?: number;
 }

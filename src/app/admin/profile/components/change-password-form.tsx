@@ -24,8 +24,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import { changeOwnPassword } from '@/lib/data';
 import { getAdminSession } from '@/lib/session-client';
+import { db } from '@/lib/firebase';
+import { ref, get, update } from 'firebase/database';
 
 
 const changePasswordSchema = z.object({
@@ -64,7 +65,20 @@ export function ChangePasswordForm() {
     }
     
     try {
-      await changeOwnPassword(session.userId, values.currentPassword, values.newPassword);
+        const userRef = ref(db, `users/${session.userId}`);
+        const snapshot = await get(userRef);
+        const userData = snapshot.val();
+      
+        if (!userData) {
+          throw new Error('Pengguna tidak ditemukan.');
+        }
+      
+        if (userData.password !== values.currentPassword) {
+          throw new Error('Kata sandi saat ini tidak cocok.');
+        }
+      
+        await update(userRef, { password: values.newPassword });
+
       toast({
         title: 'Kata Sandi Diperbarui',
         description: 'Kata sandi Anda telah berhasil diubah.',
