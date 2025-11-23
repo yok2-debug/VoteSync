@@ -10,6 +10,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupLabel,
+  SidebarMenuSkeleton,
 } from '@/components/ui/sidebar';
 import { Logo } from '@/components/logo';
 import {
@@ -72,6 +73,8 @@ export function AdminSidebar() {
       await logoutAdmin();
     });
   };
+  
+  const hasPermission = (permission: string) => !!session?.permissions?.includes(permission as any);
 
   const menuItems = [
     { href: '/admin/dashboard', icon: <Home />, label: 'Dasbor', permission: 'dashboard' },
@@ -89,8 +92,6 @@ export function AdminSidebar() {
   
   const settingsItem = { href: '/admin/settings', icon: <Settings />, label: 'Pengaturan', permission: 'settings' };
 
-  const hasPermission = (permission: string) => !!session?.permissions?.includes(permission as any);
-
   return (
     <Sidebar>
       <SidebarHeader className="h-14 justify-center">
@@ -101,24 +102,16 @@ export function AdminSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {menuItems.filter(item => hasPermission(item.permission)).map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton
-                onClick={() => router.push(item.href)}
-                isActive={pathname.startsWith(item.href)}
-                tooltip={item.label}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-          
-          {hasPermission('users') && (
-            <SidebarGroup>
-              <SidebarGroupLabel>Manajemen Pengguna</SidebarGroupLabel>
-              {userManagementItems.map((item) => (
-                 <SidebarMenuItem key={item.href}>
+          {!session ? (
+            <>
+              <SidebarMenuSkeleton showIcon={true} />
+              <SidebarMenuSkeleton showIcon={true} />
+              <SidebarMenuSkeleton showIcon={true} />
+            </>
+          ) : (
+            <>
+              {menuItems.filter(item => hasPermission(item.permission)).map((item) => (
+                <SidebarMenuItem key={item.href}>
                   <SidebarMenuButton
                     onClick={() => router.push(item.href)}
                     isActive={pathname.startsWith(item.href)}
@@ -129,20 +122,38 @@ export function AdminSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-            </SidebarGroup>
-          )}
+              
+              {hasPermission('users') && (
+                <SidebarGroup>
+                  <SidebarGroupLabel>Manajemen Pengguna</SidebarGroupLabel>
+                  {userManagementItems.map((item) => (
+                    <SidebarMenuItem key={item.href}>
+                      <SidebarMenuButton
+                        onClick={() => router.push(item.href)}
+                        isActive={pathname.startsWith(item.href)}
+                        tooltip={item.label}
+                      >
+                        {item.icon}
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarGroup>
+              )}
 
-          {hasPermission(settingsItem.permission) && (
-             <SidebarMenuItem>
-              <SidebarMenuButton
-                onClick={() => router.push(settingsItem.href)}
-                isActive={pathname.startsWith(settingsItem.href)}
-                tooltip={settingsItem.label}
-              >
-                {settingsItem.icon}
-                <span>{settingsItem.label}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+              {hasPermission(settingsItem.permission) && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => router.push(settingsItem.href)}
+                    isActive={pathname.startsWith(settingsItem.href)}
+                    tooltip={settingsItem.label}
+                  >
+                    {settingsItem.icon}
+                    <span>{settingsItem.label}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+            </>
           )}
         </SidebarMenu>
       </SidebarContent>
