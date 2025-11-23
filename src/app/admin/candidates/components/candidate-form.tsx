@@ -275,7 +275,7 @@ export function CandidateForm({
                 <Controller
                   name="vision"
                   control={control}
-                  render={({ field }) => <MarkdownEditor {...field} />}
+                  render={({ field }) => <MarkdownEditor {...field} value={field.value ?? ''} />}
                 />
               </div>
               <div className="space-y-2 col-span-full">
@@ -283,7 +283,7 @@ export function CandidateForm({
                 <Controller
                   name="mission"
                   control={control}
-                  render={({ field }) => <MarkdownEditor {...field} />}
+                  render={({ field }) => <MarkdownEditor {...field} value={field.value ?? ''} />}
                 />
               </div>
           </CardContent>
