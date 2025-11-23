@@ -135,7 +135,8 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
 
   useEffect(() => {
     setHandlePrint(() => printHandler);
-  }, [printHandler]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [votersToPrint]);
 
   const handleSelectAll = (checked: boolean) => {
     const newSelection: Record<string, boolean> = {};
