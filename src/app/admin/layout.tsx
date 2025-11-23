@@ -84,7 +84,7 @@ export default function AdminLayout({
 
   }, [pathname, router, isDbLoading, roles]);
 
-  if (isDbLoading) {
+  if (isDbLoading || !isAuthorized) {
     return <Loading />;
   }
 
@@ -99,7 +99,7 @@ export default function AdminLayout({
             <h1 className="text-lg font-semibold md:hidden">VoteSync Admin</h1>
         </header>
         <main className="flex-1 p-4 sm:p-6">
-          {isAuthorized ? children : <Loading />}
+          {children}
         </main>
       </SidebarInset>
     </SidebarProvider>
