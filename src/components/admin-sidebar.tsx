@@ -40,7 +40,7 @@ import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { getAdminSession, deleteAdminSession } from '@/lib/session-client';
 import { useEffect, useState, useTransition } from 'react';
-import type { AdminSessionPayload } from '@/lib/types';
+import type { AdminSessionPayload, Permission } from '@/lib/types';
 import { useDatabase } from '@/context/database-context';
 
 export function AdminSidebar() {
@@ -88,7 +88,11 @@ export function AdminSidebar() {
   
   const settingsItem = { href: '/admin/settings', icon: <Settings />, label: 'Pengaturan', permission: 'settings' };
 
-  const hasPermission = (permission: string) => permissions.includes(permission);
+  const hasPermission = (permission: Permission) => permissions.includes(permission);
+
+  if (isDbLoading) {
+    return null; // or a loading skeleton
+  }
 
   return (
     <Sidebar>
@@ -100,7 +104,7 @@ export function AdminSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {menuItems.filter(item => hasPermission(item.permission)).map((item) => (
+          {menuItems.filter(item => hasPermission(item.permission as Permission)).map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 onClick={() => router.push(item.href)}
