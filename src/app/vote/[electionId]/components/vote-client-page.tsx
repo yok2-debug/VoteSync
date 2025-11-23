@@ -27,19 +27,8 @@ export function VoteClientPage() {
   const { electionId } = useParams() as { electionId: string };
   const { elections, voters, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
-  const [isSessionLoading, setIsSessionLoading] = useState(true);
   const [isValid, setIsValid] = useState(false);
   const router = useRouter();
-
-  useEffect(() => {
-    const voterSession = getVoterSession();
-    if (!voterSession?.voterId) {
-      router.replace('/');
-      return;
-    }
-    setSession(voterSession);
-    setIsSessionLoading(false);
-  }, [router]);
 
   const election = useMemo(() => {
     if (isDbLoading) return undefined;
@@ -52,26 +41,35 @@ export function VoteClientPage() {
   }, [voters, session, isDbLoading]);
 
   useEffect(() => {
-    if (isDbLoading || isSessionLoading) {
-      return; // Wait for all data to be loaded
+    const voterSession = getVoterSession();
+    if (!voterSession?.voterId) {
+      router.replace('/');
+      return;
+    }
+    setSession(voterSession);
+
+    // This effect now handles all validation logic and will only run on the client.
+    if (isDbLoading) {
+      return; // Wait for DB to load
     }
     
-    // Stricter check: ensure election and voter are loaded before validation
-    if (!election || !voter) {
-       if (!isDbLoading && !isSessionLoading) {
-         // If DB is not loading and we still can't find them, redirect.
-         router.replace('/vote');
-       }
+    // Once DB is loaded, find the election and voter
+    const currentElection = elections.find(e => e.id === electionId);
+    const currentVoter = voters.find(v => v.id === voterSession.voterId);
+    
+    if (!currentElection || !currentVoter) {
+       // If data still not found after loading, redirect.
+       router.replace('/vote');
        return;
     }
 
     const now = new Date();
-    const electionStarted = election.startDate ? new Date(election.startDate) <= now : true;
-    const electionEnded = election.endDate ? new Date(election.endDate) < now : false;
-    const hasVoted = voter.hasVoted?.[electionId];
+    const electionStarted = currentElection.startDate ? new Date(currentElection.startDate) <= now : true;
+    const electionEnded = currentElection.endDate ? new Date(currentElection.endDate) < now : false;
+    const hasVoted = currentVoter.hasVoted?.[electionId];
 
     if (
-      election.status !== 'active' || 
+      currentElection.status !== 'active' || 
       !electionStarted || 
       electionEnded || 
       hasVoted
@@ -82,7 +80,7 @@ export function VoteClientPage() {
 
     setIsValid(true);
 
-  }, [isDbLoading, isSessionLoading, election, voter, electionId, router]);
+  }, [isDbLoading, elections, voters, electionId, router]);
 
 
   if (!isValid || !election || !voter) {
