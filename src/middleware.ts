@@ -18,13 +18,13 @@ const routePermissions: Record<string, Permission> = {
 };
 
 async function hasPermission(session: AdminSessionPayload | null, path: string): Promise<boolean> {
-    if (!session || !Array.isArray(session.permissions) || session.permissions.length === 0) {
+    if (!session || !Array.isArray(session.permissions)) {
       return false;
     }
     
     // Izinkan akses ke halaman profil jika pengguna memiliki setidaknya satu izin
     if (path.startsWith('/admin/profile')) {
-      return true;
+      return session.permissions.length > 0;
     }
 
     for (const route in routePermissions) {
@@ -102,3 +102,5 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: ['/admin/:path*', '/admin-login'],
 };
+
+    

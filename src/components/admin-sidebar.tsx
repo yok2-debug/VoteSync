@@ -39,9 +39,9 @@ import {
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { getAdminSession, deleteAdminSession as deleteClientSession } from '@/lib/session-client';
-import { useEffect, useState, useTransition, useMemo } from 'react';
-import type { AdminSessionPayload, Role } from '@/lib/types';
+import { getAdminSession } from '@/lib/session-client';
+import { useEffect, useState, useMemo } from 'react';
+import type { AdminSessionPayload } from '@/lib/types';
 import { logoutAdmin } from '@/lib/session';
 import { useDatabase } from '@/context/database-context';
 
@@ -50,11 +50,12 @@ export function AdminSidebar() {
   const router = useRouter();
   const avatar = PlaceHolderImages.find(p => p.id === 'default-avatar');
   const [session, setSession] = useState<AdminSessionPayload | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isLoading, setIsLoading] = useState(true);
   const { adminUsers, roles } = useDatabase();
 
   useEffect(() => {
     setSession(getAdminSession());
+    setIsLoading(false);
   }, [pathname]);
 
   const currentUser = useMemo(() => {
@@ -68,10 +69,8 @@ export function AdminSidebar() {
     return role ? role.name : 'Unknown Role';
   }, [currentUser, roles]);
 
-  const handleLogout = () => {
-    startTransition(async () => {
-      await logoutAdmin();
-    });
+  const handleLogout = async () => {
+    await logoutAdmin();
   };
   
   const hasPermission = (permission: string) => !!session?.permissions?.includes(permission as any);
@@ -102,8 +101,10 @@ export function AdminSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {!session ? (
+          {isLoading ? (
             <>
+              <SidebarMenuSkeleton showIcon={true} />
+              <SidebarMenuSkeleton showIcon={true} />
               <SidebarMenuSkeleton showIcon={true} />
               <SidebarMenuSkeleton showIcon={true} />
               <SidebarMenuSkeleton showIcon={true} />
@@ -180,7 +181,7 @@ export function AdminSidebar() {
               <span>Ubah Kata Sandi</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500 focus:bg-red-500/10" disabled={isPending}>
+            <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500 focus:bg-red-500/10">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Keluar</span>
             </DropdownMenuItem>
@@ -190,3 +191,5 @@ export function AdminSidebar() {
     </Sidebar>
   );
 }
+
+    

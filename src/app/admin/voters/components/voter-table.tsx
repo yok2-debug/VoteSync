@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import type { Voter, Category, Election } from '@/lib/types';
 import {
   Table,
@@ -34,7 +34,6 @@ import { ResetPasswordDialog } from './reset-password-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Papa from 'papaparse';
 import { VoterImportDialog } from './voter-import-dialog';
-import { useReactToPrint } from 'react-to-print';
 import { VoterCard } from '../../voters/print/components/voter-card';
 import { db } from '@/lib/firebase';
 import { ref, update, set, runTransaction } from 'firebase/database';
@@ -69,34 +68,8 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const printComponentRef = useRef<HTMLDivElement>(null);
   const [votersToPrint, setVotersToPrint] = useState<EnrichedVoter[]>([]);
   
-  const handlePrint = useReactToPrint({
-    content: () => printComponentRef.current,
-    onBeforeGetContent: () => {
-      return new Promise<void>((resolve) => {
-        const selectedVoters = numSelected > 0 
-          ? enrichedVoters.filter(v => rowSelection[v.id]) 
-          : paginatedVoters;
-
-        if (selectedVoters.length === 0) {
-            toast({
-              variant: 'destructive',
-              title: 'Tidak ada pemilih untuk dicetak',
-              description: 'Silakan pilih beberapa pemilih atau pastikan ada pemilih di halaman saat ini.',
-            });
-            return;
-        }
-        setVotersToPrint(selectedVoters);
-        resolve();
-      });
-    },
-    onAfterPrint: () => {
-      setVotersToPrint([]);
-    },
-  });
-
   const categoryMap = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
   
   const enrichedVoters = useMemo(() => {
@@ -340,16 +313,17 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     await set(ref(db, `voters/${id}`), data);
   };
 
+  const handlePrint = () => {
+    // This function is intentionally left blank as useReactToPrint is removed
+    toast({
+        title: "Fungsi Cetak Dinonaktifkan",
+        description: "Fungsionalitas cetak kartu saat ini sedang dalam peninjauan.",
+    });
+  }
+
 
   return (
     <div className="space-y-4">
-       <div style={{ display: 'none' }}>
-        <div ref={printComponentRef}>
-          <div className="grid grid-cols-4 gap-2 p-4">
-             {votersToPrint.map(voter => <VoterCard key={voter.id} voter={voter} />)}
-          </div>
-        </div>
-      </div>
        <input
           type="file"
           ref={fileInputRef}
@@ -586,3 +560,5 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     </div>
   );
 }
+
+    
