@@ -2,6 +2,7 @@
 import 'easymde/dist/easymde.min.css';
 import { useMemo } from 'react';
 import dynamic from 'next/dynamic';
+import { Options } from 'easymde';
 
 interface MarkdownEditorProps {
   value: string;
@@ -14,7 +15,7 @@ export function MarkdownEditor({ value, onChange }: MarkdownEditorProps) {
     []
   );
 
-  const options = useMemo(() => {
+  const options = useMemo((): Options => {
     return {
       autofocus: false,
       spellChecker: false,
