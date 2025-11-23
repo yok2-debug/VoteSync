@@ -24,12 +24,12 @@ export default function RootLayout({
       </head>
       <body className={cn('min-h-screen bg-background font-body antialiased flex flex-col')}>
         <AppProvider>
-            <div className="flex-grow">
-              {children}
-            </div>
+          <div className="flex-grow">
+            {children}
+          </div>
+          <Toaster />
+          <Footer />
         </AppProvider>
-        <Toaster />
-        <Footer />
       </body>
     </html>
   );
