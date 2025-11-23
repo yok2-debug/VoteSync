@@ -69,6 +69,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const printComponentRef = useRef(null);
+  const [handlePrint, setHandlePrint] = useState<(() => void) | null>(null);
 
   const categoryMap = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
 
@@ -101,7 +102,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     return numSelected > 0 ? votersSource.filter(v => rowSelection[v.id]) : votersSource;
   }, [numSelected, paginatedVoters, filteredVoters, rowSelection]);
   
-  const handlePrint = useReactToPrint({
+   const printHandler = useReactToPrint({
       content: () => printComponentRef.current,
       onBeforeGetContent: () => {
         if (votersToPrint.length === 0) {
@@ -116,6 +117,10 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
         return Promise.resolve();
       },
   });
+
+  useEffect(() => {
+    setHandlePrint(() => printHandler);
+  }, [printHandler]);
 
   const handleSelectAll = (checked: boolean) => {
     const newSelection: Record<string, boolean> = {};
@@ -361,7 +366,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
           </Select>
         </form>
         <div className="flex gap-2 flex-wrap">
-           <Button variant="outline" onClick={handlePrint} type="button">
+           <Button variant="outline" onClick={handlePrint || undefined} type="button" disabled={!handlePrint}>
               <Printer className="mr-2 h-4 w-4" />
               Cetak Kartu
             </Button>
