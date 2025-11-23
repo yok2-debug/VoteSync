@@ -34,7 +34,6 @@ import { ResetPasswordDialog } from './reset-password-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Papa from 'papaparse';
 import { VoterImportDialog } from './voter-import-dialog';
-import { VoterCard } from '../../voters/print/components/voter-card';
 import { db } from '@/lib/firebase';
 import { ref, update, set, runTransaction } from 'firebase/database';
 import { useDatabase } from '@/context/database-context';
@@ -68,7 +67,6 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [votersToPrint, setVotersToPrint] = useState<EnrichedVoter[]>([]);
   
   const categoryMap = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
   
@@ -314,7 +312,6 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   };
 
   const handlePrint = () => {
-    // This function is intentionally left blank as useReactToPrint is removed
     toast({
         title: "Fungsi Cetak Dinonaktifkan",
         description: "Fungsionalitas cetak kartu saat ini sedang dalam peninjauan.",
@@ -392,7 +389,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-               <TableHead padding="checkbox" className="w-[50px]">
+               <TableHead className="w-[50px]">
                   <Checkbox
                     checked={paginatedVoters.length > 0 && numSelected === paginatedVoters.length}
                     onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
@@ -411,7 +408,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
             {paginatedVoters.length > 0 ? (
               paginatedVoters.map((voter) => (
                 <TableRow key={voter.id} data-state={rowSelection[voter.id] ? 'selected' : ''}>
-                  <TableCell padding="checkbox">
+                  <TableCell>
                     <Checkbox
                         checked={rowSelection[voter.id] || false}
                         onCheckedChange={(checked) => setRowSelection(prev => ({ ...prev, [voter.id]: !!checked }))}
