@@ -39,22 +39,33 @@ import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { getAdminSession, deleteAdminSession as deleteClientSession } from '@/lib/session-client';
-import { useEffect, useState, useTransition } from 'react';
-import type { AdminSessionPayload } from '@/lib/types';
+import { useEffect, useState, useTransition, useMemo } from 'react';
+import type { AdminSessionPayload, Role } from '@/lib/types';
 import { logoutAdmin } from '@/lib/session';
+import { useDatabase } from '@/context/database-context';
 
 export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { toast } = useToast();
   const avatar = PlaceHolderImages.find(p => p.id === 'default-avatar');
   const [session, setSession] = useState<AdminSessionPayload | null>(null);
   const [isPending, startTransition] = useTransition();
-  
+  const { adminUsers, roles } = useDatabase();
+
   useEffect(() => {
     setSession(getAdminSession());
   }, [pathname]);
 
+  const currentUser = useMemo(() => {
+    if (!session?.userId) return null;
+    return adminUsers.find(u => u.id === session.userId);
+  }, [session, adminUsers]);
+
+  const currentUserRole = useMemo(() => {
+    if (!currentUser?.roleId) return 'User Role';
+    const role = roles.find(r => r.id === currentUser.roleId);
+    return role ? role.name : 'Unknown Role';
+  }, [currentUser, roles]);
 
   const handleLogout = () => {
     startTransition(async () => {
@@ -145,7 +156,7 @@ export function AdminSidebar() {
               </Avatar>
               <div className="flex flex-col items-start">
                 <span className="text-sm font-medium">{session?.username || 'User'}</span>
-                <span className="text-xs text-muted-foreground">Admin Role</span>
+                <span className="text-xs text-muted-foreground">{currentUserRole}</span>
               </div>
               <ChevronDown className="ml-auto h-4 w-4" />
             </Button>

@@ -34,6 +34,7 @@ import { ref, remove } from 'firebase/database';
 import { UserFormDialog } from './user-form-dialog';
 import { ResetUserPasswordDialog } from './reset-user-password-dialog';
 import { Badge } from '@/components/ui/badge';
+import { useDatabase } from '@/context/database-context';
 
 type UserTableProps = {
   users: AdminUser[];
@@ -123,7 +124,7 @@ export function UserTable({ users, roles }: UserTableProps) {
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.username}</TableCell>
                   <TableCell>
-                    <Badge variant={user.role?.name === 'Super Admin' ? 'default' : 'secondary'}>
+                    <Badge variant={roleMap.get(user.roleId) === 'Super Admin' ? 'default' : 'secondary'}>
                       {roleMap.get(user.roleId) || 'Tidak diketahui'}
                     </Badge>
                   </TableCell>

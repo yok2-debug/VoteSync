@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import type { Election, Voter, Category } from '@/lib/types';
@@ -99,14 +97,13 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
     return voters.filter(v => allowedCategoryIds.has(v.category));
   }, [voters, categories, election.id]);
   
-  // Recalculate results from `votes` to ensure consistency. This is the single source of truth.
   const recalculatedResults = useMemo(() => {
     const results: Record<string, number> = {};
-    candidates.forEach(c => results[c.id] = 0); // Initialize all candidates with 0 votes
+    candidates.forEach(c => results[c.id] = 0);
 
     const allVotes = Object.values(election.votes || {});
     for (const candidateId of allVotes) {
-      if (results[candidateId] !== undefined) { // Check if the vote is for a valid, existing candidate
+      if (results[candidateId] !== undefined) {
         results[candidateId]++;
       }
     }
@@ -127,7 +124,8 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
   const DPT_female = useMemo(() => votersForThisElection.filter(v => v.gender === 'Perempuan').length, [votersForThisElection]);
   const DPT_total = votersForThisElection.length;
   
-  const votersDidNotVote_total = DPT_total - totalValidVotes;
+  const votersWhoUsedRights_total = votersWhoVoted_male + votersWhoVoted_female;
+  const votersDidNotVote_total = DPT_total - votersWhoUsedRights_total;
   const votersDidNotVote_male = DPT_male - votersWhoVoted_male;
   const votersDidNotVote_female = DPT_female - votersWhoVoted_female;
 
@@ -148,7 +146,7 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
         {`
           @page {
             size: A4;
-            margin: 1.5cm 1.5cm 2cm 1.5cm; /* bottom margin increased for footer */
+            margin: 1.5cm 1.5cm 2cm 1.5cm;
             
             @bottom-center {
               content: "Halaman " counter(page) " dari " counter(pages);
@@ -328,7 +326,7 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
                                     <TableCell>Jumlah Pemilih yang Menggunakan Hak Pilih</TableCell>
                                     <TableCell className="text-center font-bold">{votersWhoVoted_male}</TableCell>
                                     <TableCell className="text-center font-bold">{votersWhoVoted_female}</TableCell>
-                                    <TableCell className="text-center font-bold">{totalValidVotes}</TableCell>
+                                    <TableCell className="text-center font-bold">{votersWhoUsedRights_total}</TableCell>
                                 </TableRow>
                                  <TableRow>
                                     <TableCell>Jumlah Pemilih yang Tidak Menggunakan Hak Pilih</TableCell>
@@ -448,11 +446,3 @@ export function RecapitulationDisplay({ election, categories }: RecapitulationDi
     </div>
   );
 }
-
-    
-
-    
-
-    
-
-    

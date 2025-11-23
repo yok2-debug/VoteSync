@@ -9,11 +9,11 @@ import { useDatabase } from '@/context/database-context';
 import { getVoterSession } from '@/lib/session-client';
 import { useEffect, useState, useMemo } from 'react';
 import Loading from '../loading';
-import type { VoterSessionPayload, Election, Voter } from '@/lib/types';
+import type { VoterSessionPayload, Election, Voter, Category } from '@/lib/types';
 
 export default function VoterDashboardPage() {
   const router = useRouter();
-  const { voters, isLoading: isDbLoading } = useDatabase();
+  const { voters, elections, categories, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
 
@@ -32,10 +32,22 @@ export default function VoterDashboardPage() {
     return voters.find(v => v.id === session.voterId);
   }, [voters, session]);
   
+  const followedElections = useMemo(() => {
+    if (!voter || !voter.category || elections.length === 0 || categories.length === 0) return [];
+    
+    const voterCategory = categories.find(c => c.id === voter.category);
+    if (!voterCategory || !voterCategory.allowedElections) return [];
+
+    const followed = voterCategory.allowedElections.map(electionId => 
+      elections.find(e => e.id === electionId)
+    ).filter((e): e is Election => !!e);
+
+    return followed;
+  }, [voter, elections, categories]);
+
   const availableElections = useMemo(() => {
-    if (!voter) return [];
-    return voter.followedElections?.filter(e => e.status === 'active') || [];
-  }, [voter]);
+    return followedElections.filter(e => e.status === 'active');
+  }, [followedElections]);
   
   const isLoading = isDbLoading || isSessionLoading;
 

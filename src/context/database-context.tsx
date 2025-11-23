@@ -18,50 +18,12 @@ const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined
 
 export function DatabaseProvider({ children }: { children: ReactNode }) {
   const [elections, setElections] = useState<Election[]>([]);
-  const [rawVoters, setRawVoters] = useState<Voter[]>([]);
+  const [voters, setVoters] = useState<Voter[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
-  const [rawAdminUsers, setRawAdminUsers] = useState<AdminUser[]>([]);
+  const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  const enrichedVoters = useMemo(() => {
-    if (isLoading || rawVoters.length === 0 || categories.length === 0 || elections.length === 0) {
-      return rawVoters;
-    }
-
-    const categoriesMap = new Map(categories.map(c => [c.id, c]));
-    const electionsMap = new Map(elections.map(e => [e.id, e]));
-
-    return rawVoters.map(voter => {
-      const voterCategory = categoriesMap.get(voter.category);
-      if (!voterCategory || !voterCategory.allowedElections) {
-        return { ...voter, followedElections: [] };
-      }
-      const followedElections = voterCategory.allowedElections
-        .map(electionId => electionsMap.get(electionId))
-        .filter((e): e is Election => !!e);
-      
-      return { ...voter, followedElections };
-    });
-
-  }, [rawVoters, categories, elections, isLoading]);
-
-  const enrichedAdminUsers = useMemo(() => {
-    if (isLoading || rawAdminUsers.length === 0 || roles.length === 0) {
-        return rawAdminUsers;
-    }
-    const rolesMap = new Map(roles.map(r => [r.id, r]));
-    return rawAdminUsers.map(user => {
-        const role = rolesMap.get(user.roleId);
-        return {
-            ...user,
-            // Ensure user.role is never undefined to prevent crashes on access.
-            role: role || { id: 'unknown', name: 'Unknown Role', permissions: [] }
-        };
-    });
-  }, [rawAdminUsers, roles, isLoading]);
-
-
   useEffect(() => {
     const refs = {
       elections: ref(db, 'elections'),
@@ -103,12 +65,11 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
     };
 
     const unsubElections = createUnsubscriber(refs.elections, setElections, 'elections');
-    const unsubVoters = createUnsubscriber(refs.voters, setRawVoters, 'voters');
+    const unsubVoters = createUnsubscriber(refs.voters, setVoters, 'voters');
     const unsubCategories = createUnsubscriber(refs.categories, setCategories, 'categories');
     const unsubRoles = createUnsubscriber(refs.roles, setRoles, 'roles');
-    const unsubUsers = createUnsubscriber(refs.users, setRawAdminUsers, 'users');
+    const unsubUsers = createUnsubscriber(refs.users, setAdminUsers, 'users');
     
-    // Safety timeout in case Firebase listeners don't fire for empty nodes
     const timeout = setTimeout(() => {
       if(isLoading) {
         setIsLoading(false);
@@ -126,7 +87,7 @@ export function DatabaseProvider({ children }: { children: ReactNode }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const value = { elections, voters: enrichedVoters, categories, roles, adminUsers: enrichedAdminUsers, isLoading };
+  const value = { elections, voters, categories, roles, adminUsers, isLoading };
 
   return <DatabaseContext.Provider value={value}>{children}</DatabaseContext.Provider>;
 }
