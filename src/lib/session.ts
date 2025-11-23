@@ -15,7 +15,7 @@ export async function createAdminSession(payload: Omit<AdminSessionPayload, 'exp
   cookieStore.set(ADMIN_SESSION_COOKIE_NAME, JSON.stringify(session), {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    expires: expires.getTime(),
+    expires: expires,
     path: '/',
     sameSite: 'lax',
   });
