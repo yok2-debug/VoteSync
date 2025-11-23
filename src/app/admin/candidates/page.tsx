@@ -209,7 +209,6 @@ export default function CandidatesPage() {
                             width={40}
                             height={40}
                             className="rounded-full object-cover"
-                            data-ai-hint={'person portrait'}
                           />
                       </TableCell>
                       <TableCell className="font-medium">

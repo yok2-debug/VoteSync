@@ -70,9 +70,8 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
     const usersData = usersSnapshot.val();
     return usersData ? Object.keys(usersData).map(id => ({ id, ...usersData[id] })) : [];
   } catch (error) {
-    console.error("Error fetching/initializing admin users:", error);
-    // In case of error, return empty array to prevent app crash
-    return [];
+    // In case of error, re-throw it to be handled by the caller.
+    throw new Error('Failed to fetch or initialize admin users.');
   }
 }
 
@@ -91,8 +90,7 @@ export async function getRoles(): Promise<Role[]> {
         const data = snapshot.val();
         return data ? Object.keys(data).map(id => ({ id, ...data[id] })) : [];
     } catch (error) {
-        console.error("Error fetching roles:", error);
-        return [];
+        throw new Error('Failed to fetch roles.');
     }
 }
 

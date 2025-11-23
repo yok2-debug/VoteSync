@@ -37,7 +37,6 @@ import {
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
 import { Button } from './ui/button';
-import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { getAdminSession } from '@/lib/session-client';
 import { useEffect, useState, useMemo } from 'react';
@@ -163,7 +162,7 @@ export function AdminSidebar() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex h-12 w-full items-center justify-start gap-2 px-2">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={avatar?.imageUrl} alt="Admin" data-ai-hint={avatar?.imageHint} />
+                <AvatarImage src={avatar?.imageUrl} alt="Admin" />
                 <AvatarFallback>{session?.username?.[0]?.toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-start">
@@ -191,5 +190,3 @@ export function AdminSidebar() {
     </Sidebar>
   );
 }
-
-    
