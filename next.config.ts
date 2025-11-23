@@ -1,7 +1,7 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  output: 'export',
+  /* config options here */
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -39,6 +39,9 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     // Kosongkan blok ini jika tidak ada opsi eksperimental lain
+    allowedDevOrigins: [
+        "https://9000-firebase-studio-1763527783793.cluster-iktsryn7xnhpexlu6255bftka4.cloudworkstations.dev"
+    ]
   },
 };
 

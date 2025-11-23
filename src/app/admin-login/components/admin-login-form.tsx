@@ -18,15 +18,17 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { getAdminUsers, getRoles } from '@/lib/data';
 import { setAdminSession } from '@/lib/session-client';
-import type { Permission, AdminUser } from '@/lib/types';
-import { useDatabase } from '@/context/database-context';
+import { createAdminSession } from '@/lib/session';
+import type { Permission } from '@/lib/types';
 
 const adminLoginSchema = z.object({
   username: z.string().min(1, { message: 'Username is required.' }),
   password: z.string().min(1, { message: 'Password is required.' }),
 });
 
+// Urutan prioritas halaman tujuan setelah login
 const permissionRedirectOrder: { permission: Permission; path: string }[] = [
     { permission: 'dashboard', path: '/admin/dashboard' },
     { permission: 'recapitulation', path: '/admin/recapitulation' },
@@ -47,7 +49,7 @@ function getRedirectPath(permissions: Permission[]): string | null {
             return route.path;
         }
     }
-    return null; 
+    return null; // Tidak ada rute yang cocok ditemukan
 }
 
 
@@ -55,7 +57,6 @@ export function AdminLoginForm() {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { adminUsers, roles } = useDatabase();
 
   const form = useForm<z.infer<typeof adminLoginSchema>>({
     resolver: zodResolver(adminLoginSchema),
@@ -65,7 +66,8 @@ export function AdminLoginForm() {
   async function handleAdminLogin(values: z.infer<typeof adminLoginSchema>) {
     setIsSubmitting(true);
     try {
-        const user = adminUsers.find(u => u.username === values.username);
+        const [users, roles] = await Promise.all([getAdminUsers(), getRoles()]);
+        const user = users.find(u => u.username === values.username);
         
         if (!user || user.password !== values.password) {
           throw new Error('Nama pengguna atau kata sandi tidak valid.');
@@ -79,9 +81,11 @@ export function AdminLoginForm() {
         const sessionPayload = {
             userId: user.id,
             username: user.username,
-            roleId: user.roleId,
+            permissions: role.permissions,
         };
 
+        await createAdminSession(sessionPayload);
+        // Juga simpan salinan ke localStorage untuk akses sisi klien
         setAdminSession(sessionPayload);
         
         const redirectPath = getRedirectPath(role.permissions);
@@ -138,7 +142,7 @@ export function AdminLoginForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={isSubmitting || adminUsers.length === 0}>
+        <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Login as Admin
         </Button>

@@ -1,15 +1,47 @@
 
 'use client';
-import type { Voter, Election } from '@/lib/types';
+import type { Voter } from '@/lib/types';
 
 interface VoterCardProps {
-  voter: Voter & { followedElections?: Election[] };
+  voter: Voter;
 }
 
 const formatBirthDate = (dateString?: string): string => {
   if (!dateString || dateString.trim() === '') return '-';
-  // Return as is, assuming it's in DD-MM-YYYY format from the source.
-  return dateString;
+  try {
+    // Try to handle various formats by replacing separators with a standard one.
+    const sanitizedDate = dateString.replace(/[.\/]/g, '-');
+    const parts = sanitizedDate.split('-');
+
+    let date;
+    // Guess format based on parts
+    if (parts.length === 3) {
+      if (parts[0].length === 4) { // YYYY-MM-DD
+        date = new Date(`${parts[0]}-${parts[1]}-${parts[2]}T00:00:00Z`);
+      } else if (parts[2].length === 4) { // DD-MM-YYYY or MM-DD-YYYY
+         // Assuming DD-MM-YYYY as it's a common local format
+        date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00Z`);
+      }
+    }
+    
+    // If parsing is still weird, try the native parser as a last resort
+    if (!date || isNaN(date.getTime())) {
+        date = new Date(dateString);
+    }
+    
+    if (isNaN(date.getTime())) {
+      // If it's still not a valid date, return original string
+      return dateString;
+    }
+
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const year = date.getUTCFullYear();
+    return `${day}-${month}-${year}`;
+  } catch (error) {
+    // If any error occurs, return the original string.
+    return dateString;
+  }
 };
 
 

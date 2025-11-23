@@ -23,21 +23,22 @@ export default function RealCountPage() {
             <h1 className="text-3xl font-bold tracking-tight">Real Count Pemilihan</h1>
             <p className="text-sm text-muted-foreground">Pantauan hasil perolehan suara secara real-time.</p>
           </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {activeElections.length > 0 ? (
-                activeElections.map(election => (
-                  <RealCountDisplay
-                    key={election.id}
-                    election={election}
-                    categories={categories}
-                  />
-                ))
-              ) : (
-                <div className="col-span-full text-center py-10">
-                  <p className="text-muted-foreground">Tidak ada pemilihan yang sedang aktif saat ini.</p>
-                </div>
-              )}
-            </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {activeElections.length > 0 ? (
+              activeElections.map(election => (
+                <RealCountDisplay
+                  key={election.id}
+                  election={election}
+                  categories={categories}
+                />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-10">
+                <p className="text-muted-foreground">Tidak ada pemilihan yang sedang aktif saat ini.</p>
+              </div>
+            )}
+          </div>
         </div>
       </main>
     </>

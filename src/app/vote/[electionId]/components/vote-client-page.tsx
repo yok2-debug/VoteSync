@@ -27,9 +27,19 @@ export function VoteClientPage() {
   const { electionId } = useParams() as { electionId: string };
   const { elections, voters, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
+  const [isSessionLoading, setIsSessionLoading] = useState(true);
   const [isValid, setIsValid] = useState(false);
-  const [isChecking, setIsChecking] = useState(true);
   const router = useRouter();
+
+  useEffect(() => {
+    const voterSession = getVoterSession();
+    if (!voterSession?.voterId) {
+      router.replace('/');
+      return;
+    }
+    setSession(voterSession);
+    setIsSessionLoading(false);
+  }, [router]);
 
   const election = useMemo(() => {
     if (isDbLoading) return undefined;
@@ -42,48 +52,40 @@ export function VoteClientPage() {
   }, [voters, session, isDbLoading]);
 
   useEffect(() => {
-    // This effect handles all validation logic and will only run on the client.
-    const voterSession = getVoterSession();
-    if (!voterSession?.voterId) {
-      router.replace('/');
-      return;
-    }
-    setSession(voterSession);
-
-    if (isDbLoading) {
-      return; // Wait for DB to load
+    if (isDbLoading || isSessionLoading) {
+      return; // Wait for all data to be loaded
     }
     
-    // Once DB is loaded, find the election and voter for validation
-    const currentElection = elections.find(e => e.id === electionId);
-    const currentVoter = voters.find(v => v.id === voterSession.voterId);
-    
-    if (!currentElection || !currentVoter) {
-       router.replace('/vote');
+    // Stricter check: ensure election and voter are loaded before validation
+    if (!election || !voter) {
+       if (!isDbLoading && !isSessionLoading) {
+         // If DB is not loading and we still can't find them, redirect.
+         router.replace('/vote');
+       }
        return;
     }
 
     const now = new Date();
-    const electionStarted = currentElection.startDate ? new Date(currentElection.startDate) <= now : true;
-    const electionEnded = currentElection.endDate ? new Date(currentElection.endDate) < now : false;
-    const hasVoted = currentVoter.hasVoted?.[electionId];
+    const electionStarted = election.startDate ? new Date(election.startDate) <= now : true;
+    const electionEnded = election.endDate ? new Date(election.endDate) < now : false;
+    const hasVoted = voter.hasVoted?.[electionId];
 
     if (
-      currentElection.status === 'active' && 
-      electionStarted && 
-      !electionEnded && 
-      !hasVoted
+      election.status !== 'active' || 
+      !electionStarted || 
+      electionEnded || 
+      hasVoted
     ) {
-      setIsValid(true);
-    } else {
       router.replace('/vote');
+      return;
     }
-    setIsChecking(false);
 
-  }, [isDbLoading, elections, voters, electionId, router]);
+    setIsValid(true);
+
+  }, [isDbLoading, isSessionLoading, election, voter, electionId, router]);
 
 
-  if (isChecking || !isValid || !election || !voter) {
+  if (!isValid || !election || !voter) {
     return <Loading />; 
   }
   
@@ -118,7 +120,7 @@ export function VoteClientPage() {
                        <Dialog>
                           <DialogTrigger asChild>
                             <img
-                              src={candidate.photo || defaultAvatar?.imageUrl}
+                              src={candidate.photo || defaultAvatar?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
                               alt={`Photo of ${candidate.name}`}
                               width={160}
                               height={160}
@@ -133,7 +135,7 @@ export function VoteClientPage() {
                             </DialogHeader>
                             <DialogClose asChild>
                               <img
-                                  src={candidate.photo || defaultAvatar?.imageUrl}
+                                  src={candidate.photo || defaultAvatar?.imageUrl || 'https://picsum.photos/seed/default/400/400'}
                                   alt={`Photo of ${candidate.name}`}
                                   className="w-full h-auto rounded-md cursor-pointer"
                               />

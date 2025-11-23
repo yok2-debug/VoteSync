@@ -123,7 +123,7 @@ export function UserTable({ users, roles }: UserTableProps) {
                 <TableRow key={user.id}>
                   <TableCell className="font-medium">{user.username}</TableCell>
                   <TableCell>
-                    <Badge variant={roleMap.get(user.roleId) === 'Super Admin' ? 'default' : 'secondary'}>
+                    <Badge variant={user.role?.name === 'Super Admin' ? 'default' : 'secondary'}>
                       {roleMap.get(user.roleId) || 'Tidak diketahui'}
                     </Badge>
                   </TableCell>

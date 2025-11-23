@@ -17,8 +17,7 @@ import { useEffect, useState } from 'react';
 import type { AdminUser } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { db } from '@/lib/firebase';
-import { ref, update } from 'firebase/database';
+import { updateAdminPassword } from '@/lib/data';
 
 const passwordSchema = z.object({
   password: z.string().min(6, { message: 'Kata sandi baru minimal 6 karakter.' }),
@@ -63,7 +62,7 @@ export function ResetUserPasswordDialog({
   const onSubmit: SubmitHandler<PasswordFormData> = async (data) => {
     setIsSubmitting(true);
     try {
-      await update(ref(db, `users/${user.id}`), { password: data.password });
+      await updateAdminPassword(user.id, data.password);
       toast({
         title: 'Kata Sandi Berhasil Direset',
         description: `Kata sandi untuk ${user.username} telah diperbarui.`,

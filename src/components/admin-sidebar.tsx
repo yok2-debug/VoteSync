@@ -38,10 +38,10 @@ import {
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
-import { getAdminSession, deleteAdminSession } from '@/lib/session-client';
-import { useEffect, useState, useTransition, useMemo } from 'react';
-import type { AdminSessionPayload, Permission } from '@/lib/types';
-import { useDatabase } from '@/context/database-context';
+import { getAdminSession, deleteAdminSession as deleteClientSession } from '@/lib/session-client';
+import { useEffect, useState, useTransition } from 'react';
+import type { AdminSessionPayload } from '@/lib/types';
+import { logoutAdmin } from '@/lib/session';
 
 export function AdminSidebar() {
   const pathname = usePathname();
@@ -50,27 +50,15 @@ export function AdminSidebar() {
   const avatar = PlaceHolderImages.find(p => p.id === 'default-avatar');
   const [session, setSession] = useState<AdminSessionPayload | null>(null);
   const [isPending, startTransition] = useTransition();
-  const { roles, isLoading: isDbLoading } = useDatabase();
   
   useEffect(() => {
-    const currentSession = getAdminSession();
-    setSession(currentSession);
+    setSession(getAdminSession());
   }, [pathname]);
-
-  const userRole = useMemo(() => {
-    if (isDbLoading || !session) return null;
-    return roles.find(r => r.id === session.roleId);
-  }, [roles, session, isDbLoading]);
-
-  const permissions = useMemo(() => userRole?.permissions || [], [userRole]);
 
 
   const handleLogout = () => {
-    startTransition(() => {
-        deleteAdminSession();
-        toast({ title: "Logout Berhasil", description: "Anda telah berhasil keluar." });
-        router.push('/admin-login');
-        router.refresh();
+    startTransition(async () => {
+      await logoutAdmin();
     });
   };
 
@@ -90,11 +78,7 @@ export function AdminSidebar() {
   
   const settingsItem = { href: '/admin/settings', icon: <Settings />, label: 'Pengaturan', permission: 'settings' };
 
-  const hasPermission = (permission: Permission) => permissions.includes(permission);
-
-  if (isDbLoading) {
-    return null; // or a loading skeleton
-  }
+  const hasPermission = (permission: string) => session?.permissions.includes(permission as any);
 
   return (
     <Sidebar>
@@ -106,7 +90,7 @@ export function AdminSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {menuItems.filter(item => hasPermission(item.permission as Permission)).map((item) => (
+          {menuItems.filter(item => hasPermission(item.permission)).map((item) => (
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 onClick={() => router.push(item.href)}
@@ -137,7 +121,7 @@ export function AdminSidebar() {
             </SidebarGroup>
           )}
 
-          {hasPermission(settingsItem.permission as Permission) && (
+          {hasPermission(settingsItem.permission) && (
              <SidebarMenuItem>
               <SidebarMenuButton
                 onClick={() => router.push(settingsItem.href)}
@@ -161,7 +145,7 @@ export function AdminSidebar() {
               </Avatar>
               <div className="flex flex-col items-start">
                 <span className="text-sm font-medium">{session?.username || 'User'}</span>
-                <span className="text-xs text-muted-foreground">{userRole?.name || 'Admin Role'}</span>
+                <span className="text-xs text-muted-foreground">Admin Role</span>
               </div>
               <ChevronDown className="ml-auto h-4 w-4" />
             </Button>

@@ -6,10 +6,6 @@ import { UserTable } from './components/user-table';
 export default function UsersPage() {
   const { adminUsers, roles, isLoading } = useDatabase();
 
-  if (isLoading) {
-    return <Loading />;
-  }
-
   return (
     <div className="flex flex-col gap-6">
       <div>
