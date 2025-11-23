@@ -10,8 +10,9 @@ const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days
 export async function createAdminSession(payload: Omit<AdminSessionPayload, 'expires'>) {
   const expires = new Date(Date.now() + SESSION_DURATION);
   const session = { ...payload, expires: expires.getTime() };
+  const cookieStore = cookies();
 
-  cookies().set(ADMIN_SESSION_COOKIE_NAME, JSON.stringify(session), {
+  cookieStore.set(ADMIN_SESSION_COOKIE_NAME, JSON.stringify(session), {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     expires: expires.getTime(),
@@ -22,11 +23,13 @@ export async function createAdminSession(payload: Omit<AdminSessionPayload, 'exp
 
 
 export async function deleteAdminSession() {
-  cookies().delete(ADMIN_SESSION_COOKIE_NAME);
+  const cookieStore = cookies();
+  cookieStore.delete(ADMIN_SESSION_COOKIE_NAME);
 }
 
 
 export async function logoutAdmin() {
-  cookies().delete(ADMIN_SESSION_COOKIE_NAME);
+  const cookieStore = cookies();
+  cookieStore.delete(ADMIN_SESSION_COOKIE_NAME);
   redirect('/admin-login');
 }
