@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
-import { DatabaseProvider } from '@/context/database-context';
+import { AppProvider } from '@/context/app-provider';
 import { Footer } from '@/components/footer';
 
 export const metadata: Metadata = {
@@ -23,11 +23,11 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className={cn('min-h-screen bg-background font-body antialiased flex flex-col')}>
-        <DatabaseProvider>
+        <AppProvider>
             <div className="flex-grow">
               {children}
             </div>
-        </DatabaseProvider>
+        </AppProvider>
         <Toaster />
         <Footer />
       </body>

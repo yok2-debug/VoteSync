@@ -40,7 +40,7 @@ import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { getAdminSession, deleteAdminSession } from '@/lib/session-client';
 import { useEffect, useState, useTransition, useMemo } from 'react';
-import type { AdminSessionPayload, Permission, Role } from '@/lib/types';
+import type { AdminSessionPayload, Permission } from '@/lib/types';
 import { useDatabase } from '@/context/database-context';
 
 export function AdminSidebar() {
