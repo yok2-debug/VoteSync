@@ -39,8 +39,8 @@ import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { getAdminSession, deleteAdminSession } from '@/lib/session-client';
-import { useEffect, useState, useTransition } from 'react';
-import type { AdminSessionPayload, Permission } from '@/lib/types';
+import { useEffect, useState, useTransition, useMemo } from 'react';
+import type { AdminSessionPayload, Permission, Role } from '@/lib/types';
 import { useDatabase } from '@/context/database-context';
 
 export function AdminSidebar() {
@@ -49,18 +49,20 @@ export function AdminSidebar() {
   const { toast } = useToast();
   const avatar = PlaceHolderImages.find(p => p.id === 'default-avatar');
   const [session, setSession] = useState<AdminSessionPayload | null>(null);
-  const [permissions, setPermissions] = useState<string[]>([]);
   const [isPending, startTransition] = useTransition();
   const { roles, isLoading: isDbLoading } = useDatabase();
   
   useEffect(() => {
     const currentSession = getAdminSession();
     setSession(currentSession);
-    if(currentSession && !isDbLoading && roles.length > 0) {
-      const userRole = roles.find(r => r.id === currentSession.roleId);
-      setPermissions(userRole?.permissions || []);
-    }
-  }, [pathname, isDbLoading, roles]);
+  }, [pathname]);
+
+  const userRole = useMemo(() => {
+    if (isDbLoading || !session) return null;
+    return roles.find(r => r.id === session.roleId);
+  }, [roles, session, isDbLoading]);
+
+  const permissions = useMemo(() => userRole?.permissions || [], [userRole]);
 
 
   const handleLogout = () => {
@@ -135,7 +137,7 @@ export function AdminSidebar() {
             </SidebarGroup>
           )}
 
-          {hasPermission(settingsItem.permission) && (
+          {hasPermission(settingsItem.permission as Permission) && (
              <SidebarMenuItem>
               <SidebarMenuButton
                 onClick={() => router.push(settingsItem.href)}
@@ -159,7 +161,7 @@ export function AdminSidebar() {
               </Avatar>
               <div className="flex flex-col items-start">
                 <span className="text-sm font-medium">{session?.username || 'User'}</span>
-                <span className="text-xs text-muted-foreground">{roles.find(r => r.id === session?.roleId)?.name || 'Admin Role'}</span>
+                <span className="text-xs text-muted-foreground">{userRole?.name || 'Admin Role'}</span>
               </div>
               <ChevronDown className="ml-auto h-4 w-4" />
             </Button>

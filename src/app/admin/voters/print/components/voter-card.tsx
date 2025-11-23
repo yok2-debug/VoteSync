@@ -1,9 +1,9 @@
 
 'use client';
-import type { Voter } from '@/lib/types';
+import type { Voter, Election } from '@/lib/types';
 
 interface VoterCardProps {
-  voter: Voter;
+  voter: Voter & { followedElections?: Election[] };
 }
 
 const formatBirthDate = (dateString?: string): string => {

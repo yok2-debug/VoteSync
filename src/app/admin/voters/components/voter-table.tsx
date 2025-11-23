@@ -96,11 +96,26 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
 
   const selectedVoterIds = useMemo(() => Object.keys(rowSelection).filter(id => rowSelection[id]), [rowSelection]);
   const numSelected = selectedVoterIds.length;
-
+  
   const votersToPrint = useMemo(() => {
-    const votersSource = numSelected > 0 ? filteredVoters : paginatedVoters;
-    return numSelected > 0 ? votersSource.filter(v => rowSelection[v.id]) : votersSource;
-  }, [numSelected, paginatedVoters, filteredVoters, rowSelection]);
+    const categoriesMap = new Map(categories.map(c => [c.id, c]));
+    const electionsMap = new Map(elections.map(e => [e.id, e]));
+
+    const getFollowedElections = (voter: Voter) => {
+        const voterCategory = categoriesMap.get(voter.category);
+        if (!voterCategory || !voterCategory.allowedElections) {
+            return [];
+        }
+        return voterCategory.allowedElections
+            .map(electionId => electionsMap.get(electionId))
+            .filter((e): e is Election => !!e);
+    }
+    
+    const sourceVoters = numSelected > 0 ? voters.filter(v => rowSelection[v.id]) : paginatedVoters;
+    
+    return sourceVoters.map(v => ({...v, followedElections: getFollowedElections(v)}));
+
+  }, [numSelected, paginatedVoters, rowSelection, voters, categories, elections]);
   
   const printHandler = useReactToPrint({
     content: () => printComponentRef.current,

@@ -14,7 +14,7 @@ import { ClientOnly } from '@/components/ui/client-only';
 
 export default function VoterDashboardPage() {
   const router = useRouter();
-  const { voters, isLoading: isDbLoading } = useDatabase();
+  const { voters, elections, categories, isLoading: isDbLoading } = useDatabase();
   const [session, setSession] = useState<VoterSessionPayload | null>(null);
   const [isSessionLoading, setIsSessionLoading] = useState(true);
 
@@ -34,9 +34,21 @@ export default function VoterDashboardPage() {
   }, [voters, session]);
   
   const availableElections = useMemo(() => {
-    if (!voter) return [];
-    return voter.followedElections?.filter(e => e.status === 'active') || [];
-  }, [voter]);
+    if (!voter || isDbLoading) return [];
+    
+    const categoriesMap = new Map(categories.map(c => [c.id, c]));
+    const electionsMap = new Map(elections.map(e => [e.id, e]));
+
+    const voterCategory = categoriesMap.get(voter.category);
+    if (!voterCategory || !voterCategory.allowedElections) {
+        return [];
+    }
+
+    return voterCategory.allowedElections
+        .map(electionId => electionsMap.get(electionId))
+        .filter((e): e is Election => !!e && e.status === 'active');
+        
+  }, [voter, categories, elections, isDbLoading]);
   
   const isLoading = isDbLoading || isSessionLoading;
 

@@ -33,7 +33,6 @@ export interface Voter {
   category: string; // categoryId
   password?: string;
   hasVoted?: Record<string, boolean>; // { [electionId]: true }
-  followedElections?: Election[];
   nik?: string;
   birthPlace?: string;
   birthDate?: string; // dd-mm-yyyy
@@ -60,7 +59,6 @@ export interface AdminUser {
   username: string;
   password?: string;
   roleId: string;
-  role?: Role; // Populated client-side
 }
 
 export interface AdminSessionPayload {
