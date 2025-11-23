@@ -89,7 +89,7 @@ export function AdminSidebar() {
   
   const settingsItem = { href: '/admin/settings', icon: <Settings />, label: 'Pengaturan', permission: 'settings' };
 
-  const hasPermission = (permission: string) => session?.permissions.includes(permission as any);
+  const hasPermission = (permission: string) => !!session?.permissions?.includes(permission as any);
 
   return (
     <Sidebar>
