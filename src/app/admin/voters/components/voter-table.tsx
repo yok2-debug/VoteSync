@@ -34,13 +34,13 @@ import { ResetPasswordDialog } from './reset-password-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Papa from 'papaparse';
 import { VoterImportDialog } from './voter-import-dialog';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { VoterCard } from '../../voters/print/components/voter-card';
 import { db } from '@/lib/firebase';
 import { ref, update, set, runTransaction } from 'firebase/database';
 import { useDatabase } from '@/context/database-context';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BulkUpdateCategoryDialog } from './bulk-update-category-dialog';
+import { useReactToPrint } from 'react-to-print';
+import { PrintLayout } from '../print/components/print-layout';
 
 type VoterTableProps = {
   voters: Voter[];
@@ -65,10 +65,10 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   const [selectedVoter, setSelectedVoter] = useState<Voter | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
-  const [isPrinting, setIsPrinting] = useState(false);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const printComponentRef = useRef(null);
 
   const categoryMap = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
 
@@ -96,6 +96,27 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   const selectedVoterIds = useMemo(() => Object.keys(rowSelection).filter(id => rowSelection[id]), [rowSelection]);
   const numSelected = selectedVoterIds.length;
 
+  const votersToPrint = useMemo(() => {
+    const votersSource = numSelected > 0 ? filteredVoters : paginatedVoters;
+    return numSelected > 0 ? votersSource.filter(v => rowSelection[v.id]) : votersSource;
+  }, [numSelected, paginatedVoters, filteredVoters, rowSelection]);
+  
+  const handlePrint = useReactToPrint({
+      content: () => printComponentRef.current,
+      onBeforeGetContent: () => {
+        if (votersToPrint.length === 0) {
+          toast({
+            variant: 'destructive',
+            title: 'Tidak ada pemilih untuk dicetak',
+            description: 'Tidak ada pemilih dalam daftar atau pilihan saat ini.',
+          });
+          return Promise.reject();
+        }
+        toast({ title: 'Menyiapkan cetak...', description: `Mencetak ${votersToPrint.length} kartu pemilih...` });
+        return Promise.resolve();
+      },
+  });
+
   const handleSelectAll = (checked: boolean) => {
     const newSelection: Record<string, boolean> = {};
     if (checked) {
@@ -103,86 +124,6 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     }
     setRowSelection(newSelection);
   };
-  
-  const handlePrint = async () => {
-    const votersToPrint = numSelected > 0 ? paginatedVoters.filter(v => rowSelection[v.id]) : paginatedVoters;
-    
-    if (votersToPrint.length === 0) {
-      toast({
-        variant: 'destructive',
-        title: 'Tidak ada pemilih untuk dicetak',
-        description: 'Tidak ada pemilih dalam daftar atau pilihan saat ini.',
-      });
-      return;
-    }
-
-    setIsPrinting(true);
-    toast({ title: 'Menyiapkan cetak...', description: `Mencetak ${votersToPrint.length} kartu pemilih...` });
-
-    try {
-      const printContent = renderToStaticMarkup(
-        <div className="grid grid-cols-4 gap-2">
-          {votersToPrint.map(voter => <VoterCard key={voter.id} voter={voter} />)}
-        </div>
-      );
-
-      const iframe = document.createElement('iframe');
-      iframe.style.position = 'absolute';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      
-      document.body.appendChild(iframe);
-
-      const doc = iframe.contentWindow?.document;
-      if (!doc) {
-        throw new Error('Tidak dapat mengakses dokumen iframe.');
-      }
-
-      doc.open();
-      doc.write(`
-        <html>
-          <head>
-            <title>Cetak Kartu Pemilih</title>
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css">
-            <style>
-              @page {
-                size: A4;
-                margin: 1cm;
-              }
-              body {
-                background-color: #fff !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-              * {
-                box-shadow: none !important;
-                text-shadow: none !important;
-              }
-            </style>
-          </head>
-          <body>
-            ${printContent}
-          </body>
-        </html>
-      `);
-      doc.close();
-      
-      iframe.contentWindow?.focus();
-
-      // Use a timeout to ensure content is fully rendered before printing
-      setTimeout(() => {
-        iframe.contentWindow?.print();
-        document.body.removeChild(iframe);
-        setIsPrinting(false);
-      }, 500);
-
-    } catch (e) {
-      toast({ variant: 'destructive', title: 'Cetak gagal', description: e instanceof Error ? e.message : 'Tidak dapat menghasilkan konten cetak.'});
-      setIsPrinting(false);
-    }
-  };
-
 
   const handleExportTemplate = () => {
     const csvContent = 'id,nik,name,birthPlace,birthDate,gender,address,category,password\n';
@@ -387,6 +328,9 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
 
   return (
     <div className="space-y-4">
+       <div style={{ display: "none" }}>
+          <PrintLayout ref={printComponentRef} voters={votersToPrint} />
+        </div>
        <input
           type="file"
           ref={fileInputRef}
@@ -417,8 +361,8 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
           </Select>
         </form>
         <div className="flex gap-2 flex-wrap">
-           <Button variant="outline" onClick={handlePrint} type="button" disabled={isPrinting}>
-              {isPrinting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
+           <Button variant="outline" onClick={handlePrint} type="button">
+              <Printer className="mr-2 h-4 w-4" />
               Cetak Kartu
             </Button>
            <Button variant="outline" onClick={handleExportTemplate}>
