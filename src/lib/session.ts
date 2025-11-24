@@ -11,9 +11,11 @@ export async function createAdminSession(payload: Omit<AdminSessionPayload, 'exp
   const expires = new Date(Date.now() + SESSION_DURATION);
   const session = { ...payload, expires: expires.getTime() };
   
-  const cookieStore = cookies();
+  // 1. Await cookies() untuk mendapatkan objek cookie yang bisa dimodifikasi
+  const cookieStore = await cookies();
 
-  await cookieStore.set(ADMIN_SESSION_COOKIE_NAME, JSON.stringify(session), {
+  // 2. Gunakan cookieStore yang sudah di-await untuk mengatur cookie
+  cookieStore.set(ADMIN_SESSION_COOKIE_NAME, JSON.stringify(session), {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     expires: expires,
@@ -23,12 +25,20 @@ export async function createAdminSession(payload: Omit<AdminSessionPayload, 'exp
 }
 
 export async function deleteAdminSession() {
-  const cookieStore = cookies();
-  await cookieStore.delete(ADMIN_SESSION_COOKIE_NAME);
+  // 1. Await cookies() di sini juga
+  const cookieStore = await cookies();
+  
+  // 2. Hapus cookie
+  cookieStore.delete(ADMIN_SESSION_COOKIE_NAME);
 }
 
 export async function logoutAdmin() {
-  const cookieStore = cookies();
-  await cookieStore.delete(ADMIN_SESSION_COOKIE_NAME);
+  // 1. Await cookies() di sini juga
+  const cookieStore = await cookies();
+
+  // 2. Hapus cookie
+  cookieStore.delete(ADMIN_SESSION_COOKIE_NAME);
+  
+  // 3. Redirect setelah cookie dihapus
   redirect('/admin-login');
 }
