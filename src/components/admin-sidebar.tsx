@@ -12,9 +12,7 @@ import {
   SidebarGroupLabel,
   SidebarMenuSkeleton,
 } from '@/components/ui/sidebar';
-import { Logo } from '@/components/logo';
 import {
-  BarChart2,
   Box,
   ChevronDown,
   FileText,
@@ -43,6 +41,7 @@ import { useEffect, useState, useMemo } from 'react';
 import type { AdminSessionPayload } from '@/lib/types';
 import { logoutAdmin } from '@/lib/session';
 import { useDatabase } from '@/context/database-context';
+import Image from 'next/image';
 
 export function AdminSidebar() {
   const pathname = usePathname();
@@ -94,7 +93,7 @@ export function AdminSidebar() {
     <Sidebar>
       <SidebarHeader className="h-14 justify-center">
         <div className="flex items-center gap-2">
-          <Logo />
+          <Image src="/logo-votesync.png" alt="VoteSync Logo" width={40} height={40} />
           <span className="text-lg font-semibold">VoteSync</span>
         </div>
       </SidebarHeader>
@@ -177,7 +176,7 @@ export function AdminSidebar() {
             <DropdownMenuSeparator />
              <DropdownMenuItem onClick={() => router.push('/admin/profile')}>
               <User className="mr-2 h-4 w-4" />
-              <span>Ubah Kata Sandi</span>
+              <span>Profil</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-red-500 focus:text-red-500 focus:bg-red-500/10">

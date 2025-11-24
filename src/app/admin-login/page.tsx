@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/card';
 import { AdminLoginForm } from './components/admin-login-form';
 import { PublicNavbar } from '@/components/public-navbar';
-import { Logo } from '@/components/logo';
+import Image from 'next/image';
 
 export default function AdminLoginPage() {
   return (
@@ -17,7 +17,7 @@ export default function AdminLoginPage() {
         <div className="mx-auto flex w-full flex-col justify-center space-y-6 sm:w-[400px]">
           <div className="flex flex-col space-y-2 text-center">
              <div className="mx-auto">
-                <Logo />
+                <Image src="/logo-votesync.png" alt="VoteSync Logo" width={80} height={80} />
             </div>
             <h1 className="text-2xl font-semibold tracking-tight">Portal Admin</h1>
             <p className="text-sm text-muted-foreground">Masukkan kredensial administrator Anda untuk melanjutkan</p>

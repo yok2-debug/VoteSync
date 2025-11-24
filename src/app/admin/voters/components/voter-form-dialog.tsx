@@ -29,7 +29,7 @@ import { db } from '@/lib/firebase';
 import { ref, get, set } from 'firebase/database';
 
 const voterSchema = z.object({
-  id: z.string().min(1, { message: 'ID Pemilih wajib diisi.' }),
+  id: z.string().optional(),
   name: z.string().min(3, { message: 'Nama minimal 3 karakter.' }),
   category: z.string().min(1, { message: 'Kategori wajib dipilih.' }),
   password: z.string().optional(),
@@ -97,12 +97,22 @@ export function VoterFormDialog({
   const onSubmit: SubmitHandler<VoterFormData> = async (data) => {
     setIsSubmitting(true);
     try {
-      const voterRef = ref(db, `voters/${data.id}`);
+      let voterId = data.id;
+
+      if (!isEditing && !voterId) {
+        voterId = Date.now().toString();
+      }
+
+      if (!voterId) {
+        throw new Error('ID Pemilih tidak valid.');
+      }
+      
+      const voterRef = ref(db, `voters/${voterId}`);
   
       if (!isEditing) {
         const existingVoterSnapshot = await get(voterRef);
         if (existingVoterSnapshot.exists()) {
-          throw new Error(`Pemilih dengan ID "${data.id}" sudah ada.`);
+          throw new Error(`Pemilih dengan ID "${voterId}" sudah ada.`);
         }
       }
       
@@ -118,6 +128,7 @@ export function VoterFormDialog({
 
       const savedVoter: Voter = {
         ...data,
+        id: voterId,
         password: passwordToSave,
       };
       
@@ -152,7 +163,7 @@ export function VoterFormDialog({
         <form onSubmit={handleSubmit(onSubmit)} id="voter-form" className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-1">
           <div className="space-y-2">
             <Label htmlFor="id">ID Pemilih</Label>
-            <Input id="id" {...register('id')} className="w-full font-mono" disabled={isEditing} />
+            <Input id="id" {...register('id')} className="w-full font-mono" disabled={isEditing} placeholder={isEditing ? '' : 'Otomatis jika kosong'} />
             {errors.id && <p className="text-sm text-destructive mt-1">{errors.id.message}</p>}
           </div>
           <div className="space-y-2">

@@ -17,12 +17,12 @@ export function getVoterSession(): VoterSessionPayload | null {
   }
 }
 
-export function setVoterSession(payload: VoterSessionPayload) {
+export async function setVoterSession(payload: VoterSessionPayload) {
   if (typeof window === 'undefined') return;
   localStorage.setItem(VOTER_SESSION_KEY, JSON.stringify(payload));
 }
 
-export function deleteVoterSession() {
+export async function deleteVoterSession() {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(VOTER_SESSION_KEY);
 }
@@ -45,13 +45,13 @@ export function getAdminSession(): AdminSessionPayload | null {
     }
 }
 
-export function setAdminSession(payload: AdminSessionPayload) {
+export async function setAdminSession(payload: AdminSessionPayload) {
   if (typeof window === 'undefined') return;
   localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(payload));
 }
 
 
-export function deleteAdminSession() {
+export async function deleteAdminSession() {
   if (typeof window === 'undefined') return;
   localStorage.removeItem(ADMIN_SESSION_KEY);
   // Also remove the server-side cookie by telling browser to expire it

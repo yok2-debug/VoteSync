@@ -9,6 +9,7 @@ export interface Election {
   committee?: CommitteeMember[];
   votes?: Record<string, string>; // { [voterId]: candidateId }
   results?: Record<string, number>; // { [candidateId]: voteCount }
+  showInRealCount?: boolean;
 }
 
 export interface Candidate {

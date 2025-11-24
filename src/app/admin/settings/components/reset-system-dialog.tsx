@@ -117,7 +117,10 @@ export function ResetSystemDialog({ action, title, description }: ResetSystemDia
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive">Perform Action</Button>
+        <Button variant="destructive" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Perform Action
+        </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -133,17 +136,18 @@ export function ResetSystemDialog({ action, title, description }: ResetSystemDia
                 value={confirmationInput}
                 onChange={(e) => setConfirmationInput(e.target.value)}
                 autoComplete="off"
+                disabled={isSubmitting}
             />
         </div>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setConfirmationInput('')}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel onClick={() => setConfirmationInput('')} disabled={isSubmitting}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleReset}
             disabled={confirmationInput !== CONFIRMATION_TEXT || isSubmitting}
             className="bg-destructive hover:bg-destructive/90"
           >
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            I understand, proceed
+            {isSubmitting ? 'Processing...' : 'I understand, proceed'}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

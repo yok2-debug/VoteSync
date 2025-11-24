@@ -11,10 +11,9 @@ export async function createAdminSession(payload: Omit<AdminSessionPayload, 'exp
   const expires = new Date(Date.now() + SESSION_DURATION);
   const session = { ...payload, expires: expires.getTime() };
   
-  // Tambahkan 'await' di sini
-  const cookieStore = await cookies();
+  const cookieStore = cookies();
 
-  cookieStore.set(ADMIN_SESSION_COOKIE_NAME, JSON.stringify(session), {
+  await cookieStore.set(ADMIN_SESSION_COOKIE_NAME, JSON.stringify(session), {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     expires: expires,
@@ -24,14 +23,12 @@ export async function createAdminSession(payload: Omit<AdminSessionPayload, 'exp
 }
 
 export async function deleteAdminSession() {
-  // Tambahkan 'await' di sini
-  const cookieStore = await cookies();
-  cookieStore.delete(ADMIN_SESSION_COOKIE_NAME);
+  const cookieStore = cookies();
+  await cookieStore.delete(ADMIN_SESSION_COOKIE_NAME);
 }
 
 export async function logoutAdmin() {
-  // Tambahkan 'await' di sini
-  const cookieStore = await cookies();
-  cookieStore.delete(ADMIN_SESSION_COOKIE_NAME);
+  const cookieStore = cookies();
+  await cookieStore.delete(ADMIN_SESSION_COOKIE_NAME);
   redirect('/admin-login');
 }

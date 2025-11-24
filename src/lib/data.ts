@@ -4,7 +4,7 @@ import { db } from '@/lib/firebase';
 import type { AdminUser, Role, Permission } from '@/lib/types';
 import { get, ref, update, set, push } from 'firebase/database';
 
-async function initializeDefaultAdmin(): Promise<void> {
+export async function initializeDefaultAdmin(): Promise<void> {
   const rolesRef = ref(db, 'roles');
   const usersRef = ref(db, 'users');
 

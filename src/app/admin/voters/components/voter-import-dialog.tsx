@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
@@ -56,6 +55,7 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
 
         const existingVoterIds = new Set(existingVoters.map(v => v.id));
         const currentImportIds = new Set();
+        let timestampCounter = 0;
 
         const validated = filteredData.map(row => {
             const errors: string[] = [];
@@ -69,8 +69,14 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
               gender = 'Perempuan';
             }
 
+            let id = typedRow.id ? String(typedRow.id).trim() : '';
+            if (!id) {
+                id = (Date.now() + timestampCounter).toString();
+                timestampCounter++;
+            }
+
             const cleanRow = {
-                id: typedRow.id ? String(typedRow.id).trim() : '',
+                id: id,
                 nik: typedRow.nik ? String(typedRow.nik).trim() : '',
                 name: typeof typedRow.name === 'string' ? typedRow.name.trim() : '',
                 birthPlace: typeof typedRow.birthPlace === 'string' ? typedRow.birthPlace.trim() : '',
@@ -81,26 +87,24 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
                 password: typedRow.password ? String(typedRow.password).trim() : ''
             };
             
-            if (!cleanRow.id) {
-                errors.push('Missing or invalid ID.');
-            } else if (existingVoterIds.has(cleanRow.id)) {
-                errors.push(`ID '${cleanRow.id}' already exists in the database.`);
+            if (existingVoterIds.has(cleanRow.id)) {
+                errors.push(`ID '${cleanRow.id}' sudah ada di database.`);
             } else if (currentImportIds.has(cleanRow.id)) {
-                errors.push(`Duplicate ID '${cleanRow.id}' within this import file.`);
+                errors.push(`ID duplikat '${cleanRow.id}' di dalam file impor ini.`);
             } else {
                 currentImportIds.add(cleanRow.id);
             }
             
             if (!cleanRow.name) {
-                errors.push('Missing name.');
+                errors.push('Nama tidak boleh kosong.');
             }
             
             if (!cleanRow.category || !categoryNameMap.has(normalizeCategory(cleanRow.category))) {
-                errors.push(`Category '${cleanRow.category}' is not a valid, existing category.`);
+                errors.push(`Kategori '${cleanRow.category}' tidak valid atau tidak ada.`);
             }
             
             if (cleanRow.gender && !['Laki-laki', 'Perempuan'].includes(cleanRow.gender)) {
-                errors.push(`Invalid gender: '${typedRow.gender}'. Must be 'L', 'P', 'Laki-laki', or 'Perempuan'.`);
+                errors.push(`Jenis kelamin tidak valid: '${typedRow.gender}'. Harus 'L', 'P', 'Laki-laki', atau 'Perempuan'.`);
             }
 
             return {
@@ -140,16 +144,16 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-6xl">
         <DialogHeader>
-          <DialogTitle>Import Voters from CSV</DialogTitle>
+          <DialogTitle>Impor Pemilih dari CSV</DialogTitle>
           <DialogDescription>
-            Review the data below before importing. Rows with errors will be skipped.
+            Tinjau data di bawah ini sebelum mengimpor. Baris dengan error akan dilewati.
           </DialogDescription>
         </DialogHeader>
         
         {invalidRowCount > 0 && (
             <div className="flex items-center gap-2 p-3 rounded-md border border-destructive/50 bg-destructive/10 text-destructive">
                 <AlertTriangle className="h-5 w-5"/>
-                <p className="text-sm font-medium">{invalidRowCount} row(s) have errors and will not be imported. Please fix the CSV and try again or proceed with the valid rows.</p>
+                <p className="text-sm font-medium">{invalidRowCount} baris memiliki error dan tidak akan diimpor. Harap perbaiki CSV dan coba lagi atau lanjutkan dengan baris yang valid.</p>
             </div>
         )}
         
@@ -160,9 +164,9 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
                 <TableHead>Status</TableHead>
                 <TableHead>ID</TableHead>
                 <TableHead>NIK</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Details</TableHead>
+                <TableHead>Nama</TableHead>
+                <TableHead>Kategori</TableHead>
+                <TableHead>Detail</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -196,15 +200,15 @@ export function VoterImportDialog({ open, onOpenChange, data, categories, onSave
         
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-            Cancel
+            Batal
           </Button>
           <Button onClick={handleConfirmImport} disabled={isSubmitting || validRowCount === 0}>
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importing...
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Mengimpor...
               </>
             ) : (
-                `Import ${validRowCount} Valid Voters`
+                `Impor ${validRowCount} Pemilih Valid`
             )}
           </Button>
         </DialogFooter>

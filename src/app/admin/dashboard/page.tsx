@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Vote, Users, Box, CheckCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 import Loading from '@/app/loading';
+import { RealCountSettings } from './components/real-count-settings';
 
 function Dashboard() {
   const { elections, voters, categories, isLoading } = useDatabase();
@@ -56,6 +57,8 @@ function Dashboard() {
           </Link>
         ))}
       </div>
+
+       <RealCountSettings elections={elections} />
 
        <Card>
         <CardHeader>

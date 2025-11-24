@@ -15,21 +15,22 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { setVoterSession } from '@/lib/session-client';
 import { useDatabase } from '@/context/database-context';
 
 const voterLoginSchema = z.object({
-  voterId: z.string().min(1, { message: 'Voter ID is required.' }),
-  password: z.string().min(1, { message: 'Password is required.' }),
+  voterId: z.string().min(1, { message: 'ID Pemilih wajib diisi.' }),
+  password: z.string().min(1, { message: 'Password wajib diisi.' }),
 });
 
 export function LoginForm() {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { voters } = useDatabase();
 
   const form = useForm<z.infer<typeof voterLoginSchema>>({
@@ -46,19 +47,19 @@ export function LoginForm() {
         setVoterSession({ voterId: voter.id });
 
         toast({
-          title: 'Login Successful',
-          description: 'Redirecting to your dashboard...',
+          title: 'Login Berhasil',
+          description: 'Mengarahkan ke dasbor Anda...',
         });
         
         router.push('/vote');
       } else {
-        throw new Error('Invalid voter ID or password.');
+        throw new Error('ID Pemilih atau password tidak valid.');
       }
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Login Failed',
-        description: error instanceof Error ? error.message : 'An unknown error occurred.',
+        title: 'Login Gagal',
+        description: error instanceof Error ? error.message : 'Terjadi kesalahan tidak diketahui.',
       });
     } finally {
       setIsSubmitting(false);
@@ -73,9 +74,9 @@ export function LoginForm() {
           name="voterId"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Voter ID</FormLabel>
+              <FormLabel>ID Pemilih</FormLabel>
               <FormControl>
-                <Input placeholder="Your Voter ID" {...field} />
+                <Input placeholder="ID Pemilih Anda" {...field} disabled={isSubmitting} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -87,16 +88,27 @@ export function LoginForm() {
           render={({ field }) => (
             <FormItem>
               <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input type="password" placeholder="Your Password" {...field} />
-              </FormControl>
+              <div className="relative">
+                <FormControl>
+                  <Input type={showPassword ? 'text' : 'password'} placeholder="Password Anda" {...field} disabled={isSubmitting} />
+                </FormControl>
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground"
+                  aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                  disabled={isSubmitting}
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
               <FormMessage />
             </FormItem>
           )}
         />
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Login
+          {isSubmitting ? 'Masuk...' : 'Login'}
         </Button>
       </form>
     </Form>

@@ -39,13 +39,16 @@ import { ref, update, set, runTransaction } from 'firebase/database';
 import { useDatabase } from '@/context/database-context';
 import { Checkbox } from '@/components/ui/checkbox';
 import { BulkUpdateCategoryDialog } from './bulk-update-category-dialog';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { VoterCard } from './voter-card';
+
 
 type VoterTableProps = {
   voters: Voter[];
   categories: Category[];
 };
 
-type EnrichedVoter = Voter & { followedElections?: Election[] };
+type EnrichedVoter = Voter & { categoryName?: string };
 
 const ITEMS_PER_PAGE = 100;
 
@@ -65,27 +68,20 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
   const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+  const [isPrinting, setIsPrinting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const categoryMap = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
   
   const enrichedVoters = useMemo(() => {
-    const categoriesMap = new Map(categories.map(c => [c.id, c]));
-    const electionsMap = new Map(elections.map(e => [e.id, e]));
-
-    return voters.map(voter => {
-      const voterCategory = categoriesMap.get(voter.category);
-      if (!voterCategory || !voterCategory.allowedElections) {
-        return { ...voter, followedElections: [] };
-      }
-      const followedElections = voterCategory.allowedElections
-        .map(electionId => electionsMap.get(electionId))
-        .filter((e): e is Election => !!e);
-      
-      return { ...voter, followedElections };
-    });
-  }, [voters, categories, elections]);
+    return voters.map(voter => ({
+      ...voter,
+      categoryName: categoryMap.get(voter.category) || 'N/A'
+    }));
+  }, [voters, categoryMap]);
 
   const filteredVoters = useMemo(() => enrichedVoters.filter(
     (voter) =>
@@ -119,6 +115,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   };
   
   const handleExportTemplate = () => {
+    setIsExporting(true);
     const csvContent = 'id,nik,name,birthPlace,birthDate,gender,address,category,password\n';
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -131,6 +128,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     link.click();
     document.body.removeChild(link);
     toast({ title: "Template berhasil diekspor." });
+    setIsExporting(false);
   };
   
   const handleImportClick = () => {
@@ -140,12 +138,14 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      setIsImporting(true);
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
         complete: (results) => {
           setImportedData(results.data.filter(row => Object.values(row as object).some(val => val !== '' && val !== null)));
           setShowImportDialog(true);
+          setIsImporting(false);
         },
         error: (error: any) => {
            toast({
@@ -153,6 +153,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
             title: 'Error mem-parsing CSV',
             description: error.message,
           });
+          setIsImporting(false);
         }
       });
     }
@@ -165,10 +166,14 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
     try {
         const categoryNameMap = new Map(categories.map(c => [c.name.replace(/\s+/g, '').toLowerCase(), c.id]));
         
-        const updates: Record<string, Omit<Voter, 'id'| 'followedElections'>> = {};
+        const updates: Record<string, Omit<Voter, 'id'>> = {};
     
         for (const row of dataToImport) {
-            const { id, category, ...rest } = row;
+            let { id, category, ...rest } = row;
+
+            if (!id) {
+                id = Date.now().toString() + Math.random().toString(36).substring(2, 6);
+            }
 
             const categoryId = categoryNameMap.get(category.replace(/\s+/g, '').toLowerCase());
             if (!categoryId) {
@@ -307,17 +312,114 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
   };
   
   const onFormSave = async (voterToSave: Voter) => {
-    const { id, ...data } = voterToSave;
-    await set(ref(db, `voters/${id}`), data);
+    let { id, ...data } = voterToSave;
+    if (!id) {
+      id = Date.now().toString();
+    }
+    try {
+        await set(ref(db, `voters/${id}`), data);
+    } catch(error) {
+        throw new Error(error instanceof Error ? error.message : "Gagal menyimpan pemilih.");
+    }
   };
 
-  const handlePrint = () => {
-    toast({
-        title: "Fungsi Cetak Dinonaktifkan",
-        description: "Fungsionalitas cetak kartu saat ini sedang dalam peninjauan.",
-    });
-  }
+  const { printButtonLabel, idsForPrintLogic } = useMemo(() => {
+    if (numSelected > 0) {
+      return {
+        printButtonLabel: `Cetak Kartu (${numSelected})`,
+        idsForPrintLogic: selectedVoterIds,
+      };
+    }
+    if (categoryFilter === 'all') {
+      return {
+        printButtonLabel: `Cetak Semua (${filteredVoters.length})`,
+        idsForPrintLogic: filteredVoters.map(v => v.id),
+      };
+    }
+    const filteredByCategory = filteredVoters.filter(v => v.category === categoryFilter);
+    return {
+      printButtonLabel: `Cetak Kategori (${filteredByCategory.length})`,
+      idsForPrintLogic: filteredByCategory.map(v => v.id),
+    };
+  }, [numSelected, selectedVoterIds, categoryFilter, filteredVoters]);
 
+  const handlePrint = () => {
+    setIsPrinting(true);
+    const votersToPrint = enrichedVoters.filter(v => idsForPrintLogic.includes(v.id));
+
+    if (votersToPrint.length === 0) {
+        toast({
+            variant: 'destructive',
+            title: "Tidak ada pemilih untuk dicetak",
+            description: "Tidak ada pemilih yang cocok dengan kriteria cetak Anda.",
+        });
+        setIsPrinting(false);
+        return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      toast({
+        variant: 'destructive',
+        title: "Gagal membuka jendela cetak",
+        description: "Silakan izinkan pop-up untuk situs ini dan coba lagi.",
+      });
+      setIsPrinting(false);
+      return;
+    }
+
+    const cardsHtml = votersToPrint.map(voter => {
+        return renderToStaticMarkup(<VoterCard voter={voter} categoryName={voter.categoryName || 'N/A'} />);
+    }).join('');
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Cetak Kartu Login Pemilih</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <style>
+            @media print {
+              @page {
+                size: A4 landscape;
+                margin: 0.5cm;
+              }
+              body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+            }
+            body {
+              font-family: Arial, sans-serif;
+            }
+            .page-container {
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 5mm;
+              padding: 0.5cm;
+            }
+            .card-wrapper {
+              break-inside: avoid;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="page-container">
+            ${cardsHtml}
+          </div>
+          <script>
+            setTimeout(() => {
+              window.addEventListener('afterprint', () => {
+                window.close();
+              });
+              window.print();
+            }, 500);
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    setIsPrinting(false);
+  };
 
   return (
     <div className="space-y-4">
@@ -351,16 +453,16 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
           </Select>
         </form>
         <div className="flex gap-2 flex-wrap">
-           <Button variant="outline" onClick={handlePrint} type="button">
-              <Printer className="mr-2 h-4 w-4" />
-              Cetak Kartu
+           <Button variant="outline" onClick={handlePrint} type="button" disabled={isPrinting}>
+              {isPrinting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Printer className="mr-2 h-4 w-4" />}
+              {printButtonLabel}
             </Button>
-           <Button variant="outline" onClick={handleExportTemplate}>
-              <Download className="mr-2 h-4 w-4" />
+           <Button variant="outline" onClick={handleExportTemplate} disabled={isExporting}>
+              {isExporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
               Ekspor Template
             </Button>
-            <Button variant="outline" onClick={handleImportClick}>
-              <Upload className="mr-2 h-4 w-4" />
+            <Button variant="outline" onClick={handleImportClick} disabled={isImporting}>
+              {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
               Impor CSV
             </Button>
             <Button onClick={handleAdd}>
@@ -391,7 +493,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
             <TableRow>
                <TableHead className="w-[50px]">
                   <Checkbox
-                    checked={paginatedVoters.length > 0 && numSelected === paginatedVoters.length}
+                    checked={paginatedVoters.length > 0 && numSelected === paginatedVoters.length && paginatedVoters.length > 0}
                     onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
                     aria-label="Select all"
                   />
@@ -418,7 +520,7 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
                   <TableCell className="font-mono">{voter.id}</TableCell>
                   <TableCell className="font-mono">{voter.nik || 'N/A'}</TableCell>
                   <TableCell className="font-medium">{voter.name}</TableCell>
-                  <TableCell>{categoryMap.get(voter.category) || 'N/A'}</TableCell>
+                  <TableCell>{voter.categoryName}</TableCell>
                   <TableCell>{voter.hasVoted && Object.keys(voter.hasVoted).length > 0 ? 'Ya' : 'Tidak'}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -553,7 +655,8 @@ export function VoterTable({ voters, categories }: VoterTableProps) {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-
     </div>
   );
 }
+
+    

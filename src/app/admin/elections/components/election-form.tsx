@@ -42,7 +42,7 @@ const committeeMemberSchema = z.object({
 const electionSchema = z.object({
   id: z.string(),
   name: z.string().min(3, 'Nama pemilihan minimal 3 karakter.'),
-  description: z.string().min(10, 'Deskripsi minimal 10 karakter.'),
+  description: z.string().optional(),
   status: z.enum(['pending', 'active']),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
@@ -97,7 +97,7 @@ export function ElectionForm({ election }: ElectionFormProps) {
         
         const electionData: Partial<Omit<Election, 'id' | 'candidates'>> = {
             name: data.name,
-            description: data.description,
+            description: data.description || "",
             status: data.status,
             committee: data.committee || [],
         };

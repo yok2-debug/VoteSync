@@ -4,15 +4,19 @@ import { RealCountDisplay } from './components/real-count-display';
 import { useDatabase } from '@/context/database-context';
 import Loading from '../loading';
 import { cn } from '@/lib/utils';
+import { useMemo } from 'react';
 
 export default function RealCountPage() {
   const { elections, categories, isLoading } = useDatabase();
   
+  const displayedElections = useMemo(() => 
+    elections.filter(e => e.showInRealCount === true && e.status === 'active'),
+    [elections]
+  );
+
   if (isLoading) {
     return <Loading />;
   }
-  
-  const activeElections = elections.filter(e => e.status === 'active');
 
   return (
     <>
@@ -24,9 +28,12 @@ export default function RealCountPage() {
             <p className="text-sm text-muted-foreground">Pantauan hasil perolehan suara secara real-time.</p>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {activeElections.length > 0 ? (
-              activeElections.map(election => (
+          <div className={cn(
+            "grid grid-cols-1 gap-8",
+            displayedElections.length > 1 ? "lg:grid-cols-2" : ""
+          )}>
+            {displayedElections.length > 0 ? (
+              displayedElections.map(election => (
                 <RealCountDisplay
                   key={election.id}
                   election={election}
@@ -35,7 +42,7 @@ export default function RealCountPage() {
               ))
             ) : (
               <div className="col-span-full text-center py-10">
-                <p className="text-muted-foreground">Tidak ada pemilihan yang sedang aktif saat ini.</p>
+                <p className="text-muted-foreground">Tidak ada pemilihan yang ditampilkan di Real Count saat ini.</p>
               </div>
             )}
           </div>

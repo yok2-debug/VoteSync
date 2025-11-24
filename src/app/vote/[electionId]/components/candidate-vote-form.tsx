@@ -38,15 +38,15 @@ export function CandidateVoteForm({ electionId, candidate, voterId }: CandidateV
 
     try {
       // Transaction on election data
-      await runTransaction(electionRef, (election) => {
+      const electionTransaction = await runTransaction(electionRef, (election) => {
         if (election) {
           if (!election.votes) election.votes = {};
-          if (!election.results) election.results = {};
           if (election.votes[voterId]) {
             // Abort transaction if voter already voted in this election
             return; 
           }
           election.votes[voterId] = candidate.id;
+          if (!election.results) election.results = {};
           if (!election.results[candidate.id]) {
             election.results[candidate.id] = 0;
           }
@@ -54,6 +54,10 @@ export function CandidateVoteForm({ electionId, candidate, voterId }: CandidateV
         }
         return election;
       });
+
+      if (!electionTransaction.committed) {
+        throw new Error('Anda sudah memberikan suara dalam pemilihan ini.');
+      }
 
       // Transaction on voter data
       await runTransaction(voterRef, (voter) => {
@@ -67,8 +71,8 @@ export function CandidateVoteForm({ electionId, candidate, voterId }: CandidateV
       });
       
       toast({
-        title: 'Vote Cast Successfully!',
-        description: `Your vote for ${candidate.name} has been recorded.`,
+        title: 'Suara Berhasil Dicatat!',
+        description: `Suara Anda untuk ${candidate.name} telah direkam.`,
       });
       
       router.replace('/vote');
@@ -76,8 +80,8 @@ export function CandidateVoteForm({ electionId, candidate, voterId }: CandidateV
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Failed to Cast Vote',
-        description: error instanceof Error ? error.message : 'You may have already voted or an error occurred.',
+        title: 'Gagal Memberikan Suara',
+        description: error instanceof Error ? error.message : 'Terjadi kesalahan atau Anda mungkin sudah memilih.',
       });
     } finally {
         setIsSubmitting(false);
@@ -89,22 +93,22 @@ export function CandidateVoteForm({ electionId, candidate, voterId }: CandidateV
       <AlertDialogTrigger asChild>
         <Button className="w-full" disabled={isSubmitting}>
           <Vote className="mr-2 h-4 w-4" />
-          Vote
+          Pilih
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirm Your Vote</AlertDialogTitle>
+          <AlertDialogTitle>Konfirmasi Pilihan Anda</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to vote for <span className="font-bold">{candidate.name}</span>?
-            This action cannot be undone.
+            Apakah Anda yakin ingin memilih <span className="font-bold">{candidate.name}</span>?
+            Tindakan ini tidak dapat dibatalkan.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Batal</AlertDialogCancel>
           <AlertDialogAction onClick={handleVote} disabled={isSubmitting}>
             {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Confirm Vote
+            Konfirmasi Pilihan
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -28,9 +28,9 @@ export default function VoterDashboardPage() {
   }, [router]);
 
   const voter: Voter | undefined = useMemo(() => {
-    if (!session?.voterId) return undefined;
+    if (isDbLoading || !session?.voterId) return undefined;
     return voters.find(v => v.id === session.voterId);
-  }, [voters, session]);
+  }, [voters, session, isDbLoading]);
   
   const followedElections = useMemo(() => {
     if (!voter || !voter.category || elections.length === 0 || categories.length === 0) return [];
@@ -51,7 +51,7 @@ export default function VoterDashboardPage() {
   
   const isLoading = isDbLoading || isSessionLoading;
 
-  if (isLoading || !voter) {
+  if (isLoading || (session && !voter)) {
     return <Loading />;
   }
 
@@ -81,29 +81,29 @@ export default function VoterDashboardPage() {
                   <div className="grid grid-cols-[120px_auto_1fr] items-start">
                     <div className="text-muted-foreground">Nama</div>
                     <div className="font-semibold mx-2">:</div>
-                    <div className="font-semibold break-words">{voter.name}</div>
+                    <div className="font-semibold break-words">{voter?.name}</div>
                   </div>
                    <div className="grid grid-cols-[120px_auto_1fr] items-start">
                     <div className="text-muted-foreground">NIK</div>
                     <div className="font-semibold mx-2">:</div>
-                    <div className="font-semibold break-words">{voter.nik || '-'}</div>
+                    <div className="font-semibold break-words">{voter?.nik || '-'}</div>
                   </div>
                   <div className="grid grid-cols-[120px_auto_1fr] items-start">
                     <div className="text-muted-foreground">Tempat, Tgl Lahir</div>
                     <div className="font-semibold mx-2">:</div>
-                    <div className="font-semibold break-words">{voter.birthPlace || '-'}{voter.birthPlace && voter.birthDate ? ', ' : ''}{voter.birthDate || '-'}</div>
+                    <div className="font-semibold break-words">{voter?.birthPlace || '-'}{voter?.birthPlace && voter?.birthDate ? ', ' : ''}{voter?.birthDate || '-'}</div>
                   </div>
                 </div>
                 <div className="space-y-3">
                   <div className="grid grid-cols-[120px_auto_1fr] items-start">
                     <div className="text-muted-foreground">Jenis Kelamin</div>
                     <div className="font-semibold mx-2">:</div>
-                    <div className="font-semibold break-words">{voter.gender || '-'}</div>
+                    <div className="font-semibold break-words">{voter?.gender || '-'}</div>
                   </div>
                   <div className="grid grid-cols-[120px_auto_1fr] items-start">
                     <div className="text-muted-foreground">Alamat</div>
                     <div className="font-semibold mx-2">:</div>
-                    <div className="font-semibold break-words">{voter.address || '-'}</div>
+                    <div className="font-semibold break-words">{voter?.address || '-'}</div>
                   </div>
                 </div>
              </div>
