@@ -1,0 +1,48 @@
+'use client';
+import { useDatabase } from '@/context/database-context';
+import Loading from '@/app/loading';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import Link from 'next/link';
+import { FileText } from 'lucide-react';
+
+export default function RecapitulationDashboardPage() {
+    const { elections, isLoading } = useDatabase();
+
+    if (isLoading) {
+        return <Loading />;
+    }
+
+    return (
+        <div className="flex flex-col gap-6">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight">Rekapitulasi Pemilihan</h1>
+                <p className="text-muted-foreground">
+                    Pilih pemilihan untuk melihat atau membuat laporan rekapitulasi.
+                </p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {elections.map((election) => (
+                    <Card key={election.id}>
+                        <CardHeader>
+                            <CardTitle>{election.name}</CardTitle>
+                            <CardDescription>{election.description}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                             <Button asChild className="w-full">
+                                <Link href={`/admin/recapitulation/${election.id}`}>
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    Lihat Rekapitulasi
+                                </Link>
+                            </Button>
+                        </CardContent>
+                    </Card>
+                ))}
+                {elections.length === 0 && (
+                     <p className="text-muted-foreground col-span-full">Tidak ada pemilihan yang tersedia untuk ditampilkan rekapitulasinya.</p>
+                )}
+            </div>
+        </div>
+    );
+}
