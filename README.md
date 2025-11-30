@@ -47,8 +47,8 @@ Ikuti langkah-langkah ini untuk menjalankan proyek di komputer lokal Anda.
 
 ### 2. Kloning Repositori
 ```bash
-git clone https://github.com/URL_ANDA/nama-repo.git
-cd nama-repo
+git clone https://github.com/yok2-debug/VoteSync
+cd VoteSync
 ```
 
 ### 3. Instal Dependensi
